@@ -14,6 +14,7 @@ This file is the source of truth when code and specifications differ.
 - build-declared dependency direction matching ADR 0001
 - bounded owned ETF codec for integer, UTF-8 atom, tuple, binary, proper byte/list forms, nil, and `NEW_PID_EXT`
 - EPMD ALIVE2 registration and PORT_PLEASE2 lookup with registration-socket lifetime ownership
+- OTP 23+ initiating and accepting handshake codec/FSM with cookie challenge verification
 - separate unit, integration, conformance, and stress build steps
 - research labs, benchmark directories, and evidence directories
 
@@ -23,7 +24,7 @@ No production behavior described by the v0.5 draft is implemented. In particular
 
 - ETF tags outside the documented initial subset;
 - EPMD operations outside registration and node lookup;
-- Erlang distribution handshake;
+- handshake variants outside the OTP 23+ format and target-version black-box verification;
 - distribution framing, control messages, fragmentation, or heartbeats;
 - actor scheduler, mailbox, registry, links, or monitors;
 - demand signal, transport arena, `BufferHandle`, or io_uring backend;

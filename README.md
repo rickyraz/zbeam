@@ -24,7 +24,7 @@ Process isolation alone is **not** the differentiator: Erlang ports already prov
 | Public package/module boundaries | Scaffolded |
 | ETF codec | Initial bounded subset implemented |
 | EPMD client | Registration and lookup implemented |
-| Distribution handshake | Not implemented |
+| Distribution handshake | Initiating/accepting roles implemented; OTP matrix pending |
 | Distribution control messages | Not implemented |
 | Actor runtime and mailbox | Not implemented |
 | Demand-driven backpressure | Design only |
