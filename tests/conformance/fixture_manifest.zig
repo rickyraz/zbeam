@@ -1,4 +1,5 @@
 const std = @import("std");
+const etf = @import("zbeam-etf");
 
 const manifest = @import("zbeam-etf-fixtures").bytes;
 
@@ -19,6 +20,14 @@ test "ETF fixture manifest has bounded versioned vectors" {
         try std.testing.expect(expression.len > 0);
         try std.testing.expect(hex.len >= 4 and hex.len % 2 == 0);
         try std.testing.expectEqualStrings("83", hex[0..2]);
+
+        var buffer: [1024]u8 = undefined;
+        const bytes = try std.fmt.hexToBytes(&buffer, hex);
+        var term = try etf.decode(std.testing.allocator, bytes, .{});
+        defer term.deinit(std.testing.allocator);
+        const encoded = try etf.encode(std.testing.allocator, &term);
+        defer std.testing.allocator.free(encoded);
+        try std.testing.expectEqualSlices(u8, bytes, encoded);
         vectors += 1;
     }
 

@@ -19,7 +19,7 @@ This matrix is the normative source index for implementation work. Project speci
 - `SMALL_INTEGER_EXT`, `INTEGER_EXT`;
 - `SMALL_ATOM_UTF8_EXT`, `ATOM_UTF8_EXT`;
 - `SMALL_TUPLE_EXT`, `LARGE_TUPLE_EXT`;
-- `NIL_EXT`, `LIST_EXT`, `BINARY_EXT`;
+- `NIL_EXT`, `STRING_EXT`, `LIST_EXT`, `BINARY_EXT`;
 - `NEW_PID_EXT`.
 
 ### EPMD

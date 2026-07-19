@@ -12,6 +12,7 @@ This file is the source of truth when code and specifications differ.
 - independently importable `zbeam-etf`, `zbeam-protocol`, `zbeam-transport`, `zbeam-actor`, and `zbeam-runtime` batteries
 - a behavior-free `zbeam` convenience umbrella
 - build-declared dependency direction matching ADR 0001
+- bounded owned ETF codec for integer, UTF-8 atom, tuple, binary, proper byte/list forms, nil, and `NEW_PID_EXT`
 - separate unit, integration, conformance, and stress build steps
 - research labs, benchmark directories, and evidence directories
 
@@ -19,7 +20,7 @@ This file is the source of truth when code and specifications differ.
 
 No production behavior described by the v0.5 draft is implemented. In particular, the repository has no working:
 
-- ETF encoder or decoder;
+- ETF tags outside the documented initial subset;
 - EPMD client;
 - Erlang distribution handshake;
 - distribution framing, control messages, fragmentation, or heartbeats;
