@@ -4,6 +4,9 @@ const etf = @import("zbeam-etf");
 const manifest = @import("zbeam-etf-fixtures").bytes;
 
 test "ETF fixture manifest has bounded versioned vectors" {
+    // Parse the checked-in text rather than embedding duplicate expected terms.
+    // The first octet must be 0x83 (decimal 131), ETF's version marker; decoding
+    // and re-encoding then proves the supported subset preserves exact bytes.
     var lines = std.mem.splitScalar(u8, manifest, '\n');
     var vectors: usize = 0;
 

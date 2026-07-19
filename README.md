@@ -3,7 +3,7 @@
 [![CI](https://github.com/rickyraz/zbeam/actions/workflows/ci.yml/badge.svg)](https://github.com/rickyraz/zbeam/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> **Research scaffold — not a usable Erlang node.** zbeam currently builds on Zig 0.16.0, but EPMD, ETF, the distribution handshake, actors, and transport are not implemented yet.
+> **Research scaffold — not a production Erlang node.** zbeam implements a bounded initial ETF/EPMD/handshake/echo path, but broad OTP compatibility and production safety remain unverified.
 
 zbeam explores a native Zig implementation of the Erlang Distribution Protocol (EDP v5/v6). The long-term goal is for a standalone Zig process to participate in an Erlang/OTP cluster as a distribution peer, without a NIF, port driver, or OTP patch.
 
@@ -39,7 +39,7 @@ Requirements:
 
 - Zig 0.16.0 or newer
 - Git
-- Erlang/OTP 25–27 later, when protocol conformance work begins
+- Erlang/OTP 25–27 for the target interoperability matrix
 
 ```sh
 zig build
@@ -56,7 +56,7 @@ zig build
 ./zig-out/bin/zbeam echo zbeam_echo cookie
 ```
 
-The command accepts one peer and replies once to `{echo, 'zbeam_echo@127.0.0.1'}`. The cookie argument is visible in the process list and is suitable only for local development.
+The command accepts one peer and, by default, replies once to `{echo, 'zbeam_echo@127.0.0.1'}`. The cookie argument is visible in the process list and is suitable only for local development.
 
 The test suite now covers the initial codec, EPMD, handshake, framing, bounded mailbox, and echo path. A green build still does **not** establish complete OTP 25–27 compatibility or full wire-protocol conformance.
 
@@ -67,6 +67,7 @@ The test suite now covers the initial codec, EPMD, handshake, framing, bounded m
 - [Roadmap](ROADMAP.md) — evidence-first implementation order
 - [Research backlog](docs/research-needed.md) — unresolved safety and runtime risks
 - [Protocol source matrix](docs/protocol-sources.md) — primary OTP references and initial wire subset
+- [First-principles implementation guide](docs/first-principles.md) — reasoning behind widths, ownership, framing, and runtime boundaries
 - [Architecture decisions](docs/adr/README.md)
 - [Verification evidence](docs/evidence/README.md)
 

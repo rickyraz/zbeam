@@ -14,9 +14,13 @@ pub const Config = struct {
     max_messages: usize = 1,
 };
 
-/// Accepts one peer, completes the distribution handshake, and serves the
-/// configured number of registered echo messages. Ticks do not consume the
-/// message allowance. A zero limit serves until disconnect or cancellation.
+/// Composes transport and actor behavior for one deliberately small peer.
+///
+/// First principles: EPMD already supplied a listening socket; a TCP accept
+/// creates one connection; the handshake authenticates it; only then may
+/// distribution frames reach the echo behavior. The configured message bound
+/// makes benchmark/process lifetime explicit. Ticks maintain liveness and do
+/// not count as application work; zero means run until disconnect/cancellation.
 pub fn serve(io: std.Io, allocator: std.mem.Allocator, server: *std.Io.net.Server, config: Config) !void {
     const stream = try server.accept(io);
     defer stream.close(io);
@@ -46,6 +50,8 @@ pub fn serve(io: std.Io, allocator: std.mem.Allocator, server: *std.Io.net.Serve
     }
 }
 
+/// Checks the complete wire representation, not only one byte: a tick is the
+/// four-byte zero length prefix and nothing else.
 fn isTick(packet: []const u8) bool {
     return packet.len == 4 and std.mem.allEqual(u8, packet, 0);
 }

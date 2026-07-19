@@ -1,6 +1,9 @@
 const std = @import("std");
 const etf = @import("zbeam-etf");
 
+// The distribution header is one octet (`u8`); decimal 112 is the protocol's
+// PASS_THROUGH marker. REG_SEND and SEND are ETF integer operation codes, so
+// they use the Term integer representation (`i64`) rather than byte tags.
 pub const pass_through: u8 = 112;
 pub const reg_send: i64 = 6;
 pub const send: i64 = 2;
@@ -42,11 +45,16 @@ pub const Message = struct {
         self.* = undefined;
     }
 
+    /// Decodes payload only after routing accepts the control term. This avoids
+    /// allocating or rejecting unsupported payloads addressed to other actors.
     pub fn decodePayload(self: *const Message, allocator: std.mem.Allocator, limits: etf.Limits) !etf.Term {
         return etf.decode(allocator, self.payload_etf orelse return error.MissingPayload, limits);
     }
 };
 
+/// Validates a four-octet big-endian frame, recognizes zero-length ticks, then
+/// decodes only the first ETF term as control. Four octets allow payloads above
+/// the 65,535-byte handshake limit; policy still caps them at `max_packet_bytes`.
 pub fn decodePacket(allocator: std.mem.Allocator, packet: []const u8, limits: Limits) !Packet {
     if (packet.len < 4) return error.Truncated;
     const declared = readU32(packet[0..4]);
@@ -65,6 +73,9 @@ pub fn decodePacket(allocator: std.mem.Allocator, packet: []const u8, limits: Li
     } };
 }
 
+/// Creates `[u32 length][PASS_THROUGH][control ETF][optional payload ETF]`.
+/// Control and payload each retain their own ETF version marker because the
+/// pass-through format carries standalone external terms.
 pub fn encodePacket(allocator: std.mem.Allocator, control: *const etf.Term, payload: ?*const etf.Term) ![]u8 {
     const control_bytes = try etf.encode(allocator, control);
     defer allocator.free(control_bytes);
@@ -81,10 +92,14 @@ pub fn encodePacket(allocator: std.mem.Allocator, control: *const etf.Term, payl
     return packet;
 }
 
+/// A distribution tick is exactly a zero `u32` frame length and has no body.
 pub fn tickPacket() [4]u8 {
     return @splat(0);
 }
 
+/// Recognizes `{REG_SEND, FromPid, Cookie, RegisteredName}` without treating an
+/// arbitrary tuple as routable. The cookie field is legacy and intentionally
+/// ignored only after shape and opcode validation.
 pub fn regSendDestination(control: *const etf.Term) Error!struct { from: etf.Pid, name: []const u8 } {
     if (control.* != .tuple or control.tuple.len != 4) return error.InvalidControl;
     const fields = control.tuple;

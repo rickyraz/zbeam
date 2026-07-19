@@ -4,8 +4,14 @@ const types = @import("term.zig");
 pub const Term = types.Term;
 pub const Pid = types.Pid;
 
-pub const version = 131;
+/// Every standalone External Term Format value starts with decimal 131
+/// (`0x83`). It is one octet (`u8`) because ETF defines tags and the version
+/// marker as byte-sized wire discriminants, not because 8 bits are arbitrary.
+pub const version: u8 = 131;
 
+/// Bounds are checked before allocation. A network peer controls encoded
+/// lengths, so trusting them would let a tiny packet request excessive memory
+/// or recursion depth.
 pub const Limits = struct {
     max_depth: u16 = 64,
     max_collection_len: u32 = 1_048_576,
@@ -29,7 +35,9 @@ pub const EncodeError = error{
     CollectionTooLarge,
 };
 
-const small_integer_ext = 97;
+// ETF tags are one-octet protocol constants. Their numeric values come from
+// the Erlang external format specification and must never be renumbered.
+const small_integer_ext: u8 = 97;
 const integer_ext = 98;
 const small_tuple_ext = 104;
 const large_tuple_ext = 105;
@@ -46,6 +54,9 @@ pub const Decoded = struct {
     bytes_read: usize,
 };
 
+/// Decodes exactly one ETF value and reports how many bytes it consumed.
+/// Distribution packets concatenate control and payload terms, so requiring
+/// end-of-buffer here would make that valid framing impossible to separate.
 pub fn decodePrefix(allocator: std.mem.Allocator, bytes: []const u8, limits: Limits) (DecodeError || std.mem.Allocator.Error)!Decoded {
     var cursor = Cursor{ .bytes = bytes };
     if (try cursor.readByte() != version) return error.InvalidVersion;
@@ -55,6 +66,8 @@ pub fn decodePrefix(allocator: std.mem.Allocator, bytes: []const u8, limits: Lim
     };
 }
 
+/// Decodes one complete ETF value. Rejecting trailing bytes prevents callers
+/// from accidentally authenticating or routing only a valid prefix.
 pub fn decode(allocator: std.mem.Allocator, bytes: []const u8, limits: Limits) (DecodeError || std.mem.Allocator.Error)!Term {
     var decoded = try decodePrefix(allocator, bytes, limits);
     errdefer decoded.term.deinit(allocator);
@@ -62,6 +75,9 @@ pub fn decode(allocator: std.mem.Allocator, bytes: []const u8, limits: Limits) (
     return decoded.term;
 }
 
+/// Encodes an owned term into canonical bytes for the supported subset.
+/// The returned slice belongs to the caller; a growing buffer is used because
+/// nested ETF values do not have a cheap fixed size before traversal.
 pub fn encode(allocator: std.mem.Allocator, term: *const Term) (EncodeError || std.mem.Allocator.Error)![]u8 {
     var output: std.ArrayList(u8) = .empty;
     errdefer output.deinit(allocator);
@@ -70,6 +86,8 @@ pub fn encode(allocator: std.mem.Allocator, term: *const Term) (EncodeError || s
     return output.toOwnedSlice(allocator);
 }
 
+/// Dispatches on the one-byte ETF tag. `depth` increases only when entering a
+/// nested value, making the recursion ceiling independent of total byte size.
 fn decodeValue(allocator: std.mem.Allocator, cursor: *Cursor, limits: Limits, depth: u16) (DecodeError || std.mem.Allocator.Error)!Term {
     if (depth >= limits.max_depth) return error.LimitExceeded;
     const tag = try cursor.readByte();
@@ -89,6 +107,8 @@ fn decodeValue(allocator: std.mem.Allocator, cursor: *Cursor, limits: Limits, de
     };
 }
 
+/// Copies and validates atom text. UTF-8 validation matters because these tags
+/// promise UTF-8 on the wire; accepting arbitrary bytes would violate ETF.
 fn decodeAtom(allocator: std.mem.Allocator, cursor: *Cursor, length: u16, limits: Limits) (DecodeError || std.mem.Allocator.Error)!Term {
     if (length > limits.max_atom_bytes) return error.LimitExceeded;
     const source = try cursor.take(length);
@@ -102,6 +122,8 @@ fn decodeBinary(allocator: std.mem.Allocator, cursor: *Cursor, limits: Limits) (
     return .{ .binary = try allocator.dupe(u8, try cursor.take(length)) };
 }
 
+/// Shared tuple/list element decoder. Partial initialization is unwound so a
+/// malformed child cannot leak the children decoded before it.
 fn decodeSequence(comptime tag: std.meta.Tag(Term), allocator: std.mem.Allocator, cursor: *Cursor, length: u32, limits: Limits, depth: u16) (DecodeError || std.mem.Allocator.Error)!Term {
     if (length > limits.max_collection_len) return error.LimitExceeded;
     const items = try allocator.alloc(Term, length);
@@ -126,6 +148,8 @@ fn decodeString(allocator: std.mem.Allocator, cursor: *Cursor, limits: Limits) (
     return .{ .list = items };
 }
 
+/// This subset models only proper lists, therefore the final ETF tail must be
+/// NIL_EXT. Improper lists are rejected rather than represented ambiguously.
 fn decodeList(allocator: std.mem.Allocator, cursor: *Cursor, limits: Limits, depth: u16) (DecodeError || std.mem.Allocator.Error)!Term {
     const length = try cursor.readU32();
     var result = try decodeSequence(.list, allocator, cursor, length, limits, depth);
@@ -153,6 +177,9 @@ fn decodePid(allocator: std.mem.Allocator, cursor: *Cursor, limits: Limits, dept
     } };
 }
 
+/// Chooses the smallest standard ETF representation that preserves the value:
+/// one payload byte for 0..255, four bytes for signed i32, and compact tuple,
+/// atom, or byte-list tags when their one-byte/two-byte length fields permit.
 fn encodeValue(allocator: std.mem.Allocator, output: *std.ArrayList(u8), term: *const Term) (EncodeError || std.mem.Allocator.Error)!void {
     switch (term.*) {
         .integer => |value| {
@@ -228,6 +255,8 @@ fn encodeAtom(allocator: std.mem.Allocator, output: *std.ArrayList(u8), bytes: [
     try output.appendSlice(allocator, bytes);
 }
 
+// ETF multibyte integers are big-endian (network byte order). Shifting by
+// eight moves one octet at a time; truncation keeps the low eight bits.
 fn appendU16(allocator: std.mem.Allocator, output: *std.ArrayList(u8), value: u16) std.mem.Allocator.Error!void {
     try output.appendSlice(allocator, &.{ @intCast(value >> 8), @truncate(value) });
 }
@@ -241,6 +270,8 @@ fn appendU32(allocator: std.mem.Allocator, output: *std.ArrayList(u8), value: u3
     });
 }
 
+/// Bounds-checked view over untrusted bytes. Centralizing cursor movement makes
+/// every primitive read fail closed on truncation instead of slicing blindly.
 const Cursor = struct {
     bytes: []const u8,
     index: usize = 0,

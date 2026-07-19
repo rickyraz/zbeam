@@ -5,6 +5,11 @@ const distribution = @import("zbeam-protocol").distribution;
 pub const Echo = struct {
     registered_name: []const u8,
 
+    /// Minimal actor boundary for the interoperability proof.
+    ///
+    /// Ticks are echoed for connection liveness, unrelated registered names
+    /// return `null`, and only a matching REG_SEND payload is decoded. The
+    /// response uses SEND to target the original sender PID directly.
     pub fn handle(self: Echo, allocator: std.mem.Allocator, packet_bytes: []const u8) !?[]u8 {
         var packet = try distribution.decodePacket(allocator, packet_bytes, .{});
         defer packet.deinit(allocator);

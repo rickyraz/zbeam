@@ -1,6 +1,9 @@
 const std = @import("std");
 const zbeam = @import("zbeam");
 
+/// Keeps the executable thin: parse one development command, then delegate all
+/// protocol and runtime work to battery modules. This prevents CLI concerns
+/// from becoming hidden transport policy.
 pub fn main(init: std.process.Init) !void {
     var args = try std.process.Args.Iterator.initAllocator(init.minimal.args, init.gpa);
     defer args.deinit();
@@ -17,6 +20,8 @@ pub fn main(init: std.process.Init) !void {
     return error.UnknownCommand;
 }
 
+/// Prints help through `std.Io` so the executable follows Zig 0.16's explicit
+/// I/O capability model instead of using process-global legacy writers.
 fn printStatus(init: std.process.Init) !void {
     var buffer: [1024]u8 = undefined;
     var file_writer: std.Io.File.Writer = .init(.stdout(), init.io, &buffer);
@@ -30,6 +35,10 @@ fn printStatus(init: std.process.Init) !void {
     try writer.flush();
 }
 
+/// Assembles the smallest real node lifecycle: listen on an ephemeral port,
+/// register that port with EPMD, generate a fresh 32-bit challenge, then serve
+/// one authenticated peer. The registration stream stays open for exactly the
+/// server lifetime because closing it tells EPMD the node is gone.
 fn runEcho(init: std.process.Init, short_name: []const u8, cookie: []const u8, max_messages: usize) !void {
     const allocator = init.gpa;
     const io = init.io;
@@ -47,6 +56,8 @@ fn runEcho(init: std.process.Init, short_name: []const u8, cookie: []const u8, m
     });
     defer registration.close(io);
 
+    // The handshake wire field is exactly four octets. Filling bytes directly
+    // avoids narrowing a larger random value; @bitCast preserves all 32 bits.
     var challenge_bytes: [4]u8 = undefined;
     io.random(&challenge_bytes);
     const challenge: u32 = @bitCast(challenge_bytes);

@@ -1,3 +1,7 @@
+// Distribution capabilities are bit positions in one 64-bit `N` handshake
+// field. A bit is advertised only when the corresponding wire behavior is
+// implemented; setting an aspirational bit would make OTP send unsupported
+// terms or framing. Hex keeps protocol bit positions auditable.
 pub const published: u64 = 0x0000_0001;
 pub const extended_references: u64 = 0x0000_0004;
 pub const dist_monitor: u64 = 0x0000_0008;
@@ -16,6 +20,10 @@ pub const mandatory_25_digest: u64 = 0x0000_0010_0000_0000;
 pub const v4_nc: u64 = 0x0000_0004_0000_0000;
 
 /// Conservative capabilities for the no-atom-cache M1 path.
+///
+/// `mandatory_25_digest` is bit 36 (`1 << 36`), which explains why it crosses
+/// the low 32-bit word. `v4_nc` is bit 34. Both still fit the eight-octet `u64`
+/// flag field sent by the OTP 23+ handshake.
 pub const m1 = published |
     extended_references |
     dist_monitor |

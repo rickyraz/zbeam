@@ -1,9 +1,13 @@
 [zbeam_bin, port_echo_bin, iterations_arg] = System.argv()
 iterations = String.to_integer(iterations_arg)
 if iterations < 1, do: raise("iterations must be positive")
+# Warm both paths without letting warmup dominate short runs. The same fixed
+# 32-byte payload keeps payload size from becoming a hidden benchmark variable.
 warmup = min(100, max(1, div(iterations, 10)))
 payload = :binary.copy(<<0x5A>>, 32)
 
+# Measure each request/reply rather than dividing one batch duration; this keeps
+# a latency distribution from which median and tail percentiles can be derived.
 measure = fn operation ->
   for _ <- 1..iterations do
     started = System.monotonic_time(:nanosecond)
@@ -19,6 +23,8 @@ stats = fn samples ->
   {median, p95}
 end
 
+# `{packet, 4}` makes the BEAM prepend/strip a four-byte big-endian length, the
+# same framing implemented by the reference Zig Port worker.
 port = Port.open({:spawn_executable, String.to_charlist(port_echo_bin)}, [
   :binary,
   {:packet, 4},
@@ -37,6 +43,7 @@ Enum.each(1..warmup, fn _ -> port_round_trip.() end)
 port_samples = measure.(port_round_trip)
 Port.close(port)
 
+# A process-specific node name avoids EPMD collisions between benchmark runs.
 short_name = "zbeam_bench_#{System.pid()}"
 total_messages = warmup + iterations
 zbeam_port = Port.open({:spawn_executable, String.to_charlist(zbeam_bin)}, [

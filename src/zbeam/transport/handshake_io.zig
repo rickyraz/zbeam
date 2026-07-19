@@ -21,6 +21,10 @@ pub const Peer = struct {
     }
 };
 
+/// Drives the initiating role over one already-connected TCP stream.
+///
+/// Protocol encoding stays in `handshake.zig`; this function owns ordering,
+/// buffering, flushes, and transfer of the decoded peer identity.
 pub fn initiate(stream: std.Io.net.Stream, io: std.Io, allocator: std.mem.Allocator, config: Config) !Peer {
     var reader_buffer: [2048]u8 = undefined;
     var writer_buffer: [2048]u8 = undefined;
@@ -74,6 +78,9 @@ pub fn initiate(stream: std.Io.net.Stream, io: std.Io, allocator: std.mem.Alloca
     return peer;
 }
 
+/// Drives the accepting role: receive identity, advertise status/challenge,
+/// verify the cookie proof, then prove knowledge of the cookie in return.
+/// A `Peer` is returned only after every FSM transition succeeds.
 pub fn accept(stream: std.Io.net.Stream, io: std.Io, allocator: std.mem.Allocator, config: Config) !Peer {
     var reader_buffer: [2048]u8 = undefined;
     var writer_buffer: [2048]u8 = undefined;
@@ -126,6 +133,8 @@ pub fn accept(stream: std.Io.net.Stream, io: std.Io, allocator: std.mem.Allocato
     return peer;
 }
 
+/// Reads the handshake's two-octet big-endian length before allocating. Zero
+/// has no valid handshake payload and the policy maximum bounds hostile peers.
 fn readPacket(allocator: std.mem.Allocator, reader: *std.Io.Reader, max_size: u16) ![]u8 {
     var length_bytes: [2]u8 = undefined;
     try reader.readSliceAll(&length_bytes);
@@ -137,6 +146,8 @@ fn readPacket(allocator: std.mem.Allocator, reader: *std.Io.Reader, max_size: u1
     return payload;
 }
 
+/// Flushes each handshake frame because the next protocol step waits for the
+/// peer; leaving bytes buffered would make both sides wait indefinitely.
 fn writePacket(writer: *std.Io.Writer, packet: []const u8) !void {
     try writer.writeAll(packet);
     try writer.flush();

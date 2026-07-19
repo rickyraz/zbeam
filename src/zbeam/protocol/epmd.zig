@@ -1,5 +1,8 @@
 const std = @import("std");
 
+// EPMD fields use the widths fixed by the protocol: TCP ports and message
+// lengths are 16-bit, while request/response tags are single 8-bit octets.
+// These widths are wire compatibility requirements, not local optimizations.
 pub const default_port: u16 = 4369;
 pub const normal_node: u8 = 77;
 pub const tcp_ip_v4: u8 = 0;
@@ -52,6 +55,9 @@ pub const Error = error{
     InvalidResponse,
 };
 
+/// Builds ALIVE2_REQ, which tells EPMD which distribution port belongs to a
+/// node name. The leading `u16` counts the payload only; therefore the allocated
+/// packet is payload + two framing octets.
 pub fn encodeAlive2(allocator: std.mem.Allocator, options: AliveOptions) (Error || std.mem.Allocator.Error)![]u8 {
     const name_len = std.math.cast(u16, options.node_name.len) orelse return error.NameTooLong;
     const extra_len = std.math.cast(u16, options.extra.len) orelse return error.ExtraTooLong;
@@ -76,6 +82,8 @@ pub fn encodeAlive2(allocator: std.mem.Allocator, options: AliveOptions) (Error 
     return bytes;
 }
 
+/// Builds PORT_PLEASE2_REQ for name-to-port lookup. The request carries no
+/// explicit name length because the outer 16-bit frame already delimits it.
 pub fn encodePortPlease2(allocator: std.mem.Allocator, node_name: []const u8) (Error || std.mem.Allocator.Error)![]u8 {
     const payload_len = 1 + node_name.len;
     const framed_len = std.math.cast(u16, payload_len) orelse return error.NameTooLong;
@@ -87,6 +95,9 @@ pub fn encodePortPlease2(allocator: std.mem.Allocator, node_name: []const u8) (E
     return bytes;
 }
 
+/// Accepts both historical 16-bit and extended 32-bit creation responses.
+/// Creation distinguishes node incarnations, so truncating the extended form
+/// could make a restarted node look like an old one.
 pub fn decodeAliveResponse(bytes: []const u8) Error!AliveResult {
     if (bytes.len < 2) return error.Truncated;
     if (bytes[1] != 0) return error.RegistrationFailed;
@@ -103,6 +114,9 @@ pub fn decodeAliveResponse(bytes: []const u8) Error!AliveResult {
     };
 }
 
+/// Parses a complete PORT2_RESP into owned metadata. Lengths are checked before
+/// copying because EPMD is a network trust boundary even on typical localhost
+/// deployments; `max_extra` also caps peer-controlled allocation.
 pub fn decodePort2Response(allocator: std.mem.Allocator, bytes: []const u8, max_extra: u16) (Error || std.mem.Allocator.Error)!NodeInfo {
     if (bytes.len < 2) return error.Truncated;
     if (bytes[0] != port2_resp) return error.UnexpectedTag;
@@ -140,6 +154,8 @@ pub fn decodePort2Response(allocator: std.mem.Allocator, bytes: []const u8, max_
     };
 }
 
+/// Writes a 16-bit integer most-significant octet first, as EPMD specifies
+/// network byte order. Advancing the shared index keeps layout arithmetic local.
 fn putU16(bytes: []u8, index: *usize, value: u16) void {
     bytes[index.*] = @intCast(value >> 8);
     bytes[index.* + 1] = @truncate(value);

@@ -1,6 +1,9 @@
 const std = @import("std");
 const actor = @import("zbeam-actor");
 
+/// Minimal in-process actor registry parameterized by message type. It owns
+/// names and registry tables, while callers own mailbox storage and task
+/// scheduling; separating those lifetimes avoids an unrequested scheduler.
 pub fn Runtime(comptime Message: type) type {
     return struct {
         const Self = @This();
@@ -24,6 +27,8 @@ pub fn Runtime(comptime Message: type) type {
             mailbox: *MessageMailbox,
         };
 
+        /// Captures allocator and I/O capabilities once so locking, queue close,
+        /// and registry allocation use the same explicit runtime context.
         pub fn init(allocator: std.mem.Allocator, io: std.Io) Self {
             return .{
                 .allocator = allocator,
@@ -33,6 +38,9 @@ pub fn Runtime(comptime Message: type) type {
             };
         }
 
+        /// Closes every live mailbox before releasing owned names and maps.
+        /// The mutex spans teardown so no concurrent lookup can observe a table
+        /// while it is being destroyed.
         pub fn deinit(self: *Self) void {
             self.mutex.lockUncancelable(self.io);
             var iterator = self.actors.valueIterator();
@@ -57,6 +65,8 @@ pub fn Runtime(comptime Message: type) type {
             if (owned_name) |value| {
                 if (self.names.contains(value)) return error.NameTaken;
             }
+            // IDs only need uniqueness, not cross-thread memory publication;
+            // registry insertion under the mutex provides the ordering.
             const id = self.next_id.fetchAdd(1, .monotonic);
             try self.actors.put(id, .{ .mailbox = mailbox, .name = owned_name });
             errdefer _ = self.actors.remove(id);
@@ -64,6 +74,9 @@ pub fn Runtime(comptime Message: type) type {
             return .{ .id = id, .token = .init(id), .mailbox = mailbox };
         }
 
+        /// Atomically removes identity and name, then closes the mailbox after
+        /// unlocking. Closing outside the registry critical section avoids
+        /// waking queue waiters while unrelated name operations are blocked.
         pub fn terminate(self: *Self, id: u64) bool {
             self.mutex.lockUncancelable(self.io);
             const removed = self.actors.fetchRemove(id) orelse {
@@ -79,6 +92,9 @@ pub fn Runtime(comptime Message: type) type {
             return true;
         }
 
+        /// Resolves under the mutex but performs potentially blocking delivery
+        /// after unlock. A full mailbox must backpressure this sender without
+        /// freezing every registry lookup.
         pub fn sendNamed(self: *Self, name: []const u8, message: Message) !void {
             self.mutex.lockUncancelable(self.io);
             const id = self.names.get(name) orelse {
@@ -90,6 +106,7 @@ pub fn Runtime(comptime Message: type) type {
             try mailbox.deliver(self.io, message);
         }
 
+        /// Returns the stable logical ID rather than exposing registry internals.
         pub fn whereis(self: *Self, name: []const u8) ?u64 {
             self.mutex.lockUncancelable(self.io);
             defer self.mutex.unlock(self.io);

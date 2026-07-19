@@ -5,6 +5,9 @@ pub const Client = struct {
     io: std.Io,
     address: std.Io.net.IpAddress = .{ .ip4 = .loopback(epmd.default_port) },
 
+    /// Opens the long-lived EPMD registration connection. EPMD removes the
+    /// name when this TCP stream closes, so returning the stream is part of the
+    /// registration lifetime rather than an implementation detail.
     pub fn register(self: Client, allocator: std.mem.Allocator, options: epmd.AliveOptions) !Registration {
         const request = try epmd.encodeAlive2(allocator, options);
         defer allocator.free(request);
@@ -29,6 +32,9 @@ pub const Client = struct {
         return .{ .stream = stream, .creation = result.creation };
     }
 
+    /// Resolves a short node name using a short-lived EPMD connection. Reads
+    /// fixed fields first, then allocates only after bounded variable lengths
+    /// are known; this avoids trusting a remote length up front.
     pub fn lookup(self: Client, allocator: std.mem.Allocator, node_name: []const u8, max_extra: u16) !epmd.NodeInfo {
         const request = try epmd.encodePortPlease2(allocator, node_name);
         defer allocator.free(request);
@@ -63,12 +69,16 @@ pub const Registration = struct {
     stream: std.Io.net.Stream,
     creation: u32,
 
+    /// Closing is semantically "unregister", because EPMD ties liveness to the
+    /// connection instead of exposing a separate deregistration request.
     pub fn close(self: *Registration, io: std.Io) void {
         self.stream.close(io);
         self.* = undefined;
     }
 };
 
+/// Flushes explicitly because buffered bytes are not visible to EPMD until
+/// handed to the socket; waiting for a response before flushing would deadlock.
 fn writeRequest(stream: std.Io.net.Stream, io: std.Io, request: []const u8) !void {
     var writer_buffer: [512]u8 = undefined;
     var stream_writer = stream.writer(io, &writer_buffer);

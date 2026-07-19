@@ -1,5 +1,8 @@
 const std = @import("std");
 
+/// Handshake frames have a two-octet length prefix, hence the protocol-level
+/// length type is `u16`. The lower 1024-byte policy limit rejects unreasonable
+/// names without allocating the full theoretical 65,535-byte frame.
 pub const max_packet_size: u16 = 1024;
 
 pub const Status = enum { ok, ok_simultaneous, alive, nok, not_allowed };
@@ -28,6 +31,8 @@ pub const Challenge = struct {
 };
 
 pub const Reply = struct {
+    // Challenges are four wire octets (`u32`); MD5 always emits 128 bits,
+    // represented exactly as 16 octets rather than a variable slice.
     challenge: u32,
     digest: [16]u8,
 };
@@ -45,12 +50,16 @@ pub const Error = error{
     NodeNameEmpty,
 };
 
+/// Encodes the OTP 23+ `N` name message. Its fixed 15-byte payload is:
+/// tag(1) + flags(8) + creation(4) + name_length(2), followed by the name.
 pub fn encodeName(allocator: std.mem.Allocator, message: Name) (Error || std.mem.Allocator.Error)![]u8 {
     if (message.node_name.len == 0) return error.NodeNameEmpty;
     const payload_len = 15 + message.node_name.len;
     return encodeNPacket(allocator, payload_len, message.flags, null, message.creation, message.node_name);
 }
 
+/// Decodes an unframed `N` name payload and copies the peer name so it remains
+/// valid after the transport releases its packet buffer.
 pub fn decodeName(allocator: std.mem.Allocator, payload: []const u8) (Error || std.mem.Allocator.Error)!Name {
     if (payload.len < 15) return error.Truncated;
     if (payload[0] != 'N') return error.UnexpectedTag;
@@ -63,12 +72,16 @@ pub fn decodeName(allocator: std.mem.Allocator, payload: []const u8) (Error || s
     };
 }
 
+/// Encodes the challenge variant of `N`. It adds one four-octet random
+/// challenge to the name layout, giving 19 fixed bytes before the node name.
 pub fn encodeChallenge(allocator: std.mem.Allocator, message: Challenge) (Error || std.mem.Allocator.Error)![]u8 {
     if (message.node_name.len == 0) return error.NodeNameEmpty;
     const payload_len = 19 + message.node_name.len;
     return encodeNPacket(allocator, payload_len, message.flags, message.challenge, message.creation, message.node_name);
 }
 
+/// Parses and owns the peer's challenge identity after validating its declared
+/// name length against the bytes actually received.
 pub fn decodeChallenge(allocator: std.mem.Allocator, payload: []const u8) (Error || std.mem.Allocator.Error)!Challenge {
     if (payload.len < 19) return error.Truncated;
     if (payload[0] != 'N') return error.UnexpectedTag;
@@ -82,6 +95,8 @@ pub fn decodeChallenge(allocator: std.mem.Allocator, payload: []const u8) (Error
     };
 }
 
+/// Frames the textual status selected by the protocol. Keeping the accepted
+/// strings in an enum prevents arbitrary status bytes from entering the FSM.
 pub fn encodeStatus(allocator: std.mem.Allocator, status: Status) std.mem.Allocator.Error![]u8 {
     const text = statusText(status);
     const packet = try allocator.alloc(u8, text.len + 3);
@@ -91,6 +106,8 @@ pub fn encodeStatus(allocator: std.mem.Allocator, status: Status) std.mem.Alloca
     return packet;
 }
 
+/// Maps only protocol-defined status text; unknown values cannot silently
+/// become success.
 pub fn decodeStatus(payload: []const u8) Error!Status {
     if (payload.len < 2) return error.Truncated;
     if (payload[0] != 's') return error.UnexpectedTag;
@@ -101,6 +118,8 @@ pub fn decodeStatus(payload: []const u8) Error!Status {
     return error.UnexpectedStatus;
 }
 
+/// Serializes tag(1) + our challenge(4) + cookie digest(16) = 21 bytes.
+/// The peer needs our challenge to produce the reciprocal acknowledgement.
 pub fn encodeReply(allocator: std.mem.Allocator, reply: Reply) std.mem.Allocator.Error![]u8 {
     var payload: [21]u8 = undefined;
     payload[0] = 'r';
@@ -109,12 +128,15 @@ pub fn encodeReply(allocator: std.mem.Allocator, reply: Reply) std.mem.Allocator
     return frame(allocator, &payload);
 }
 
+/// Requires the exact 21-byte shape so extra bytes cannot be smuggled behind
+/// an otherwise valid authentication reply.
 pub fn decodeReply(payload: []const u8) Error!Reply {
     if (payload.len != 21) return error.Truncated;
     if (payload[0] != 'r') return error.UnexpectedTag;
     return .{ .challenge = readU32(payload[1..5]), .digest = payload[5..21].* };
 }
 
+/// Serializes the reciprocal proof as tag(1) + MD5 digest(16) = 17 bytes.
 pub fn encodeAck(allocator: std.mem.Allocator, ack: Ack) std.mem.Allocator.Error![]u8 {
     var payload: [17]u8 = undefined;
     payload[0] = 'a';
@@ -122,12 +144,17 @@ pub fn encodeAck(allocator: std.mem.Allocator, ack: Ack) std.mem.Allocator.Error
     return frame(allocator, &payload);
 }
 
+/// Requires exactly one tag and one 128-bit digest.
 pub fn decodeAck(payload: []const u8) Error!Ack {
     if (payload.len != 17) return error.Truncated;
     if (payload[0] != 'a') return error.UnexpectedTag;
     return .{ .digest = payload[1..17].* };
 }
 
+/// Implements the legacy distribution proof MD5(cookie ++ decimal(challenge)).
+/// The ten-byte scratch buffer is sufficient for every decimal `u32`
+/// (`4294967295` is ten digits). This is compatibility authentication, not a
+/// recommendation to use MD5 in new protocols.
 pub fn cookieDigest(cookie: []const u8, challenge: u32) [16]u8 {
     var decimal_buffer: [10]u8 = undefined;
     const decimal = std.fmt.bufPrint(&decimal_buffer, "{d}", .{challenge}) catch unreachable;
@@ -139,6 +166,8 @@ pub fn cookieDigest(cookie: []const u8, challenge: u32) [16]u8 {
     return result;
 }
 
+/// Uses constant-time comparison so mismatch position does not leak through
+/// ordinary early-exit timing behavior.
 pub fn verifyDigest(expected: [16]u8, actual: [16]u8) Error!void {
     if (!std.crypto.timing_safe.eql([16]u8, expected, actual)) return error.InvalidDigest;
 }
@@ -149,6 +178,8 @@ pub const Initiator = struct {
     pub const State = enum { idle, name_sent, status_received, challenge_received, reply_sent, connected };
     pub const Event = enum { send_name, receive_status, receive_challenge, send_reply, receive_ack };
 
+    /// Makes legal ordering explicit. Authentication messages are meaningful
+    /// only after their prerequisites, so out-of-order I/O fails closed.
     pub fn advance(self: *Initiator, event: Event) Error!void {
         self.state = switch (self.state) {
             .idle => if (event == .send_name) .name_sent else return error.InvalidTransition,
@@ -167,6 +198,8 @@ pub const Acceptor = struct {
     pub const State = enum { idle, name_received, status_sent, challenge_sent, reply_received, connected };
     pub const Event = enum { receive_name, send_status, send_challenge, receive_reply, send_ack };
 
+    /// Mirrors the initiator from the accepting side and rejects skipped or
+    /// replayed steps before the transport treats the peer as connected.
     pub fn advance(self: *Acceptor, event: Event) Error!void {
         self.state = switch (self.state) {
             .idle => if (event == .receive_name) .name_received else return error.InvalidTransition,
@@ -179,6 +212,8 @@ pub const Acceptor = struct {
     }
 };
 
+/// Shared constructor keeps the nearly identical NAME and CHALLENGE layouts
+/// from drifting. All multibyte fields are emitted big-endian as wire values.
 fn encodeNPacket(allocator: std.mem.Allocator, payload_len: usize, flags: u64, challenge: ?u32, creation: u32, node_name: []const u8) (Error || std.mem.Allocator.Error)![]u8 {
     if (payload_len > max_packet_size) return error.PacketTooLarge;
     const packet = try allocator.alloc(u8, payload_len + 2);
@@ -239,6 +274,8 @@ fn readU32(bytes: *const [4]u8) u32 {
         (@as(u32, bytes[2]) << 8) | bytes[3];
 }
 
+/// Reconstructs a network-order 64-bit flag word one octet at a time. Each
+/// iteration shifts existing bits by eight because one input element is `u8`.
 fn readU64(bytes: *const [8]u8) u64 {
     var value: u64 = 0;
     for (bytes) |byte| value = (value << 8) | byte;
