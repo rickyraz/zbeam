@@ -15,6 +15,7 @@ This file is the source of truth when code and specifications differ.
 - bounded owned ETF codec for integer, UTF-8 atom, tuple, binary, proper byte/list forms, nil, and `NEW_PID_EXT`
 - EPMD ALIVE2 registration and PORT_PLEASE2 lookup with registration-socket lifetime ownership
 - OTP 23+ initiating and accepting handshake codec/FSM with cookie challenge verification
+- four-byte pass-through distribution framing, ticks, `REG_SEND` routing, `SEND` replies, and a one-shot registered echo peer
 - separate unit, integration, conformance, and stress build steps
 - research labs, benchmark directories, and evidence directories
 
@@ -25,8 +26,8 @@ No production behavior described by the v0.5 draft is implemented. In particular
 - ETF tags outside the documented initial subset;
 - EPMD operations outside registration and node lookup;
 - handshake variants outside the OTP 23+ format and target-version black-box verification;
-- distribution framing, control messages, fragmentation, or heartbeats;
-- actor scheduler, mailbox, registry, links, or monitors;
+- distribution headers with atom caches, fragmentation, heartbeats beyond tick echo, or control operations outside initial send routing;
+- actor scheduler, mailbox, general registry, links, or monitors;
 - demand signal, transport arena, `BufferHandle`, or io_uring backend;
 - OTP interoperability or crash-isolation conformance harness.
 

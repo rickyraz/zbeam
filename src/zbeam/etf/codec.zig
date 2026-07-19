@@ -41,13 +41,25 @@ const atom_utf8_ext = 118;
 const small_atom_utf8_ext = 119;
 const new_pid_ext = 88;
 
-pub fn decode(allocator: std.mem.Allocator, bytes: []const u8, limits: Limits) (DecodeError || std.mem.Allocator.Error)!Term {
+pub const Decoded = struct {
+    term: Term,
+    bytes_read: usize,
+};
+
+pub fn decodePrefix(allocator: std.mem.Allocator, bytes: []const u8, limits: Limits) (DecodeError || std.mem.Allocator.Error)!Decoded {
     var cursor = Cursor{ .bytes = bytes };
     if (try cursor.readByte() != version) return error.InvalidVersion;
-    var term = try decodeValue(allocator, &cursor, limits, 0);
-    errdefer term.deinit(allocator);
-    if (cursor.index != bytes.len) return error.TrailingData;
-    return term;
+    return .{
+        .term = try decodeValue(allocator, &cursor, limits, 0),
+        .bytes_read = cursor.index,
+    };
+}
+
+pub fn decode(allocator: std.mem.Allocator, bytes: []const u8, limits: Limits) (DecodeError || std.mem.Allocator.Error)!Term {
+    var decoded = try decodePrefix(allocator, bytes, limits);
+    errdefer decoded.term.deinit(allocator);
+    if (decoded.bytes_read != bytes.len) return error.TrailingData;
+    return decoded.term;
 }
 
 pub fn encode(allocator: std.mem.Allocator, term: *const Term) (EncodeError || std.mem.Allocator.Error)![]u8 {

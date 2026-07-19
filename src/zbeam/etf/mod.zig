@@ -8,6 +8,8 @@ pub const Term = codec.Term;
 pub const Pid = codec.Pid;
 pub const Limits = codec.Limits;
 pub const decode = codec.decode;
+pub const decodePrefix = codec.decodePrefix;
+pub const Decoded = codec.Decoded;
 pub const encode = codec.encode;
 pub const version = codec.version;
 

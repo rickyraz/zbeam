@@ -4,7 +4,7 @@ pub const default_port: u16 = 4369;
 pub const normal_node: u8 = 77;
 pub const tcp_ip_v4: u8 = 0;
 pub const highest_version: u16 = 6;
-pub const lowest_version: u16 = 5;
+pub const lowest_version: u16 = 6;
 
 pub const alive2_req: u8 = 120;
 pub const alive2_resp: u8 = 121;

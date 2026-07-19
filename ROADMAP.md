@@ -15,8 +15,8 @@ zbeam advances only when a milestone leaves executable evidence. The v0.5 specif
 - [x] ETF fixtures for the smallest required term subset
 - [x] EPMD registration and lookup
 - [ ] Initiating and accepting OTP 25–27 handshakes
-- [ ] One registered Zig actor reachable from Elixir/Erlang
-- [ ] Black-box round-trip test against a real OTP node
+- [x] One registered Zig actor reachable from Elixir/Erlang
+- [x] Black-box round-trip test against a real OTP node (OTP 28 development evidence; target matrix pending)
 
 **Exit evidence:** one actor exchanges a documented message with OTP; captured bytes match the official protocol documentation.
 

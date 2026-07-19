@@ -9,6 +9,7 @@ const runtime = @import("zbeam-runtime");
 comptime {
     _ = @import("epmd_integration.zig");
     _ = @import("handshake_integration.zig");
+    _ = @import("peer_integration.zig");
 }
 
 test "integration: umbrella and independent battery imports compile" {

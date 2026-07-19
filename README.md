@@ -25,8 +25,8 @@ Process isolation alone is **not** the differentiator: Erlang ports already prov
 | ETF codec | Initial bounded subset implemented |
 | EPMD client | Registration and lookup implemented |
 | Distribution handshake | Initiating/accepting roles implemented; OTP matrix pending |
-| Distribution control messages | Not implemented |
-| Actor runtime and mailbox | Not implemented |
+| Distribution framing/control | Pass-through `REG_SEND`/`SEND`, ticks, and one-shot echo implemented |
+| Actor runtime and mailbox | One-shot echo composition only; mailbox not implemented |
 | Demand-driven backpressure | Design only |
 | Arena-backed ownership transfer | Design only |
 | OTP compatibility | Target only; not verified |
@@ -47,7 +47,17 @@ zig build test-all
 zig build run
 ```
 
-The current tests only verify repository wiring and importability. A green build does **not** establish OTP or wire-protocol conformance.
+A one-shot development echo peer is available when local EPMD is running:
+
+```sh
+epmd -daemon
+zig build
+./zig-out/bin/zbeam echo zbeam_echo cookie
+```
+
+The command accepts one peer and replies once to `{echo, 'zbeam_echo@127.0.0.1'}`. The cookie argument is visible in the process list and is suitable only for local development.
+
+The test suite now covers the initial codec, EPMD, handshake, framing, and one-shot echo path. A green build still does **not** establish complete OTP 25–27 compatibility or full wire-protocol conformance.
 
 ## Documentation
 

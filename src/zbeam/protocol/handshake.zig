@@ -47,34 +47,38 @@ pub const Error = error{
 
 pub fn encodeName(allocator: std.mem.Allocator, message: Name) (Error || std.mem.Allocator.Error)![]u8 {
     if (message.node_name.len == 0) return error.NodeNameEmpty;
-    const payload_len = 13 + message.node_name.len;
+    const payload_len = 15 + message.node_name.len;
     return encodeNPacket(allocator, payload_len, message.flags, null, message.creation, message.node_name);
 }
 
 pub fn decodeName(allocator: std.mem.Allocator, payload: []const u8) (Error || std.mem.Allocator.Error)!Name {
-    if (payload.len < 14) return error.Truncated;
+    if (payload.len < 15) return error.Truncated;
     if (payload[0] != 'N') return error.UnexpectedTag;
+    const name_len = readU16(payload[13..15]);
+    if (name_len > payload.len - 15) return error.Truncated;
     return .{
         .flags = readU64(payload[1..9]),
         .creation = readU32(payload[9..13]),
-        .node_name = try allocator.dupe(u8, payload[13..]),
+        .node_name = try allocator.dupe(u8, payload[15..][0..name_len]),
     };
 }
 
 pub fn encodeChallenge(allocator: std.mem.Allocator, message: Challenge) (Error || std.mem.Allocator.Error)![]u8 {
     if (message.node_name.len == 0) return error.NodeNameEmpty;
-    const payload_len = 17 + message.node_name.len;
+    const payload_len = 19 + message.node_name.len;
     return encodeNPacket(allocator, payload_len, message.flags, message.challenge, message.creation, message.node_name);
 }
 
 pub fn decodeChallenge(allocator: std.mem.Allocator, payload: []const u8) (Error || std.mem.Allocator.Error)!Challenge {
-    if (payload.len < 18) return error.Truncated;
+    if (payload.len < 19) return error.Truncated;
     if (payload[0] != 'N') return error.UnexpectedTag;
+    const name_len = readU16(payload[17..19]);
+    if (name_len > payload.len - 19) return error.Truncated;
     return .{
         .flags = readU64(payload[1..9]),
         .challenge = readU32(payload[9..13]),
         .creation = readU32(payload[13..17]),
-        .node_name = try allocator.dupe(u8, payload[17..]),
+        .node_name = try allocator.dupe(u8, payload[19..][0..name_len]),
     };
 }
 
@@ -188,7 +192,9 @@ fn encodeNPacket(allocator: std.mem.Allocator, payload_len: usize, flags: u64, c
     }
     putU32(packet[index..][0..4], creation);
     index += 4;
-    @memcpy(packet[index..], node_name);
+    putU16(packet[index..][0..2], @intCast(node_name.len));
+    index += 2;
+    @memcpy(packet[index..][0..node_name.len], node_name);
     return packet;
 }
 
@@ -222,6 +228,10 @@ fn putU64(out: *[8]u8, value: u64) void {
         @intCast(value >> 56),  @truncate(value >> 48), @truncate(value >> 40), @truncate(value >> 32),
         @truncate(value >> 24), @truncate(value >> 16), @truncate(value >> 8),  @truncate(value),
     };
+}
+
+fn readU16(bytes: *const [2]u8) u16 {
+    return (@as(u16, bytes[0]) << 8) | bytes[1];
 }
 
 fn readU32(bytes: *const [4]u8) u32 {
