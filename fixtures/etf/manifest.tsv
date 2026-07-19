@@ -1,0 +1,9 @@
+# generator_otp=28
+# name	expression	hex
+small_integer_42	42	83612a
+integer_negative_1	-1	8362ffffffff
+atom_hello	:hello	83770568656c6c6f
+tuple_ok_42	{:ok, 42}	83680277026f6b612a
+binary_0001ff	<<0, 1, 255>>	836d000000030001ff
+empty_list	[]	836a
+list_1_2	[1, 2]	836b00020102

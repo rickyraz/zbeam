@@ -12,7 +12,7 @@ zbeam advances only when a milestone leaves executable evidence. The v0.5 specif
 
 ## M1 — Minimum real distribution peer
 
-- [ ] ETF fixtures for the smallest required term subset
+- [x] ETF fixtures for the smallest required term subset
 - [ ] EPMD registration and lookup
 - [ ] Initiating and accepting OTP 25–27 handshakes
 - [ ] One registered Zig actor reachable from Elixir/Erlang

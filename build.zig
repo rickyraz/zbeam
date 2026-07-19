@@ -95,6 +95,11 @@ pub fn build(b: *std.Build) void {
     const test_integration_step = b.step("test-integration", "Verify independent and umbrella imports");
     test_integration_step.dependOn(&b.addRunArtifact(integration_tests).step);
 
+    const etf_fixtures_mod = b.createModule(.{
+        .root_source_file = b.path("fixtures/etf/manifest.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
     const conformance_tests_mod = b.createModule(.{
         .root_source_file = b.path("tests/conformance/basic_conformance.zig"),
         .target = target,
@@ -102,6 +107,7 @@ pub fn build(b: *std.Build) void {
         .imports = &.{
             .{ .name = "zbeam-etf", .module = etf_mod },
             .{ .name = "zbeam-protocol", .module = protocol_mod },
+            .{ .name = "zbeam-etf-fixtures", .module = etf_fixtures_mod },
         },
     });
     const conformance_tests = b.addTest(.{ .root_module = conformance_tests_mod });

@@ -55,6 +55,7 @@ The current tests only verify repository wiring and importability. A green build
 - [Implementation status](docs/implementation-status.md) — spec-to-code truth table
 - [Roadmap](ROADMAP.md) — evidence-first implementation order
 - [Research backlog](docs/research-needed.md) — unresolved safety and runtime risks
+- [Protocol source matrix](docs/protocol-sources.md) — primary OTP references and initial wire subset
 - [Architecture decisions](docs/adr/README.md)
 - [Verification evidence](docs/evidence/README.md)
 
