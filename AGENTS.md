@@ -22,14 +22,16 @@ Prioritize strict module boundaries, protocol conformance evidence, and auditabl
 - `docs/adr` → architecture decision records
 - `docs/evidence/phase-{a,b,c}` → verification evidence by phase
 - `docs/research-needed.md` → active research/risk backlog
-- `specs/zbeam-v0.3.0.md` → primary technical spec
+- `specs/zbeam-v0.5.0.md` → latest design target (not implementation status)
+- `docs/implementation-status.md` → source of truth for implemented behavior
 
 ## Reading Order (Before Major Changes)
 1. `AGENTS.md`
-2. `specs/zbeam-v0.3.0.md`
-3. `docs/research-needed.md`
-4. `docs-id/kurikulum.md`
-5. touched modules under `src/zbeam/*`
+2. `docs/implementation-status.md`
+3. `specs/zbeam-v0.5.0.md`
+4. `docs/research-needed.md`
+5. `docs-id/kurikulum.md`
+6. touched modules under `src/zbeam/*`
 
 ## Environment
 Required:
@@ -60,6 +62,7 @@ zig build test-all
 - `BufferHandle` lifetime escapes must use explicit ownership strategy.
 - Panics/errors must not cross node boundary uncaught.
 - Protocol-visible changes MUST keep OTP compatibility target explicit.
+- Repository documentation MUST use declarative, contributor-facing language rather than conversational Q&A or assistant-style prose.
 
 ## DO NOT
 - Re-introduce unbounded mailbox buffering that hides TCP backpressure.
@@ -77,8 +80,8 @@ For protocol contract changes, include conformance tests and update evidence.
 
 ## Docs Sync
 When changing contract/lifecycle/boundaries:
-- update relevant section in `specs/zbeam-v0.3.0.md`,
-- update `docs/research-needed.md` when adding risk/open question,
+- update relevant section in `specs/zbeam-v0.5.0.md`,
+- update `docs/research-needed.md` when adding an unresolved risk,
 - record verification summary in `docs/evidence/phase-*/`.
 
 ## Commit Rules

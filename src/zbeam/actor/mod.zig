@@ -1,1 +1,3 @@
-//! Actor layer package placeholder.
+//! Actor and mailbox boundary.
+//!
+//! No actor behavior is implemented yet.

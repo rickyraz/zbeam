@@ -7,5 +7,6 @@ pub const protocol = zbeam.protocol;
 pub const runtime = zbeam.runtime;
 pub const transport = zbeam.transport;
 
-pub const add = zbeam.add;
-pub const printAnotherMessage = zbeam.printAnotherMessage;
+test {
+    @import("std").testing.refAllDecls(@This());
+}

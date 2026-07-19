@@ -1,6 +1,7 @@
 const std = @import("std");
+const zbeam = @import("zbeam");
 
-test "conformance placeholder" {
-    // Placeholder for OTP wire/protocol conformance tests.
-    try std.testing.expect(true);
+test "conformance suite wiring: protocol module is importable" {
+    // This is build wiring only. It makes no wire-conformance claim.
+    std.testing.refAllDecls(zbeam.protocol);
 }

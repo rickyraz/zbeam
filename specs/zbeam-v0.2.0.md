@@ -528,7 +528,7 @@ pub const BinaryView = struct {
 };
 ```
 
-**Lifetime violation is a logic error, not a safety issue** (Zig is memory-safe here because the arena is not freed until the connection dies). However, the data pointed to by `BinaryView.bytes` MAY be overwritten by the next recv. Rule: if you call `receive()` again or store the binary for later, call `toOwned()` first.
+**Lifetime violation is a logic error, not a safety issue** (Zig is memory-safe here because the arena is not freed until the connection dies). However, the data pointed to by `BinaryView.bytes` MAY be overwritten by the next recv. Rule: callers MUST invoke `toOwned()` before another `receive()` call or before storing the binary beyond the current handler.
 
 #### 5.3.5 Atom Interning & Cache
 
@@ -1652,7 +1652,7 @@ zbeam uses a three-tier allocator model:
 
 zbeam's entire concurrency model is built on `std.Io` (Zig 0.16). This is non-negotiable — there is no hand-rolled thread pool, no custom event loop, no custom fiber scheduler. `std.Io` is the pluggable execution backend.
 
-**Key principle from Zig 0.16**: code is written as synchronous/blocking. The `Io` backend decides whether that blocking is real (threaded) or virtual (evented). This is what the core team calls "asynchrony without concurrency" — you get async I/O behavior without async function coloring.
+**Key principle from Zig 0.16**: code is written as synchronous/blocking. The `Io` backend decides whether that blocking is real (threaded) or virtual (evented). The core team describes this model as "asynchrony without concurrency": asynchronous I/O behavior without async function coloring.
 
 ```
 zbeam code (synchronous style)

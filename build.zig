@@ -66,7 +66,7 @@ pub fn build(b: *std.Build) void {
     });
     const conformance_tests = b.addTest(.{ .root_module = conformance_tests_mod });
     const run_conformance_tests = b.addRunArtifact(conformance_tests);
-    const test_conformance_step = b.step("test-conformance", "Run protocol conformance tests");
+    const test_conformance_step = b.step("test-conformance", "Run conformance suite (wiring only until M1)");
     test_conformance_step.dependOn(&run_conformance_tests.step);
 
     const stress_tests_mod = b.createModule(.{
@@ -79,7 +79,7 @@ pub fn build(b: *std.Build) void {
     });
     const stress_tests = b.addTest(.{ .root_module = stress_tests_mod });
     const run_stress_tests = b.addRunArtifact(stress_tests);
-    const test_stress_step = b.step("test-stress", "Run stress and liveness tests");
+    const test_stress_step = b.step("test-stress", "Run stress suite (wiring only until M2)");
     test_stress_step.dependOn(&run_stress_tests.step);
 
     const test_all_step = b.step("test-all", "Run all test suites");

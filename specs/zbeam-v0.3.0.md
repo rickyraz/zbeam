@@ -855,7 +855,7 @@ This section documents the research directions that v0.3.0's architecture is exp
 
 **Problem**: when a zbeam actor sends a `BufferHandle` to another local zbeam actor, v0.3.0 currently requires `toOwned()` — a copy. The ETF-free internal protocol vision is: ownership of the `TransportArena` slot is transferred to the receiver, zero copy.
 
-**Research question**: can Zig's `comptime` enforce that after `promote()`, the sender cannot access the buffer? This simulates linear types without requiring them at the language level.
+**Research objective**: determine whether Zig `comptime` can prevent sender access after `promote()`, approximating linear ownership without language-level linear types.
 
 **Prerequisite already in place**: `BufferHandle.arena_id` — the receiver can identify and reference the exact buffer slot without knowing the sender's stack. `promote()` stub exists in §5.3.1.
 
@@ -869,7 +869,7 @@ This section documents the research directions that v0.3.0's architecture is exp
 
 **Problem**: `std.Io` in Zig 0.16 does not expose `IORING_OP_PROVIDE_BUFFERS`. `TransportArena` is aligned and pre-allocated correctly — the buffers are ready to be registered. The missing piece is the registration call.
 
-**Research question**: is it acceptable to drop below `std.Io` to `std.os.linux` directly for buffer ring registration, while keeping all other I/O through `std.Io`? What are the interaction effects with `std.Io.Group` task cancellation?
+**Research objective**: evaluate direct `std.os.linux` buffer-ring registration alongside `std.Io`, including interactions with `std.Io.Group` task cancellation.
 
 **Prerequisite already in place**: `TransportArena` with 4096-aligned allocation, `arena_id` tracking, `BufferHandle` abstraction boundary in §5.5.1.
 
@@ -877,13 +877,13 @@ This section documents the research directions that v0.3.0's architecture is exp
 
 **Problem**: demand-based receiver in §5.5.3 is per-actor. When multiple actors consume from one connection (fan-out), demand signals need to be composed.
 
-**Research question**: can the `DemandSignal` be generalized to a multi-consumer demand combinator that maps naturally to GenStage's pull model on the Elixir side? This would make zbeam a native participant in Broadway pipelines.
+**Research objective**: generalize `DemandSignal` into a multi-consumer combinator compatible with GenStage pull semantics and Broadway pipelines.
 
 ### 18.4 Session Types for BufferHandle Lifetime (research needed)
 
 **Problem**: `BufferHandle` lifetime is enforced by documentation, not the type system.
 
-**Research question**: can Zig's `comptime` phase-type pattern (already used in `HandshakeState` in §10.2) be applied to `BufferHandle` to make out-of-scope access a compile error? See reference [9] Multiparty Session Types for theoretical grounding.
+**Research objective**: evaluate the `HandshakeState` phase-type pattern for compile-time rejection of out-of-scope `BufferHandle` access. Reference [9] provides the multiparty-session-type basis.
 
 ---
 
