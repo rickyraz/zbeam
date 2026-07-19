@@ -1,3 +1,9 @@
-//! EPMD, handshake, and distribution-protocol boundary.
+//! Pure EPMD, handshake, and distribution-protocol battery.
 //!
-//! No protocol behavior is implemented yet.
+//! This module models bytes and state transitions without owning sockets.
+
+pub const epmd = @import("epmd.zig");
+
+test {
+    @import("std").testing.refAllDecls(@This());
+}

@@ -23,7 +23,7 @@ Process isolation alone is **not** the differentiator: Erlang ports already prov
 | Zig 0.16.0 build and test layout | Scaffolded |
 | Public package/module boundaries | Scaffolded |
 | ETF codec | Initial bounded subset implemented |
-| EPMD client | Not implemented |
+| EPMD client | Registration and lookup implemented |
 | Distribution handshake | Not implemented |
 | Distribution control messages | Not implemented |
 | Actor runtime and mailbox | Not implemented |

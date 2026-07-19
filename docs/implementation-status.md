@@ -13,6 +13,7 @@ This file is the source of truth when code and specifications differ.
 - a behavior-free `zbeam` convenience umbrella
 - build-declared dependency direction matching ADR 0001
 - bounded owned ETF codec for integer, UTF-8 atom, tuple, binary, proper byte/list forms, nil, and `NEW_PID_EXT`
+- EPMD ALIVE2 registration and PORT_PLEASE2 lookup with registration-socket lifetime ownership
 - separate unit, integration, conformance, and stress build steps
 - research labs, benchmark directories, and evidence directories
 
@@ -21,7 +22,7 @@ This file is the source of truth when code and specifications differ.
 No production behavior described by the v0.5 draft is implemented. In particular, the repository has no working:
 
 - ETF tags outside the documented initial subset;
-- EPMD client;
+- EPMD operations outside registration and node lookup;
 - Erlang distribution handshake;
 - distribution framing, control messages, fragmentation, or heartbeats;
 - actor scheduler, mailbox, registry, links, or monitors;
