@@ -1,6 +1,6 @@
 # Lab 01 — Mailbox Correctness
 
-**Status:** Planned; blocked until the actor battery has a queue implementation.
+**Status:** Initial contract implemented and stress-tested on 2026-07-19; broader shutdown/fault injection remains open.
 
 ## Objective
 

@@ -26,8 +26,8 @@ Process isolation alone is **not** the differentiator: Erlang ports already prov
 | EPMD client | Registration and lookup implemented |
 | Distribution handshake | Initiating/accepting roles implemented; OTP matrix pending |
 | Distribution framing/control | Pass-through `REG_SEND`/`SEND`, ticks, and one-shot echo implemented |
-| Actor runtime and mailbox | One-shot echo composition only; mailbox not implemented |
-| Demand-driven backpressure | Design only |
+| Actor runtime and mailbox | Bounded mailbox, logical ownership, registry, and lifecycle implemented |
+| Demand-driven backpressure | Atomic credit primitive implemented; transport gating pending |
 | Arena-backed ownership transfer | Design only |
 | OTP compatibility | Target only; not verified |
 

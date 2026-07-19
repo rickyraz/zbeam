@@ -16,6 +16,7 @@ This file is the source of truth when code and specifications differ.
 - EPMD ALIVE2 registration and PORT_PLEASE2 lookup with registration-socket lifetime ownership
 - OTP 23+ initiating and accepting handshake codec/FSM with cookie challenge verification
 - four-byte pass-through distribution framing, ticks, `REG_SEND` routing, `SEND` replies, and a one-shot registered echo peer
+- bounded `std.Io.Queue` mailbox with one logical consumer, atomic demand credits, named registry, and explicit termination
 - separate unit, integration, conformance, and stress build steps
 - research labs, benchmark directories, and evidence directories
 
@@ -27,8 +28,8 @@ No production behavior described by the v0.5 draft is implemented. In particular
 - EPMD operations outside registration and node lookup;
 - handshake variants outside the OTP 23+ format and target-version black-box verification;
 - distribution headers with atom caches, fragmentation, heartbeats beyond tick echo, or control operations outside initial send routing;
-- actor scheduler, mailbox, general registry, links, or monitors;
-- demand signal, transport arena, `BufferHandle`, or io_uring backend;
+- actor task scheduler, distributed registry semantics, links, or monitors;
+- transport demand gating, demand liveness diagnostics, transport arena, `BufferHandle`, or io_uring backend;
 - OTP interoperability or crash-isolation conformance harness.
 
 ## Specification interpretation

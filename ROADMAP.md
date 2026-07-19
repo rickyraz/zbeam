@@ -22,7 +22,7 @@ zbeam advances only when a milestone leaves executable evidence. The v0.5 specif
 
 ## M2 — Correct runtime boundary
 
-- [ ] Thread-safe, single-consumer mailbox contract
+- [x] Thread-safe, single-consumer mailbox contract
 - [ ] Link/monitor behavior verified from OTP
 - [ ] Bounded message and fragment handling
 - [ ] Reconnect and incarnation cleanup
