@@ -44,6 +44,7 @@ Requirements:
 ```sh
 zig build
 zig build test-all
+zig build test-interop  # configured OTP matrix; missing versions are reported as skipped
 zig build run
 ```
 
@@ -57,7 +58,7 @@ zig build
 
 The command accepts one peer and replies once to `{echo, 'zbeam_echo@127.0.0.1'}`. The cookie argument is visible in the process list and is suitable only for local development.
 
-The test suite now covers the initial codec, EPMD, handshake, framing, and one-shot echo path. A green build still does **not** establish complete OTP 25–27 compatibility or full wire-protocol conformance.
+The test suite now covers the initial codec, EPMD, handshake, framing, bounded mailbox, and echo path. A green build still does **not** establish complete OTP 25–27 compatibility or full wire-protocol conformance.
 
 ## Documentation
 

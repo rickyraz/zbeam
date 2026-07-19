@@ -17,6 +17,7 @@ This file is the source of truth when code and specifications differ.
 - OTP 23+ initiating and accepting handshake codec/FSM with cookie challenge verification
 - four-byte pass-through distribution framing, ticks, `REG_SEND` routing, `SEND` replies, and a one-shot registered echo peer
 - bounded `std.Io.Queue` mailbox with one logical consumer, atomic demand credits, named registry, and explicit termination
+- reproducible OTP matrix orchestration and a local Erlang Port latency baseline
 - separate unit, integration, conformance, and stress build steps
 - research labs, benchmark directories, and evidence directories
 

@@ -17,3 +17,23 @@ jobs:
           version: 0.16.0
       - run: zig fmt --check build.zig src tests examples
       - run: zig build test-all
+
+  otp-interop:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        otp: ["25", "26", "27"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.16.0
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{ matrix.otp }}
+      - run: zig build
+      - name: Run OTP ${{ matrix.otp }} echo smoke test
+        run: |
+          export OTP_ERL_${{ matrix.otp }}="$(command -v erl)"
+          zig build test-interop

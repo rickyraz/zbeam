@@ -36,6 +36,7 @@ zig build test-integration
 zig build test-conformance
 zig build test-stress
 zig build test-all
+zig build test-interop  # requires OTP_ERL_25/26/27 for target-matrix passes
 ```
 
 Protocol changes must include a real OTP fixture or black-box conformance case. Runtime changes must include the smallest stress test that would fail if the invariant regressed.

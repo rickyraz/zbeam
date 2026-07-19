@@ -436,6 +436,8 @@ pub const TransportLayer = struct {
 
 ### 5.6 Actor Runtime
 
+> **Implementation note (2026-07-19):** the pre-alpha portable subset uses a caller-bounded `std.Io.Queue`, a logical single-consumer token, and separate atomic demand credits. Registry lifecycle is implemented, but actor task scheduling and transport demand gating remain pending. The designs below remain targets where they exceed that subset.
+
 #### 5.6.1 Actor Identity
 
 _(Unchanged from v0.2.0)_

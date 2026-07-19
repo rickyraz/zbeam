@@ -1,17 +1,14 @@
 # Benchmarks
 
-**Status:** No benchmark currently produces publishable performance evidence.
+Benchmarks are evidence tooling, not product claims. Results must record hardware, OS, Zig, OTP, command, payload, iteration count, and raw output.
 
-## Suites
+## Erlang Port baseline
 
-- `transport/` — socket, framing, buffering, copy, and cancellation costs.
-- `mailbox/` — delivery throughput, contention, wakeups, and tail latency.
-- `memory/` — allocation, copying, arena occupancy, and handle lifetime.
+Build and compare a four-byte packet-mode Erlang Port echo with the current distribution echo path:
 
-## Result requirements
+```sh
+zig build
+./scripts/bench_port_vs_zbeam.sh 1000
+```
 
-Every published result MUST include the commit, Zig/OTP/kernel versions, target and optimization mode, hardware, command, workload, warmup, sample count, raw output, and summary method.
-
-Comparisons MUST use equivalent semantics and payloads. A faster incomplete protocol path is not a valid comparison. Results belong under a dated evidence directory or attached release artifact; this directory stores benchmark source, not hand-edited headline numbers.
-
-No `bench` build step is registered until the first benchmark executable and result schema exist.
+Both paths round-trip the same 32-byte payload from one BEAM process to one Zig process. The result reports per-message median and p95 latency. This is a local transport baseline, not evidence of throughput, production readiness, or superiority over Ports.

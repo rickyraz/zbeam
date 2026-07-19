@@ -32,7 +32,7 @@ zbeam advances only when a milestone leaves executable evidence. The v0.5 specif
 
 ## M3 — Validate the niche
 
-- [ ] Compare one zbeam actor with one Erlang Port
+- [x] Compare one zbeam actor with one Erlang Port (initial local latency baseline)
 - [ ] Measure p50/p95/p99 latency, memory, restart time, and BEAM scheduler impact
 - [ ] Add two or three actors only after the one-actor baseline is useful
 - [ ] Document the actual failure blast radius inside one zbeam process

@@ -11,11 +11,13 @@ pub const Config = struct {
     registered_name: []const u8 = "echo",
     flags: u64 = protocol.flags.m1,
     max_packet_bytes: u32 = 16 * 1024 * 1024,
+    max_messages: usize = 1,
 };
 
-/// Accepts one peer, completes the distribution handshake, and serves one
-/// registered echo message (ticks do not consume the message allowance).
-pub fn serveOne(io: std.Io, allocator: std.mem.Allocator, server: *std.Io.net.Server, config: Config) !void {
+/// Accepts one peer, completes the distribution handshake, and serves the
+/// configured number of registered echo messages. Ticks do not consume the
+/// message allowance. A zero limit serves until disconnect or cancellation.
+pub fn serve(io: std.Io, allocator: std.mem.Allocator, server: *std.Io.net.Server, config: Config) !void {
     const stream = try server.accept(io);
     defer stream.close(io);
     var peer = try transport.handshake_io.accept(stream, io, allocator, .{
@@ -33,13 +35,14 @@ pub fn serveOne(io: std.Io, allocator: std.mem.Allocator, server: *std.Io.net.Se
     var stream_writer = stream.writer(io, &writer_buffer);
     const echo = Echo{ .registered_name = config.registered_name };
 
-    while (true) {
+    var handled: usize = 0;
+    while (config.max_messages == 0 or handled < config.max_messages) {
         const packet = try transport.distribution_io.readPacket(allocator, &stream_reader.interface, config.max_packet_bytes);
         defer allocator.free(packet);
         const response = try echo.handle(allocator, packet) orelse continue;
         defer allocator.free(response);
         try transport.distribution_io.writePacket(&stream_writer.interface, response);
-        if (!isTick(packet)) return;
+        if (!isTick(packet)) handled += 1;
     }
 }
 
