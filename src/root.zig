@@ -1,11 +1,10 @@
-//! Public package surface for `@import("zbeam")`.
-const zbeam = @import("zbeam/mod.zig");
+//! Convenience battery that re-exports every public zbeam module.
 
-pub const actor = zbeam.actor;
-pub const etf = zbeam.etf;
-pub const protocol = zbeam.protocol;
-pub const runtime = zbeam.runtime;
-pub const transport = zbeam.transport;
+pub const etf = @import("zbeam-etf");
+pub const protocol = @import("zbeam-protocol");
+pub const transport = @import("zbeam-transport");
+pub const actor = @import("zbeam-actor");
+pub const runtime = @import("zbeam-runtime");
 
 test {
     @import("std").testing.refAllDecls(@This());

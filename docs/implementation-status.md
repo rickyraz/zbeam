@@ -9,7 +9,9 @@ This file is the source of truth when code and specifications differ.
 ## Implemented repository infrastructure
 
 - Zig 0.16.0 package and executable targets
-- public module boundaries for actor, ETF, protocol, runtime, and transport
+- independently importable `zbeam-etf`, `zbeam-protocol`, `zbeam-transport`, `zbeam-actor`, and `zbeam-runtime` batteries
+- a behavior-free `zbeam` convenience umbrella
+- build-declared dependency direction matching ADR 0001
 - separate unit, integration, conformance, and stress build steps
 - research labs, benchmark directories, and evidence directories
 
@@ -35,6 +37,18 @@ A feature becomes implemented only when all of the following exist in the same c
 2. a runnable test at the required level;
 3. verification evidence under `docs/evidence/`;
 4. an updated row in this file.
+
+## Structural boundaries
+
+The module graph is implemented as build wiring, not subsystem behavior:
+
+```text
+protocol  -> etf
+transport -> protocol, etf
+runtime   -> actor, transport, protocol, etf
+```
+
+Tools and interoperability suites remain repository assets rather than consumable packages. Physical package or repository splits require a real standalone consumer or distinct dependency/release requirements.
 
 ## Compatibility
 

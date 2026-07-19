@@ -60,6 +60,27 @@ The current tests only verify repository wiring and importability. A green build
 
 Historical specifications remain under [`specs/`](specs/). They are not current contracts.
 
+## Battery-pack architecture
+
+zbeam ships as one repository package with independently importable modules:
+
+| Import | Responsibility | Allowed zbeam dependencies |
+|---|---|---|
+| `zbeam-etf` | ETF terms and wire codec | None |
+| `zbeam-protocol` | Handshake, control, identity, and frame semantics | `zbeam-etf` |
+| `zbeam-transport` | Socket and framed I/O | `zbeam-protocol`, `zbeam-etf` |
+| `zbeam-actor` | Mailbox and local actor contracts | None |
+| `zbeam-runtime` | Runtime composition and lifecycle | All narrower batteries |
+| `zbeam` | Convenience re-export | All batteries; no behavior |
+
+```zig
+const zbeam = @import("zbeam");          // complete convenience surface
+const etf = @import("zbeam-etf");       // standalone battery
+const protocol = @import("zbeam-protocol");
+```
+
+Tools and OTP interoperability suites are repository build/test assets, not runtime packages. See [ADR 0001](docs/adr/0001-battery-pack-module-boundaries.md).
+
 ## Design boundaries
 
 - zbeam is a separate OS process and distribution peer, never an in-process NIF.

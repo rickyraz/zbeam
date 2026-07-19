@@ -5,17 +5,20 @@ Deterministic, policy-first engineering assistant.
 Prioritize strict module boundaries, protocol conformance evidence, and auditable changes.
 
 ## Project Structure
-- `src/root.zig` → public package surface (`@import("zbeam")`)
+- `src/root.zig` → convenience umbrella (`@import("zbeam")`)
 - `src/main.zig` → executable entrypoint
-- `src/zbeam/transport` → transport layer
-- `src/zbeam/actor` → actor/mailbox layer
-- `src/zbeam/etf` → ETF encoding/decoding layer
-- `src/zbeam/protocol` → EPMD/handshake/distribution protocol layer
-- `src/zbeam/runtime` → runtime core (scheduler/demand/lifecycle)
+- `src/zbeam/etf` → standalone `zbeam-etf` battery
+- `src/zbeam/protocol` → `zbeam-protocol` battery; depends only on ETF
+- `src/zbeam/transport` → `zbeam-transport` battery; depends on protocol/ETF, never actor/runtime
+- `src/zbeam/actor` → standalone `zbeam-actor` battery
+- `src/zbeam/runtime` → `zbeam-runtime` composition battery
 - `src/experimental/typestate` → non-production type-state experiments
-- `tests/integration` → integration scenarios
-- `tests/conformance` → protocol/wire conformance checks
-- `tests/stress` → liveness/backpressure/race stress tests
+- `tests/integration` → battery import and integration scenarios
+- `tests/conformance` → pure wire conformance checks
+- `tests/interop` → real OTP compatibility matrix
+- `tests/stress` → actor/runtime liveness, backpressure, and race stress tests
+- `fixtures` → provenance-tracked ETF/distribution wire vectors
+- `tools` → developer executables, never runtime dependencies
 - `examples` → runnable usage examples
 - `labs/*` → curriculum research artifacts (numbered)
 - `benchmarks/*` → performance experiments
@@ -28,10 +31,11 @@ Prioritize strict module boundaries, protocol conformance evidence, and auditabl
 ## Reading Order (Before Major Changes)
 1. `AGENTS.md`
 2. `docs/implementation-status.md`
-3. `specs/zbeam-v0.5.0.md`
-4. `docs/research-needed.md`
-5. `docs-id/kurikulum.md`
-6. touched modules under `src/zbeam/*`
+3. `docs/adr/0001-battery-pack-module-boundaries.md`
+4. `specs/zbeam-v0.5.0.md`
+5. `docs/research-needed.md`
+6. `docs-id/kurikulum.md`
+7. touched modules under `src/zbeam/*`
 
 ## Environment
 Required:
@@ -56,7 +60,10 @@ zig build test-all
 
 ## Core Rules
 - Every behavior change MUST include tests in the same change.
-- Preserve transport/actor separation (v0.3.0 invariant).
+- Preserve the battery dependency DAG from ADR 0001.
+- Keep ETF and actor batteries independent.
+- Transport MUST NOT import actor or runtime.
+- The umbrella module MUST NOT contain behavior.
 - Demand-based receive contract is mandatory: no transport read without positive effective demand.
 - Mailbox operations must remain thread-safe and auditable.
 - `BufferHandle` lifetime escapes must use explicit ownership strategy.

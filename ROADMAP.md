@@ -7,6 +7,7 @@ zbeam advances only when a milestone leaves executable evidence. The v0.5 specif
 - [x] English project entry points and contribution policy
 - [x] Explicit spec-to-code status
 - [x] Zig 0.16.0 CI and test-suite wiring
+- [x] Independent battery-module build graph (ADR 0001)
 - [ ] First tagged pre-alpha release
 
 ## M1 — Minimum real distribution peer

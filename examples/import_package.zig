@@ -1,6 +1,8 @@
 const std = @import("std");
-const zbeam = @import("../src/root.zig");
+const zbeam = @import("zbeam");
 
-test "example: import the package surface" {
+// Applications may import the umbrella battery or a narrower module such as
+// `zbeam-etf` when configured by their build.
+test "example: import the umbrella package" {
     std.testing.refAllDecls(zbeam);
 }
