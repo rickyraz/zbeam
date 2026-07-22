@@ -4,11 +4,13 @@ const zbeam = @import("zbeam");
 /// Keeps the executable thin: parse one development command, then delegate all
 /// protocol and runtime work to battery modules. This prevents CLI concerns
 /// from becoming hidden transport policy.
+/// Zig supplies arguments, allocators, and explicit I/O through `process.Init`:
+/// https://ziglang.org/download/0.16.0/release-notes.html#Juicy-Main
 pub fn main(init: std.process.Init) !void {
     var args = try std.process.Args.Iterator.initAllocator(init.minimal.args, init.gpa);
     defer args.deinit();
-    _ = args.next();
-    const command = args.next() orelse return printStatus(init);
+    _ = args.next(); // skip first argument
+    const command = args.next() orelse return printStatus(init); // take second argument
 
     if (std.mem.eql(u8, command, "echo")) {
         const short_name = args.next() orelse return error.MissingNodeName;
@@ -22,6 +24,7 @@ pub fn main(init: std.process.Init) !void {
 
 /// Prints help through `std.Io` so the executable follows Zig 0.16's explicit
 /// I/O capability model instead of using process-global legacy writers.
+/// Reference: https://ziglang.org/download/0.16.0/release-notes.html#IO-as-an-Interface
 fn printStatus(init: std.process.Init) !void {
     var buffer: [1024]u8 = undefined;
     var file_writer: std.Io.File.Writer = .init(.stdout(), init.io, &buffer);
@@ -39,6 +42,8 @@ fn printStatus(init: std.process.Init) !void {
 /// register that port with EPMD, generate a fresh 32-bit challenge, then serve
 /// one authenticated peer. The registration stream stays open for exactly the
 /// server lifetime because closing it tells EPMD the node is gone.
+/// EPMD registration: https://www.erlang.org/docs/27/apps/erts/erl_dist_protocol.html#register-a-node-in-epmd
+/// Handshake: https://www.erlang.org/docs/27/apps/erts/erl_dist_protocol.html#distribution-handshake
 fn runEcho(init: std.process.Init, short_name: []const u8, cookie: []const u8, max_messages: usize) !void {
     const allocator = init.gpa;
     const io = init.io;
@@ -49,9 +54,11 @@ fn runEcho(init: std.process.Init, short_name: []const u8, cookie: []const u8, m
     var server = try address.listen(io, .{ .reuse_address = true });
     defer server.deinit(io);
 
+    // Register the short name and listening port so peers can discover the node.
     const epmd_client = zbeam.transport.epmd_client.Client{ .io = io };
+    const server_port = server.socket.address.getPort();
     var registration = try epmd_client.register(allocator, .{
-        .port = server.socket.address.getPort(),
+        .port = server_port,
         .node_name = short_name,
     });
     defer registration.close(io);
@@ -62,11 +69,18 @@ fn runEcho(init: std.process.Init, short_name: []const u8, cookie: []const u8, m
     io.random(&challenge_bytes);
     const challenge: u32 = @bitCast(challenge_bytes);
 
+    // The runtime completes OTP's mutual cookie challenge-response:
+    // 1. The server sends its random 32-bit challenge.
+    // 2. The client replies with its challenge and digest of the server challenge.
+    // 3. The server verifies the reply and returns a digest of the client challenge.
+    // 4. The client verifies that acknowledgement; only then is the peer authenticated.
+
     var stdout_buffer: [1024]u8 = undefined;
     var file_writer: std.Io.File.Writer = .init(.stdout(), io, &stdout_buffer);
-    try file_writer.interface.print("registered {s} on port {d}; waiting for one peer\n", .{ full_name, server.socket.address.getPort() });
+    try file_writer.interface.print("registered {s} on port {d}; waiting for one peer\n", .{ full_name, server_port });
     try file_writer.interface.flush();
 
+    // Wait for one peer connection.
     try zbeam.runtime.node.serve(io, allocator, &server, .{
         .node_name = full_name,
         .cookie = cookie,

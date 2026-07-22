@@ -46,12 +46,15 @@ pub const Client = struct {
         var reader_buffer: [512]u8 = undefined;
         var stream_reader = stream.reader(self.io, &reader_buffer);
         const reader = &stream_reader.interface;
+        
         var fixed: [12]u8 = undefined;
         try reader.readSliceAll(&fixed);
         if (fixed[0] != epmd.port2_resp) return error.UnexpectedTag;
         if (fixed[1] != 0) return error.NodeNotFound;
         const name_len = readU16(fixed[10..12]);
+        
         if (name_len > 255) return error.LimitExceeded;
+        
         const prefix_len = fixed.len + @as(usize, name_len) + 2;
         const response = try allocator.alloc(u8, prefix_len + max_extra);
         defer allocator.free(response);
