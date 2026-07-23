@@ -33,6 +33,7 @@ pub const DecodeError = error{
 pub const EncodeError = error{
     IntegerOutOfRange,
     AtomTooLong,
+    InvalidAtom,
     CollectionTooLarge,
 };
 
@@ -176,7 +177,11 @@ fn decodePid(allocator: std.mem.Allocator, cursor: *Cursor, limits: Limits, dept
     errdefer node.deinit(allocator);
     if (node != .atom) return error.InvalidAtom;
     const node_bytes = node.atom;
-    node = undefined;
+    // Leave the existing errdefer a valid no-op after moving the atom bytes.
+    node = .nil;
+    // Ownership moves out of `node` before the fixed PID fields are read; free
+    // it if a truncated field prevents construction of the owning PID term.
+    errdefer allocator.free(node_bytes);
     return .{ .pid = .{
         .node = node_bytes,
         .id = try cursor.readU32(),
@@ -252,6 +257,9 @@ fn isByteList(items: []const Term) bool {
 }
 
 fn encodeAtom(allocator: std.mem.Allocator, output: *std.ArrayList(u8), bytes: []const u8) (EncodeError || std.mem.Allocator.Error)!void {
+    // UTF-8 atom tags promise valid UTF-8 on the wire, so encoding must uphold
+    // the same invariant that decodeAtom validates for untrusted input.
+    if (!std.unicode.utf8ValidateSlice(bytes)) return error.InvalidAtom;
     if (bytes.len > std.math.maxInt(u16)) return error.AtomTooLong;
     if (bytes.len <= 255) {
         try output.append(allocator, small_atom_utf8_ext);
@@ -343,4 +351,142 @@ test "ETF rejects truncated collections before allocation" {
     const allocator = failing_allocator.allocator();
     try std.testing.expectError(error.Truncated, decode(allocator, &.{ version, large_tuple_ext, 0, 0, 0, 1 }, .{}));
     try std.testing.expectError(error.Truncated, decode(allocator, &.{ version, list_ext, 0, 0, 0, 1, nil_ext }, .{}));
+}
+
+test "ETF rejects malformed prefixes and separates concatenated terms" {
+    const allocator = std.testing.allocator;
+    try std.testing.expectError(error.Truncated, decode(allocator, &.{}, .{}));
+    try std.testing.expectError(error.InvalidVersion, decode(allocator, &.{ 0, nil_ext }, .{}));
+    try std.testing.expectError(error.UnknownTag, decode(allocator, &.{ version, 0 }, .{}));
+    try std.testing.expectError(error.TrailingData, decode(allocator, &.{ version, small_integer_ext, 1, small_integer_ext, 2 }, .{}));
+
+    var decoded = try decodePrefix(allocator, &.{ version, small_integer_ext, 1, small_integer_ext, 2 }, .{});
+    defer decoded.term.deinit(allocator);
+    try std.testing.expectEqual(@as(usize, 3), decoded.bytes_read);
+    try std.testing.expectEqual(@as(i64, 1), decoded.term.integer);
+}
+
+test "ETF integer boundaries and encoding range are explicit" {
+    const allocator = std.testing.allocator;
+    const cases = [_]struct { bytes: []const u8, value: i64 }{
+        .{ .bytes = &.{ version, small_integer_ext, 0 }, .value = 0 },
+        .{ .bytes = &.{ version, small_integer_ext, 255 }, .value = 255 },
+        .{ .bytes = &.{ version, integer_ext, 0, 0, 1, 0 }, .value = 256 },
+        .{ .bytes = &.{ version, integer_ext, 0x80, 0, 0, 0 }, .value = std.math.minInt(i32) },
+        .{ .bytes = &.{ version, integer_ext, 0x7f, 0xff, 0xff, 0xff }, .value = std.math.maxInt(i32) },
+    };
+    for (cases) |case| {
+        var term = try decode(allocator, case.bytes, .{});
+        defer term.deinit(allocator);
+        try std.testing.expectEqual(case.value, term.integer);
+    }
+
+    var out_of_range = Term{ .integer = @as(i64, std.math.maxInt(i32)) + 1 };
+    try std.testing.expectError(error.IntegerOutOfRange, encode(allocator, &out_of_range));
+}
+
+test "ETF atom and binary limits reject invalid or oversized values" {
+    const allocator = std.testing.allocator;
+    var atom_bytes: [256]u8 = undefined;
+    @memset(&atom_bytes, 'a');
+    var atom = Term{ .atom = &atom_bytes };
+    const encoded_atom = try encode(allocator, &atom);
+    defer allocator.free(encoded_atom);
+
+    var max_atom = try decode(allocator, encoded_atom, .{ .max_atom_bytes = 256 });
+    defer max_atom.deinit(allocator);
+    try std.testing.expectEqual(@as(usize, 256), max_atom.atom.len);
+    try std.testing.expectError(error.LimitExceeded, decode(allocator, encoded_atom, .{}));
+
+    var invalid_atom = Term{ .atom = "\xff" };
+    try std.testing.expectError(error.InvalidAtom, encode(allocator, &invalid_atom));
+    try std.testing.expectError(error.InvalidAtom, decode(allocator, &.{ version, small_atom_utf8_ext, 1, 0xff }, .{}));
+
+    var binary = try decode(allocator, &.{ version, binary_ext, 0, 0, 0, 2, 1, 2 }, .{ .max_binary_bytes = 2 });
+    defer binary.deinit(allocator);
+    try std.testing.expectEqual(@as(usize, 2), binary.binary.len);
+    try std.testing.expectError(error.LimitExceeded, decode(allocator, &.{ version, binary_ext, 0, 0, 0, 3, 1, 2, 3 }, .{ .max_binary_bytes = 2 }));
+    try std.testing.expectError(error.Truncated, decode(allocator, &.{ version, binary_ext, 0, 0, 0, 2, 1 }, .{}));
+}
+
+test "ETF collection boundaries and proper-list tails are enforced" {
+    const allocator = std.testing.allocator;
+    var tuple = try decode(allocator, &.{ version, small_tuple_ext, 1, small_integer_ext, 0 }, .{ .max_collection_len = 1 });
+    defer tuple.deinit(allocator);
+    try std.testing.expectError(error.LimitExceeded, decode(allocator, &.{ version, small_tuple_ext, 2 }, .{ .max_collection_len = 1 }));
+    try std.testing.expectError(error.Truncated, decode(allocator, &.{ version, small_tuple_ext, 2, small_integer_ext, 0, small_integer_ext }, .{}));
+
+    var empty_list = try decode(allocator, &.{ version, list_ext, 0, 0, 0, 0, nil_ext }, .{});
+    defer empty_list.deinit(allocator);
+    try std.testing.expectEqual(@as(usize, 0), empty_list.list.len);
+    try std.testing.expectError(error.InvalidListTail, decode(allocator, &.{ version, list_ext, 0, 0, 0, 0, small_integer_ext, 0 }, .{}));
+}
+
+test "ETF chooses the tuple tag at the 255-item boundary" {
+    const allocator = std.testing.allocator;
+    var small_items: [255]Term = undefined;
+    var large_items: [256]Term = undefined;
+    for (&small_items) |*item| item.* = .{ .integer = 0 };
+    for (&large_items) |*item| item.* = .{ .integer = 0 };
+
+    var small_tuple = Term{ .tuple = &small_items };
+    const small_bytes = try encode(allocator, &small_tuple);
+    defer allocator.free(small_bytes);
+    try std.testing.expectEqual(small_tuple_ext, small_bytes[1]);
+
+    var large_tuple = Term{ .tuple = &large_items };
+    const large_bytes = try encode(allocator, &large_tuple);
+    defer allocator.free(large_bytes);
+    try std.testing.expectEqual(large_tuple_ext, large_bytes[1]);
+}
+
+test "ETF string, PID, and nesting boundaries fail closed" {
+    const allocator = std.testing.allocator;
+    var empty_string = try decode(allocator, &.{ version, string_ext, 0, 0 }, .{});
+    defer empty_string.deinit(allocator);
+    try std.testing.expectEqual(@as(usize, 0), empty_string.list.len);
+    try std.testing.expectError(error.LimitExceeded, decode(allocator, &.{ version, string_ext, 0, 3, 1, 2, 3 }, .{ .max_collection_len = 2 }));
+    try std.testing.expectError(error.Truncated, decode(allocator, &.{ version, string_ext, 0, 2, 1 }, .{}));
+
+    try std.testing.expectError(error.InvalidAtom, decode(allocator, &.{ version, new_pid_ext, small_integer_ext, 0 }, .{}));
+    try std.testing.expectError(error.Truncated, decode(allocator, &.{ version, new_pid_ext, small_atom_utf8_ext, 1, 'n' }, .{}));
+
+    var allowed: [129]u8 = undefined;
+    allowed[0] = version;
+    var index: usize = 1;
+    for (0..63) |_| {
+        allowed[index] = small_tuple_ext;
+        allowed[index + 1] = 1;
+        index += 2;
+    }
+    allowed[index] = small_integer_ext;
+    allowed[index + 1] = 0;
+    var allowed_term = try decode(allocator, &allowed, .{});
+    defer allowed_term.deinit(allocator);
+
+    var too_deep: [131]u8 = undefined;
+    too_deep[0] = version;
+    index = 1;
+    for (0..64) |_| {
+        too_deep[index] = small_tuple_ext;
+        too_deep[index + 1] = 1;
+        index += 2;
+    }
+    too_deep[index] = small_integer_ext;
+    too_deep[index + 1] = 0;
+    try std.testing.expectError(error.LimitExceeded, decode(allocator, &too_deep, .{}));
+}
+
+test "ETF canonicalizes byte lists and releases partial PID ownership" {
+    const allocator = std.testing.allocator;
+    const list_bytes = &.{ version, list_ext, 0, 0, 0, 2, small_integer_ext, 'a', small_integer_ext, 'b', nil_ext };
+    var list = try decode(allocator, list_bytes, .{});
+    defer list.deinit(allocator);
+    const canonical = try encode(allocator, &list);
+    defer allocator.free(canonical);
+    try std.testing.expectEqualSlices(u8, &.{ version, string_ext, 0, 2, 'a', 'b' }, canonical);
+
+    // std.testing.allocator reports a leak if decodePid loses its copied node
+    // while reading a truncated fixed-width PID field.
+    try std.testing.expectError(error.Truncated, decode(allocator, &.{ version, new_pid_ext, small_atom_utf8_ext, 1, 'n', 0, 0, 0 }, .{}));
 }

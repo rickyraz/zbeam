@@ -6,7 +6,9 @@ const manifest = @import("zbeam-etf-fixtures").bytes;
 test "ETF fixture manifest has bounded versioned vectors" {
     // Parse the checked-in text rather than embedding duplicate expected terms.
     // The first octet must be 0x83 (decimal 131), ETF's version marker; decoding
-    // and re-encoding then proves the supported subset preserves exact bytes.
+    // and re-encoding then proves these canonical vectors preserve exact bytes.
+    // Other valid representations may canonicalize; for example, a byte-valued
+    // LIST_EXT is encoded as STRING_EXT by the ETF encoder.
     var lines = std.mem.splitScalar(u8, manifest, '\n');
     var vectors: usize = 0;
 
