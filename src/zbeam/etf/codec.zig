@@ -122,11 +122,18 @@ fn decodeBinary(allocator: std.mem.Allocator, cursor: *Cursor, limits: Limits) (
     return .{ .binary = try allocator.dupe(u8, try cursor.take(length)) };
 }
 
-/// Shared tuple/list element decoder. Partial initialization is unwound so a
-/// malformed child cannot leak the children decoded before it.
+/// Shared tuple/list element decoder. Each item needs at least one tag byte,
+/// so reject an obviously truncated collection before allocating its item array.
+/// A proper list reserves one additional byte for its NIL_EXT tail. Partial
+/// initialization is unwound so a malformed child cannot leak the children
+/// decoded before it.
 fn decodeSequence(comptime tag: std.meta.Tag(Term), allocator: std.mem.Allocator, cursor: *Cursor, length: u32, limits: Limits, depth: u16) (DecodeError || std.mem.Allocator.Error)!Term {
     if (length > limits.max_collection_len) return error.LimitExceeded;
-    const items = try allocator.alloc(Term, length);
+    const item_count = std.math.cast(usize, length) orelse return error.LimitExceeded;
+    const trailing_min_bytes: usize = if (tag == .list) 1 else 0;
+    const remaining = cursor.bytes.len - cursor.index;
+    if (item_count > remaining or trailing_min_bytes > remaining - item_count) return error.Truncated;
+    const items = try allocator.alloc(Term, item_count);
     var initialized: usize = 0;
     errdefer {
         for (items[0..initialized]) |*item| item.deinit(allocator);
@@ -328,4 +335,11 @@ test "ETF rejects truncation and configured size violations" {
     const allocator = std.testing.allocator;
     try std.testing.expectError(error.Truncated, decode(allocator, &.{ version, binary_ext, 0, 0, 0, 2, 1 }, .{}));
     try std.testing.expectError(error.LimitExceeded, decode(allocator, &.{ version, binary_ext, 0, 0, 0, 2, 1, 2 }, .{ .max_binary_bytes = 1 }));
+}
+
+test "ETF rejects truncated collections before allocation" {
+    var failing_allocator = std.testing.FailingAllocator.init(std.testing.allocator, .{ .fail_index = 0 });
+    const allocator = failing_allocator.allocator();
+    try std.testing.expectError(error.Truncated, decode(allocator, &.{ version, large_tuple_ext, 0, 0, 0, 1 }, .{}));
+    try std.testing.expectError(error.Truncated, decode(allocator, &.{ version, list_ext, 0, 0, 0, 1, nil_ext }, .{}));
 }
