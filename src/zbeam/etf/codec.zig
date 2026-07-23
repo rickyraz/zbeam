@@ -7,11 +7,12 @@ pub const Pid = types.Pid;
 /// Every standalone External Term Format value starts with decimal 131
 /// (`0x83`). It is one octet (`u8`) because ETF defines tags and the version
 /// marker as byte-sized wire discriminants, not because 8 bits are arbitrary.
+/// ETF specification: https://www.erlang.org/docs/27/apps/erts/erl_ext_dist.html
 pub const version: u8 = 131;
 
 /// Bounds are checked before allocation. A network peer controls encoded
 /// lengths, so trusting them would let a tiny packet request excessive memory
-/// or recursion depth.
+/// or recursion depth. Allocation guidance: https://cwe.mitre.org/data/definitions/789.html
 pub const Limits = struct {
     max_depth: u16 = 64,
     max_collection_len: u32 = 1_048_576,
