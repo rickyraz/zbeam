@@ -3,52 +3,63 @@
 [![CI](https://github.com/rickyraz/zbeam/actions/workflows/ci.yml/badge.svg)](https://github.com/rickyraz/zbeam/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> **Research scaffold — not a production Erlang node.** zbeam implements a bounded initial ETF/EPMD/handshake/echo path, but broad OTP compatibility and production safety remain unverified.
+> **BEAM-compatible nodes in Zig.**
 
-zbeam explores a native Zig implementation of the Erlang Distribution Protocol (EDP v5/v6). The long-term goal is for a standalone Zig process to participate in an Erlang/OTP cluster as a distribution peer, without a NIF, port driver, or OTP patch.
+zbeam is a pre-alpha implementation of the Erlang Distribution Protocol in Zig.
 
-## Project rationale
+Its long-term goal is to let a standalone Zig process participate in an Erlang/OTP cluster as a distribution peer—with its own node identity and BEAM-visible processes—without running as a NIF, port driver, or patched OTP runtime.
 
-The narrow hypothesis is that some workloads need both:
+> **Not a production Erlang node.**  
+> The repository currently implements a bounded ETF, EPMD, handshake, distribution framing, and echo path. Broad OTP compatibility, protocol conformance, and production safety remain unverified.
 
-- explicit, non-tracing-GC memory management for native, latency-sensitive state; and
-- individual BEAM-visible identities with link/monitor semantics, rather than one multiplexed byte-stream endpoint.
+## Why zbeam?
 
-Process isolation alone is **not** the differentiator: Erlang ports already provide it. zbeam must prove that granular actor identity is useful enough to justify the much larger EDP implementation cost.
+Native code can already be integrated with Erlang through NIFs and Ports:
+
+- NIFs provide close integration but execute inside the BEAM VM.
+- Ports provide process isolation but expose one multiplexed byte-stream endpoint.
+
+zbeam explores a narrower hypothesis:
+
+> Can a separate native process combine explicit memory management with granular BEAM-visible identities, messaging, links, and monitors?
+
+Process isolation alone is not the differentiator—Ports already provide it. zbeam must demonstrate that native processes addressable through Erlang Distribution are useful enough to justify the implementation and verification cost of EDP.
 
 ## Current status
 
 | Area | Status |
 |---|---|
 | Zig 0.16.0 build and test layout | Scaffolded |
-| Public package/module boundaries | Scaffolded |
-| ETF codec | Initial bounded subset implemented |
+| Public package boundaries | Scaffolded |
+| ETF codec | Initial bounded subset |
 | EPMD client | Registration and lookup implemented |
-| Distribution handshake | Initiating/accepting roles implemented; OTP matrix pending |
-| Distribution framing/control | Pass-through `REG_SEND`/`SEND`, ticks, and one-shot echo implemented |
-| Actor runtime and mailbox | Bounded mailbox, logical ownership, registry, and lifecycle implemented |
+| Distribution handshake | Initiator and acceptor implemented; OTP matrix pending |
+| Distribution framing | Ticks, `REG_SEND`, `SEND`, and one-shot echo implemented |
+| Local actor subsystem | Bounded mailbox, registry, ownership, and lifecycle implemented |
 | Demand-driven backpressure | Atomic credit primitive implemented; transport gating pending |
 | Arena-backed ownership transfer | Design only |
 | OTP compatibility | Target only; not verified |
 
-The v0.5 document is a **design target**, not implementation evidence. See [Implementation Status](docs/implementation-status.md) before relying on any specification claim.
+The v0.5 specification is a **design target**, not evidence that every described feature exists.
+
+See [Implementation Status](docs/implementation-status.md) for the current spec-to-code truth table.
 
 ## Build
 
-Requirements:
+### Requirements
 
 - Zig 0.16.0 or newer
 - Git
-- Erlang/OTP 25–27 for the target interoperability matrix
+- Erlang/OTP 25–27 for interoperability testing
 
 ```sh
 zig build
 zig build test-all
-zig build test-interop  # configured OTP matrix; missing versions are reported as skipped
+zig build test-interop # configured OTP matrix; unavailable versions are skipped
 zig build run
 ```
 
-A one-shot development echo peer is available when local EPMD is running:
+A one-shot development echo peer requires a local EPMD instance:
 
 ```sh
 epmd -daemon
@@ -56,26 +67,23 @@ zig build
 ./zig-out/bin/zbeam echo zbeam_echo cookie
 ```
 
-The command accepts one peer and, by default, replies once to `{echo, 'zbeam_echo@127.0.0.1'}`. The cookie argument is visible in the process list and is suitable only for local development.
-
-The test suite now covers the initial codec, EPMD, handshake, framing, bounded mailbox, and echo path. A green build still does **not** establish complete OTP 25–27 compatibility or full wire-protocol conformance.
+The cookie is visible in the process list; use this command only for local development.
 
 ## Documentation
 
-- [v0.5.0 draft specification](specs/zbeam-v0.5.0.md) — latest design target
-- [Implementation status](docs/implementation-status.md) — spec-to-code truth table
+- [Implementation status](docs/implementation-status.md) — source of truth for implemented behavior
+- [v0.5.0 draft specification](specs/zbeam-v0.5.0.md) — design target
 - [Roadmap](ROADMAP.md) — evidence-first implementation order
 - [Research backlog](docs/research-needed.md) — unresolved safety and runtime risks
 - [Protocol source matrix](docs/protocol-sources.md) — primary OTP references and initial wire subset
-- [First-principles implementation guide](docs/first-principles.md) — reasoning behind widths, ownership, framing, and runtime boundaries
 - [Architecture decisions](docs/adr/README.md)
 - [Verification evidence](docs/evidence/README.md)
 
-Historical specifications remain under [`specs/`](specs/). They are not current contracts.
+Historical specifications under [`specs/`](specs/) are not current contracts.
 
 ## Battery-pack architecture
 
-zbeam ships as one repository package with independently importable modules:
+zbeam exposes independently importable modules:
 
 | Import | Responsibility | Allowed zbeam dependencies |
 |---|---|---|
@@ -87,8 +95,8 @@ zbeam ships as one repository package with independently importable modules:
 | `zbeam` | Convenience re-export | All batteries; no behavior |
 
 ```zig
-const zbeam = @import("zbeam");          // complete convenience surface
-const etf = @import("zbeam-etf");       // standalone battery
+const zbeam = @import("zbeam");
+const etf = @import("zbeam-etf");
 const protocol = @import("zbeam-protocol");
 ```
 
@@ -97,19 +105,15 @@ Tools and OTP interoperability suites are repository build/test assets, not runt
 ## Design boundaries
 
 - zbeam is a separate OS process and distribution peer, never an in-process NIF.
-- Transport ownership must remain separate from actor behavior.
+- Transport ownership remains separate from actor behavior.
 - No transport read may occur without positive effective demand.
-- Raw slices and pointers must not escape actor or asynchronous boundaries without explicit ownership.
+- Raw slices and pointers do not escape actor or asynchronous boundaries without explicit ownership.
 - Zero-copy, performance, fault-isolation, and OTP-compatibility claims require reproducible evidence.
 - A process boundary isolates zbeam from the BEAM VM; it does not isolate unsafe actors from one another inside one zbeam process.
 
-## Roadmap in one line
-
-First make **one real actor** interoperable with OTP and compare it with one Port; only then add local multi-actor semantics, ownership-transfer optimization, or io_uring.
-
 ## Contributing
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md). The most useful early contributions are small protocol fixtures, OTP black-box tests, and corrections backed by primary sources.
+Read [CONTRIBUTING.md](CONTRIBUTING.md). Useful early contributions include protocol fixtures, OTP black-box tests, and corrections backed by primary sources.
 
 ## Security
 
