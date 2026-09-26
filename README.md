@@ -3,121 +3,99 @@
 [![CI](https://github.com/rickyraz/zbeam/actions/workflows/ci.yml/badge.svg)](https://github.com/rickyraz/zbeam/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> **BEAM-compatible nodes in Zig.**
+> **A bounded, single-actor Erlang Distribution peer in Zig.**
 
-zbeam is a pre-alpha implementation of the Erlang Distribution Protocol in Zig.
+zbeam implements a development MVP: a separate Zig process registers through EPMD, authenticates with OTP, exposes one registered echo actor, and supports repeated messages and sequential reconnects. Both handshake directions are verified against real OTP 25, 26 and 27.
 
-Its long-term goal is to let a standalone Zig process participate in an Erlang/OTP cluster as a distribution peer—with its own node identity and BEAM-visible processes—without running as a NIF, port driver, or patched OTP runtime.
+**Not a production Erlang node.** Compatibility is limited to the [MVP wire subset](docs/mvp.md). Arbitrary ETF terms, RPC, process links/monitors, distributed registry semantics and the full v0.5 runtime are not implemented.
 
-> **Not a production Erlang node.**  
-> The repository currently implements a bounded ETF, EPMD, handshake, distribution framing, and echo path. Broad OTP compatibility, protocol conformance, and production safety remain unverified.
+## Purpose
 
-## Why zbeam?
+NIFs execute native code within the BEAM VM. Ports already provide a separate-process boundary. zbeam explores whether distribution-addressable native actors justify the additional protocol and lifecycle complexity; process isolation alone is not its differentiator.
 
-Native code can already be integrated with Erlang through NIFs and Ports:
-
-- NIFs provide close integration but execute inside the BEAM VM.
-- Ports provide process isolation but expose one multiplexed byte-stream endpoint.
-
-zbeam explores a narrower hypothesis:
-
-> Can a separate native process combine explicit memory management with granular BEAM-visible identities, messaging, links, and monitors?
-
-Process isolation alone is not the differentiator—Ports already provide it. zbeam must demonstrate that native processes addressable through Erlang Distribution are useful enough to justify the implementation and verification cost of EDP.
+The current benchmark includes negative results. It does not establish a performance advantage over Ports.
 
 ## Current status
 
 | Area | Status |
 |---|---|
-| Zig 0.16.0 build and test layout | Scaffolded |
-| Public package boundaries | Scaffolded |
-| ETF codec | Initial bounded subset |
-| EPMD client | Registration and lookup implemented |
-| Distribution handshake | Initiator and acceptor implemented; OTP matrix pending |
-| Distribution framing | Ticks, `REG_SEND`, `SEND`, and one-shot echo implemented |
-| Local actor subsystem | Bounded mailbox, registry, ownership, and lifecycle implemented |
-| Demand-driven backpressure | Atomic credit primitive implemented; transport gating pending |
-| Arena-backed ownership transfer | Design only |
-| OTP compatibility | Target only; not verified |
+| Zig 0.16.0 and battery dependency graph | Implemented and tested |
+| ETF | Bounded owned subset, including aggregate allocation limits |
+| EPMD and handshake | Registration/lookup; both handshake roles verified on OTP 25–27 |
+| Distribution | Pass-through framing, tick echo, REG_SEND/SEND subset |
+| Service lifecycle | One synchronous actor; repeated messages; sequential peer recovery |
+| Backpressure | Demand-gated unbuffered reads; TCP saturation/resume evidence |
+| Local actor primitives | Bounded mailbox, logical receive ownership, registry and termination |
+| Process-loss isolation | SIGKILL/nodedown tests with surviving OTP VM and local process |
+| Arena-backed ownership and io_uring | Not implemented; research only |
 
-The v0.5 specification is a **design target**, not evidence that every described feature exists.
+[Implementation Status](docs/implementation-status.md) is the source of truth. The v0.5 specification describes a broader design, not shipped behavior.
 
-See [Implementation Status](docs/implementation-status.md) for the current spec-to-code truth table.
+## Build and verify
 
-## Build
-
-### Requirements
-
-- Zig 0.16.0 or newer
-- Git
-- Erlang/OTP 25–27 for interoperability testing
+Requirements: Zig 0.16.0 and Git. Interoperability checks additionally require Erlang/EPMD; the pinned-container runner requires Linux and Docker.
 
 ```sh
 zig build
-zig build test-all
-zig build test-interop # configured OTP matrix; unavailable versions are skipped
-zig build run
+zig build test-all                            # deterministic, no external EPMD required
+zig build test-all -Doptimize=ReleaseSafe
+zig build test-interop-docker                 # all OTP 25/26/27 targets; pinned images
 ```
 
-A one-shot development echo peer requires a local EPMD instance:
+Native OTP installations can use `OTP_ERL_25`, `OTP_ERL_26` and `OTP_ERL_27` with `ZBEAM_REQUIRE_ALL_OTP=1 zig build test-interop`. Missing targets are not passes, and incorrectly labeled versions fail.
+
+## Run the echo service
 
 ```sh
 epmd -daemon
-zig build
-./zig-out/bin/zbeam echo zbeam_echo cookie
+./zig-out/bin/zbeam serve zbeam_echo development_cookie
 ```
 
-The cookie is visible in the process list; use this command only for local development.
+In another terminal:
 
-## Documentation
+```sh
+erl +S 2:2 -noshell -name client@127.0.0.1 -setcookie development_cookie -eval '
+  N = list_to_atom("zbeam_echo@127.0.0.1"),
+  true = net_kernel:connect_node(N),
+  {echo, N} ! hello,
+  receive hello -> io:format("echo passed~n") after 3000 -> halt(1) end,
+  halt().'
+```
 
-- [Implementation status](docs/implementation-status.md) — source of truth for implemented behavior
-- [v0.5.0 draft specification](specs/zbeam-v0.5.0.md) — design target
-- [Roadmap](ROADMAP.md) — evidence-first implementation order
-- [Research backlog](docs/research-needed.md) — unresolved safety and runtime risks
-- [Protocol source matrix](docs/protocol-sources.md) — primary OTP references and initial wire subset
-- [Architecture decisions](docs/adr/README.md)
-- [Verification evidence](docs/evidence/README.md)
+The service binds IPv4 loopback and handles one active peer at a time. `echo` provides a bounded one-shot variant; `probe` initiates a request to a real OTP echo actor. See [MVP usage and contracts](docs/mvp.md).
 
-Historical specifications under [`specs/`](specs/) are not current contracts.
+Cookies in arguments are visible in process listings. There are no network deadlines or TLS integration; do not expose this development service to untrusted peers.
 
 ## Battery-pack architecture
 
-zbeam exposes independently importable modules:
-
 | Import | Responsibility | Allowed zbeam dependencies |
 |---|---|---|
-| `zbeam-etf` | ETF terms and wire codec | None |
-| `zbeam-protocol` | Handshake, control, identity, and frame semantics | `zbeam-etf` |
-| `zbeam-transport` | Socket and framed I/O | `zbeam-protocol`, `zbeam-etf` |
-| `zbeam-actor` | Mailbox and local actor contracts | None |
-| `zbeam-runtime` | Runtime composition and lifecycle | All narrower batteries |
-| `zbeam` | Convenience re-export | All batteries; no behavior |
+| `zbeam-etf` | Owned terms and ETF codec | None |
+| `zbeam-protocol` | Pure wire and handshake semantics | `zbeam-etf` |
+| `zbeam-transport` | EPMD, handshake and framed I/O | Protocol, ETF |
+| `zbeam-actor` | Bounded mailbox and demand primitives | None |
+| `zbeam-runtime` | Service composition and local registry | All narrower batteries |
+| `zbeam` | Behavior-free convenience exports | All batteries |
 
 ```zig
 const zbeam = @import("zbeam");
 const etf = @import("zbeam-etf");
-const protocol = @import("zbeam-protocol");
 ```
 
-Tools and OTP interoperability suites are repository build/test assets, not runtime packages. See [ADR 0001](docs/adr/0001-battery-pack-module-boundaries.md).
+Transport never imports actor/runtime. The actor-facing dispatcher reserves demand before reading and never prefetches another frame. Decoded bytes are owned copies; no zero-copy claim is made. The OS process boundary does not isolate actors from each other inside zbeam.
 
-## Design boundaries
+## Documentation
 
-- zbeam is a separate OS process and distribution peer, never an in-process NIF.
-- Transport ownership remains separate from actor behavior.
-- No transport read may occur without positive effective demand.
-- Raw slices and pointers do not escape actor or asynchronous boundaries without explicit ownership.
-- Zero-copy, performance, fault-isolation, and OTP-compatibility claims require reproducible evidence.
-- A process boundary isolates zbeam from the BEAM VM; it does not isolate unsafe actors from one another inside one zbeam process.
+- [MVP scope, commands, limits and remaining work](docs/mvp.md)
+- [Implementation status](docs/implementation-status.md)
+- [Roadmap](ROADMAP.md) and [research/risk backlog](docs/research-needed.md)
+- [Protocol primary sources](docs/protocol-sources.md)
+- [Architecture decisions](docs/adr/README.md)
+- [Verification evidence](docs/evidence/README.md)
+- [Port comparison](benchmarks/README.md)
+- [v0.5.0 draft](specs/zbeam-v0.5.0.md), a design target with unimplemented pseudocode
 
-## Contributing
-
-Read [CONTRIBUTING.md](CONTRIBUTING.md). Useful early contributions include protocol fixtures, OTP black-box tests, and corrections backed by primary sources.
-
-## Security
-
-This repository is pre-alpha research software. Do not expose it to untrusted networks. See [SECURITY.md](SECURITY.md).
+Contribution requirements are in [CONTRIBUTING.md](CONTRIBUTING.md). Security limits are in [SECURITY.md](SECURITY.md).
 
 ## License
 

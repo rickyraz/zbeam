@@ -1,0 +1,13 @@
+2026-09-26T11:07:26+07:00
+ae6e75c0987904f4db8eef9bab97533e1783147f
+Linux 6.6.114.1-microsoft-standard-WSL2 x86_64 GNU/Linux
+0.16.0
+Erlang/OTP 28 [erts-16.3] [source] [64-bit] [smp:2:2] [ds:2:2:10] [async-threads:1] [jit:ns]
+
+Elixir 1.19.5 (compiled with Erlang/OTP 28)
+CPU(s):                                  4
+Model name:                              AMD Ryzen 5 5600H with Radeon Graphics
+Thread(s) per core:                      2
+Core(s) per socket:                      2
+NUMA node0 CPU(s):                       0-3
+Docker server 29.1.2

@@ -1,52 +1,49 @@
 # Implementation Status
 
-**Last reviewed:** 2026-07-12  
-**Code version:** 0.0.1 pre-alpha  
-**Design target:** v0.5.0 draft
+- **Last verified:** 2026-09-26
+- **Package version:** 0.0.1 pre-alpha (no release tag created)
+- **Implemented milestone:** [restricted single-actor MVP](mvp.md)
+- **Broader design target:** v0.5.0 draft, not a release description
 
-This file is the source of truth when code and specifications differ.
+This file is authoritative when code and historical specifications differ.
 
-## Implemented repository infrastructure
+## Implemented and verified
 
-- Zig 0.16.0 package and executable targets
-- independently importable `zbeam-etf`, `zbeam-protocol`, `zbeam-transport`, `zbeam-actor`, and `zbeam-runtime` batteries
-- a behavior-free `zbeam` convenience umbrella
-- build-declared dependency direction matching ADR 0001
-- bounded owned ETF codec for integer, UTF-8 atom, tuple, binary, proper byte/list forms, nil, and `NEW_PID_EXT`
-- EPMD ALIVE2 registration and PORT_PLEASE2 lookup with registration-socket lifetime ownership
-- OTP 23+ initiating and accepting handshake codec/FSM with cookie challenge verification
-- four-byte pass-through distribution framing, ticks, `REG_SEND` routing, `SEND` replies, and a one-shot registered echo peer
-- bounded `std.Io.Queue` mailbox with one logical consumer, atomic demand credits, named registry, and explicit termination
-- reproducible OTP matrix orchestration and a local Erlang Port latency baseline
-- separate unit, integration, conformance, and stress build steps
-- research labs, benchmark directories, and evidence directories
+| Area | Current contract | Verification |
+|---|---|---|
+| Packaging | Zig 0.16.0; five independent batteries and a behavior-free umbrella; ADR 0001 dependency DAG | Independent unit builds and integration imports |
+| ETF | Owned integer/UTF-8 atom/tuple/binary/proper list/nil/NEW_PID subset; depth, size and aggregate allocation limits | Unit, golden-vector and conformance tests |
+| EPMD | Registration-socket ownership; node lookup; exact short error response | Deterministic client wire tests and real OTP discovery/removal |
+| Handshake | Initiating and accepting OTP 23+ format; mutual cookie digest; no read-ahead loss at distribution handoff | Coalesced-frame regression in both roles; actual OTP 25/26/27 |
+| Distribution | Bounded pass-through framing, ticks, REG_SEND and SEND subset | Conformance and socket integration |
+| Runtime service | One synchronous registered echo actor; repeat messages; sequential peers; fresh per-connection state; malformed peer isolation | `serve`, `echo`, integration and OTP matrix |
+| Initiating request | `probe` discovers an OTP peer, authenticates identity and validates one exact SEND reply | Synthetic housekeeping/tick regression and OTP matrix |
+| Demand | One outstanding frame; atomic reservation before unbuffered read; credit restored after handler/reply | Zero-read/allocation oracle, 64 MiB TCP pause/resume test and cancellation cleanup |
+| Local actors | Bounded MPSC mailbox; logical consumer token; concurrent receive rejection; name registry and termination | Unit and eight-producer stress tests |
+| Process-loss boundary | Test child SIGKILL produces OTP nodedown without terminating the VM or an unrelated local process | OTP 25/26/27 black-box assertions |
+| Benchmark | Same 32-byte sequential payload over Port/distribution; p50/p95/p99, throughput, child RSS/HWM, BEAM memory, restart sample, scheduler activity | Reproducible script and raw Phase C results |
 
-## Unimplemented subsystems
+Details and commands are in [mvp.md](mvp.md). Verification records are [Phase B](evidence/phase-b/2026-09-26-mvp.md) and [Phase C](evidence/phase-c/2026-09-26-mvp-runtime.md).
 
-No production behavior described by the v0.5 draft is implemented. In particular, the repository has no working:
+## Not implemented or not established
 
-- ETF tags outside the documented initial subset;
-- EPMD operations outside registration and node lookup;
-- handshake variants outside the OTP 23+ format and target-version black-box verification;
-- distribution headers with atom caches, fragmentation, heartbeats beyond tick echo, or control operations outside initial send routing;
-- actor task scheduler, distributed registry semantics, links, or monitors;
-- transport demand gating, demand liveness diagnostics, transport arena, `BufferHandle`, or io_uring backend;
-- OTP interoperability or crash-isolation conformance harness.
+- Complete ETF coverage, old handshakes, simultaneous-connection arbitration or general Erlang-node compatibility.
+- Cached distribution headers, fragmentation, proactive heartbeat scheduling or control operations beyond the documented send subset.
+- Distributed registry semantics, RPC, OTP behaviours, process links/monitors or a general actor task scheduler.
+- Concurrent peer servicing, transport deadlines, stalled-handler recovery, outbound reconnect/backoff or EPMD-loss recovery.
+- Arena-backed buffers, `BufferHandle`, typestate/linear ownership, io_uring or zero-copy transfer.
+- BEAM distribution-sender throttling measurements, multi-workload performance conclusions or isolation between actors inside the native process.
+- Panic/corruption crash-injection coverage, sanitizers/TSAN or a production security audit.
 
-## Specification interpretation
+The service deliberately uses synchronous owned-copy processing. The reusable mailbox/registry is not an implicit asynchronous scheduler. Logical tokens are copyable; they do not prove an OS-thread or task identity. Caller-managed lifetimes remain required.
 
-The specifications contain pseudocode and proposed invariants. Words such as “implemented,” “fixed,” or “conformance-tested” describe the intended revision relative to earlier design documents; they do **not** describe this repository's current code.
+## Compatibility scope
 
-A feature becomes implemented only when all of the following exist in the same change:
+The checked-in runner passed on real OTP 25, 26 and 27 using pinned Docker images on Linux x86-64. OTP 28 is additional local development evidence. Only the MVP operations are covered; mandatory handshake bits do not establish complete support for every corresponding ETF tag. Unsupported matching payloads are rejected by disconnecting that peer.
 
-1. code under the correct `src/zbeam/*` boundary;
-2. a runnable test at the required level;
-3. verification evidence under `docs/evidence/`;
-4. an updated row in this file.
+No claim is made for all patch versions, other operating systems, or full v0.5 conformance. Historical July records remain historical; missing matrix and demand evidence from those records is superseded by the September records, not retroactively changed.
 
 ## Structural boundaries
-
-The module graph is implemented as build wiring, not subsystem behavior:
 
 ```text
 protocol  -> etf
@@ -54,8 +51,8 @@ transport -> protocol, etf
 runtime   -> actor, transport, protocol, etf
 ```
 
-Tools and interoperability suites remain repository assets rather than consumable packages. Physical package or repository splits require a real standalone consumer or distinct dependency/release requirements.
+ETF and actor remain independent. Transport accepts an injected credit source without importing the actor battery. Tools, fixtures and OTP runners are verification assets, not runtime dependencies.
 
-## Compatibility
+## Completion rule
 
-OTP 25, 26, and 27 are design targets. No compatibility claim is currently made.
+A behavior requires code under the correct battery, a runnable regression check, a verification record and an updated status entry. Design pseudocode, a checked roadmap box or an unavailable/skipped OTP target is not implementation evidence.

@@ -18,6 +18,8 @@ pub const Limits = struct {
     max_collection_len: u32 = 1_048_576,
     max_binary_bytes: u32 = 16 * 1024 * 1024,
     max_atom_bytes: u16 = 255,
+    /// Aggregate owned storage per decoded term, including collection arrays.
+    max_allocated_bytes: usize = 32 * 1024 * 1024,
 };
 
 pub const DecodeError = error{
@@ -60,7 +62,7 @@ pub const Decoded = struct {
 /// Distribution packets concatenate control and payload terms, so requiring
 /// end-of-buffer here would make that valid framing impossible to separate.
 pub fn decodePrefix(allocator: std.mem.Allocator, bytes: []const u8, limits: Limits) (DecodeError || std.mem.Allocator.Error)!Decoded {
-    var cursor = Cursor{ .bytes = bytes };
+    var cursor = Cursor{ .bytes = bytes, .allocation_left = limits.max_allocated_bytes };
     if (try cursor.readByte() != version) return error.InvalidVersion;
     return .{
         .term = try decodeValue(allocator, &cursor, limits, 0),
@@ -115,13 +117,16 @@ fn decodeAtom(allocator: std.mem.Allocator, cursor: *Cursor, length: u16, limits
     if (length > limits.max_atom_bytes) return error.LimitExceeded;
     const source = try cursor.take(length);
     if (!std.unicode.utf8ValidateSlice(source)) return error.InvalidAtom;
+    try cursor.reserve(u8, source.len);
     return .{ .atom = try allocator.dupe(u8, source) };
 }
 
 fn decodeBinary(allocator: std.mem.Allocator, cursor: *Cursor, limits: Limits) (DecodeError || std.mem.Allocator.Error)!Term {
     const length = try cursor.readU32();
     if (length > limits.max_binary_bytes) return error.LimitExceeded;
-    return .{ .binary = try allocator.dupe(u8, try cursor.take(length)) };
+    const source = try cursor.take(length);
+    try cursor.reserve(u8, source.len);
+    return .{ .binary = try allocator.dupe(u8, source) };
 }
 
 /// Shared tuple/list element decoder. Each item needs at least one tag byte,
@@ -135,6 +140,7 @@ fn decodeSequence(comptime tag: std.meta.Tag(Term), allocator: std.mem.Allocator
     const trailing_min_bytes: usize = if (tag == .list) 1 else 0;
     const remaining = cursor.bytes.len - cursor.index;
     if (item_count > remaining or trailing_min_bytes > remaining - item_count) return error.Truncated;
+    try cursor.reserve(Term, item_count);
     const items = try allocator.alloc(Term, item_count);
     var initialized: usize = 0;
     errdefer {
@@ -151,6 +157,7 @@ fn decodeString(allocator: std.mem.Allocator, cursor: *Cursor, limits: Limits) (
     const length = try cursor.readU16();
     if (length > limits.max_collection_len) return error.LimitExceeded;
     const bytes = try cursor.take(length);
+    try cursor.reserve(Term, length);
     const items = try allocator.alloc(Term, length);
     errdefer allocator.free(items);
     for (bytes, items) |byte, *item| item.* = .{ .integer = byte };
@@ -291,6 +298,13 @@ fn appendU32(allocator: std.mem.Allocator, output: *std.ArrayList(u8), value: u3
 const Cursor = struct {
     bytes: []const u8,
     index: usize = 0,
+    allocation_left: usize,
+
+    fn reserve(self: *Cursor, comptime T: type, count: usize) DecodeError!void {
+        const bytes = std.math.mul(usize, @sizeOf(T), count) catch return error.LimitExceeded;
+        if (bytes > self.allocation_left) return error.LimitExceeded;
+        self.allocation_left -= bytes;
+    }
 
     fn take(self: *Cursor, length: usize) DecodeError![]const u8 {
         if (length > self.bytes.len - self.index) return error.Truncated;
@@ -475,6 +489,16 @@ test "ETF string, PID, and nesting boundaries fail closed" {
     too_deep[index] = small_integer_ext;
     too_deep[index + 1] = 0;
     try std.testing.expectError(error.LimitExceeded, decode(allocator, &too_deep, .{}));
+}
+
+test "ETF aggregate budget includes nested storage and unwinds partial terms" {
+    const bytes = &.{ version, small_tuple_ext, 2, small_atom_utf8_ext, 1, 'a', binary_ext, 0, 0, 0, 2, 1, 2 };
+    const exact = 2 * @sizeOf(Term) + 3;
+    var term = try decode(std.testing.allocator, bytes, .{ .max_allocated_bytes = exact });
+    defer term.deinit(std.testing.allocator);
+    try std.testing.expectError(error.LimitExceeded, decode(std.testing.allocator, bytes, .{ .max_allocated_bytes = exact - 1 }));
+    var failing = std.testing.FailingAllocator.init(std.testing.allocator, .{ .fail_index = 0 });
+    try std.testing.expectError(error.LimitExceeded, decode(failing.allocator(), &.{ version, string_ext, 0, 2, 1, 2 }, .{ .max_allocated_bytes = @sizeOf(Term) }));
 }
 
 test "ETF canonicalizes byte lists and releases partial PID ownership" {

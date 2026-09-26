@@ -104,7 +104,7 @@ pub fn regSendDestination(control: *const etf.Term) Error!struct { from: etf.Pid
     if (control.* != .tuple or control.tuple.len != 4) return error.InvalidControl;
     const fields = control.tuple;
     if (fields[0] != .integer or fields[0].integer != reg_send) return error.InvalidControl;
-    if (fields[1] != .pid or fields[3] != .atom) return error.InvalidControl;
+    if (fields[1] != .pid or fields[2] != .atom or fields[3] != .atom) return error.InvalidControl;
     return .{ .from = fields[1].pid, .name = fields[3].atom };
 }
 

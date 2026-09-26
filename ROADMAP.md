@@ -2,6 +2,10 @@
 
 zbeam advances only when a milestone leaves executable evidence. The v0.5 specification is a design backlog, not a release description.
 
+## Restricted MVP — verified 2026-09-26
+
+The [single-actor development profile](docs/mvp.md) passes its acceptance gates: both handshake roles on real OTP 25/26/27, bounded owned messages, demand-gated reads, sequential reconnect, process-loss observation and a reproducible Port baseline. This is a subset milestone, not completion of M2–M4 or the full v0.5 specification.
+
 ## M0 — Honest public scaffold
 
 - [x] English project entry points and contribution policy
@@ -14,9 +18,9 @@ zbeam advances only when a milestone leaves executable evidence. The v0.5 specif
 
 - [x] ETF fixtures for the smallest required term subset
 - [x] EPMD registration and lookup
-- [ ] Initiating and accepting OTP 25–27 handshakes
+- [x] Initiating and accepting OTP 25–27 handshakes (pinned-image black-box evidence)
 - [x] One registered Zig actor reachable from Elixir/Erlang
-- [x] Black-box round-trip test against a real OTP node (OTP 28 development evidence; target matrix pending)
+- [x] Exact black-box round trips against OTP 25, 26 and 27; OTP 28 remains additional development evidence
 
 **Exit evidence:** one actor exchanges a documented message with OTP; captured bytes match the official protocol documentation.
 
@@ -24,24 +28,31 @@ zbeam advances only when a milestone leaves executable evidence. The v0.5 specif
 
 - [x] Thread-safe, single-consumer mailbox contract
 - [ ] Link/monitor behavior verified from OTP
-- [ ] Bounded message and fragment handling
-- [ ] Reconnect and incarnation cleanup
-- [ ] Demand-gated receive path with observable TCP backpressure
+- [x] Bounded wire messages and aggregate decoded storage; unnegotiated fragments rejected
+- [x] Fresh demand and packet state after sequential TCP reconnect
+- [x] Demand-gated receive path with observable TCP sender backpressure and cancellation cleanup
+- [ ] Fragment assembly, when negotiated, with explicit global bounds
+- [ ] OS-restart/stale-PID incarnation tests and outbound reconnect policy
+- [ ] BEAM distribution-sender queue/backpressure measurements
+- [ ] Transport deadlines and stalled-handler/EPMD-loss diagnostics
 
 **Exit evidence:** logic, integration, conformance, and stress suites pass; bounded-memory and failure behavior are recorded under `docs/evidence/`.
 
 ## M3 — Validate the niche
 
-- [x] Compare one zbeam actor with one Erlang Port (initial local latency baseline)
-- [ ] Measure p50/p95/p99 latency, memory, restart time, and BEAM scheduler impact
+- [x] Compare one zbeam actor with one Erlang Port (same sequential 32-byte workload)
+- [x] Record p50/p95/p99, throughput, memory snapshots, restart sample and scheduler activity
+- [ ] Repeat across payload sizes/concurrency and report uncertainty before performance conclusions
 - [ ] Add two or three actors only after the one-actor baseline is useful
-- [ ] Document the actual failure blast radius inside one zbeam process
+- [x] Record external process-loss isolation on OTP 25–27
+- [ ] Test panic/corruption failures and document the failure blast radius inside one zbeam process
 
 **Exit evidence:** reproducible benchmark scripts and raw results, including negative results.
 
 ## M4 — Ownership optimization
 
-- [ ] Copy small binaries by default
+- [x] Use owned copies for all supported binaries in the MVP
+- [ ] Justify a copy/arena threshold from measurements before introducing the arena path
 - [ ] Prove arena slot claim/release correctness under contention
 - [ ] Add explicit owned/borrowed/forward-only APIs only where tests justify them
 - [ ] Verify no stale slot reuse or silent refcount underflow

@@ -4,6 +4,7 @@ const distribution = @import("zbeam-protocol").distribution;
 
 pub const Echo = struct {
     registered_name: []const u8,
+    limits: distribution.Limits = .{},
 
     /// Minimal actor boundary for the interoperability proof.
     ///
@@ -11,13 +12,13 @@ pub const Echo = struct {
     /// return `null`, and only a matching REG_SEND payload is decoded. The
     /// response uses SEND to target the original sender PID directly.
     pub fn handle(self: Echo, allocator: std.mem.Allocator, packet_bytes: []const u8) !?[]u8 {
-        var packet = try distribution.decodePacket(allocator, packet_bytes, .{});
+        var packet = try distribution.decodePacket(allocator, packet_bytes, self.limits);
         defer packet.deinit(allocator);
         if (packet == .tick) return try allocator.dupe(u8, &distribution.tickPacket());
 
         const route = try distribution.regSendDestination(&packet.message.control);
         if (!std.mem.eql(u8, route.name, self.registered_name)) return null;
-        var payload = try packet.message.decodePayload(allocator, .{});
+        var payload = try packet.message.decodePayload(allocator, self.limits.etf);
         defer payload.deinit(allocator);
 
         var control_items = [_]etf.Term{

@@ -16,7 +16,10 @@ jobs:
         with:
           version: 0.16.0
       - run: zig fmt --check build.zig src tests examples
+      - run: zig build
       - run: zig build test-all
+      - run: zig build test-all -Doptimize=ReleaseSafe
+      - run: for script in scripts/interop/*.sh scripts/bench_port_vs_zbeam.sh; do sh -n "$script"; done
 
   otp-interop:
     runs-on: ubuntu-latest
@@ -33,7 +36,9 @@ jobs:
         with:
           otp-version: ${{ matrix.otp }}
       - run: zig build
-      - name: Run OTP ${{ matrix.otp }} echo smoke test
+      - name: Verify OTP ${{ matrix.otp }} MVP contracts
         run: |
           export OTP_ERL_${{ matrix.otp }}="$(command -v erl)"
+          export OTP_VERSIONS="${{ matrix.otp }}"
+          export ZBEAM_REQUIRE_ALL_OTP=1
           zig build test-interop

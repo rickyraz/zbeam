@@ -48,6 +48,7 @@ For this term, the safe order is:
 const length = try cursor.readU32();
 if (length > limits.max_binary_bytes) return error.LimitExceeded;
 const source = try cursor.take(length);
+try cursor.reserve(u8, source.len);
 const owned = try allocator.dupe(u8, source);
 ```
 
@@ -65,21 +66,25 @@ Current limits in `Limits` are:
 | `max_atom_bytes` | 255 bytes | atom allocation and UTF-8 validation |
 | `max_collection_len` | 1,048,576 | tuple/list item allocation |
 | `max_depth` | 64 | nested tuple/list/PID recursion |
+| `max_allocated_bytes` | 32 MiB | total owned arrays and copied bytes for one decoded term |
 
 The decoder rejects an over-limit value with `error.LimitExceeded`, truncated data with `error.Truncated`, and invalid UTF-8 atom bytes with `error.InvalidAtom`.
 
-## Is the two-step check the best mechanism?
+## Validation order
 
 **Validate a semantic limit, then verify available bytes before allocation** is the right baseline for a length-prefixed leaf value such as `BINARY_EXT` or a UTF-8 atom. It is simple, auditable, avoids an unnecessary pre-scan, and follows the essential mitigation for attacker-controlled allocation lengths.
 
-It is not sufficient by itself for every ETF term. A complete bounded decoder needs four protections:
+Per-value bounds alone do not cap the sum of nested allocations. The current decoder uses five protections:
 
 1. **Transport frame limit**: reject an oversized network frame before allocating the frame buffer.
 2. **Semantic value limit**: reject a declared binary length, atom length, collection arity, or nesting depth above the configured `Limits`.
 3. **Physical and structural preflight**: prove the encoded bytes required at this point exist before allocating from a peer-declared count when possible.
-4. **Fallible allocation and ownership cleanup**: propagate allocator failure and release partially decoded children on failure.
+4. **Aggregate storage budget**: checked size arithmetic reserves space from one remaining budget before every array allocation or byte copy.
+5. **Fallible allocation and ownership cleanup**: propagate allocator failure and release partially decoded children on failure.
 
-The combined receive path has all four protections for atom and binary values. The ETF decoder applies the same cheap lower-bound preflight to tuples and lists before allocating their `Term` arrays, then retains depth checks, fallible allocation, and partial-initialization cleanup for the full recursive decode.
+Control and payload have separate term budgets. This cap excludes allocator metadata, input frames and temporary encoding buffers; it is not a process RSS bound.
+
+The combined receive path has all five protections for atom and binary values. The ETF decoder applies the same cheap lower-bound preflight to tuples and lists before allocating their `Term` arrays, then retains depth checks, fallible allocation, and partial-initialization cleanup for the full recursive decode.
 
 > [!note] Collection distinction
 > For a tuple with `N` children, each child needs at least one tag byte. For a proper list, the `N` children plus the `NIL_EXT` tail need at least `N + 1` bytes. The decoder checks that lower bound against remaining input before allocating. It does not replace full recursive decoding, because each tag can require more bytes.
@@ -93,7 +98,8 @@ The combined receive path has all four protections for atom and binary values. T
 | Limit check, available-byte check, then allocate | Rejects truncated leaf values before allocation | One bounds check | Use for binary and atom values |
 | Full pre-scan, then decode | Can prove complete structural validity before allocations | Duplicates parser complexity and CPU; difficult ownership/error paths | Avoid by default |
 | Streaming/lazy terms | Can reduce peak memory for large data | Lifetime and actor-boundary complexity | Add only after measurement proves need |
-| Lower collection-size preflight | Rejects obviously impossible tuple/list arity before allocation | A small amount of term-specific code | Recommended improvement for collection decoding |
+| Lower collection-size preflight | Rejects obviously impossible tuple/list arity before allocation | A small amount of term-specific code | Implemented for tuples/lists |
+| Aggregate owned-storage budget | Bounds nested allocation totals, including string-to-Term expansion | One checked reservation per allocation | Implemented |
 
 A full pre-scan is usually not the best default. It parses every term twice or needs a separate validator that can drift from the decoder. The better minimal design is **single-pass decoding with explicit limits and cheap local preflights**.
 
@@ -106,6 +112,7 @@ read declared length
 -> validate semantic maximum
 -> validate arithmetic used for capacity
 -> verify available bytes when the term has a fixed or known lower-bound size
+-> reserve array/byte storage from the aggregate allocation budget
 -> allocate fallibly
 -> decode with depth and collection limits
 ```

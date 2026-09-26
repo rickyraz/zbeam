@@ -26,12 +26,12 @@ pub const Peer = struct {
 /// Protocol encoding stays in `handshake.zig`; this function owns ordering,
 /// buffering, flushes, and transfer of the decoded peer identity.
 pub fn initiate(stream: std.Io.net.Stream, io: std.Io, allocator: std.mem.Allocator, config: Config) !Peer {
-    var reader_buffer: [2048]u8 = undefined;
     var writer_buffer: [2048]u8 = undefined;
-    var stream_reader = stream.reader(io, &reader_buffer);
+    // Never read ahead into distribution bytes: this reader ends at handoff.
+    var stream_reader = stream.reader(io, &.{});
     var stream_writer = stream.writer(io, &writer_buffer);
-    const reader = &stream_reader.interface;
-    const writer = &stream_writer.interface;
+    const reader = &stream_reader;
+    const writer = &stream_writer;
     var fsm: handshake.Initiator = .{};
 
     const name_packet = try handshake.encodeName(allocator, .{
@@ -82,12 +82,12 @@ pub fn initiate(stream: std.Io.net.Stream, io: std.Io, allocator: std.mem.Alloca
 /// verify the cookie proof, then prove knowledge of the cookie in return.
 /// A `Peer` is returned only after every FSM transition succeeds.
 pub fn accept(stream: std.Io.net.Stream, io: std.Io, allocator: std.mem.Allocator, config: Config) !Peer {
-    var reader_buffer: [2048]u8 = undefined;
     var writer_buffer: [2048]u8 = undefined;
-    var stream_reader = stream.reader(io, &reader_buffer);
+    // The next frame can arrive in the same TCP read as CHALLENGE_REPLY.
+    var stream_reader = stream.reader(io, &.{});
     var stream_writer = stream.writer(io, &writer_buffer);
-    const reader = &stream_reader.interface;
-    const writer = &stream_writer.interface;
+    const reader = &stream_reader;
+    const writer = &stream_writer;
     var fsm: handshake.Acceptor = .{};
 
     const name_payload = try readPacket(allocator, reader, config.max_packet_size);
@@ -135,20 +135,20 @@ pub fn accept(stream: std.Io.net.Stream, io: std.Io, allocator: std.mem.Allocato
 
 /// Reads the handshake's two-octet big-endian length before allocating. Zero
 /// has no valid handshake payload and the policy maximum bounds hostile peers.
-fn readPacket(allocator: std.mem.Allocator, reader: *std.Io.Reader, max_size: u16) ![]u8 {
+fn readPacket(allocator: std.mem.Allocator, reader: *std.Io.net.Stream.Reader, max_size: u16) ![]u8 {
     var length_bytes: [2]u8 = undefined;
-    try reader.readSliceAll(&length_bytes);
+    reader.interface.readSliceAll(&length_bytes) catch |err| return reader.err orelse err;
     const length = (@as(u16, length_bytes[0]) << 8) | length_bytes[1];
     if (length == 0 or length > max_size) return error.PacketTooLarge;
     const payload = try allocator.alloc(u8, length);
     errdefer allocator.free(payload);
-    try reader.readSliceAll(payload);
+    reader.interface.readSliceAll(payload) catch |err| return reader.err orelse err;
     return payload;
 }
 
 /// Flushes each handshake frame because the next protocol step waits for the
 /// peer; leaving bytes buffered would make both sides wait indefinitely.
-fn writePacket(writer: *std.Io.Writer, packet: []const u8) !void {
-    try writer.writeAll(packet);
-    try writer.flush();
+fn writePacket(writer: *std.Io.net.Stream.Writer, packet: []const u8) !void {
+    writer.interface.writeAll(packet) catch |err| return writer.err orelse err;
+    writer.interface.flush() catch |err| return writer.err orelse err;
 }

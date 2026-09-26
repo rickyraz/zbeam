@@ -39,8 +39,8 @@ pub fn Runtime(comptime Message: type) type {
         }
 
         /// Closes every live mailbox before releasing owned names and maps.
-        /// The mutex spans teardown so no concurrent lookup can observe a table
-        /// while it is being destroyed.
+        /// Callers must first join all runtime operations; the mutex does not
+        /// extend the lifetime of this object or externally owned mailboxes.
         pub fn deinit(self: *Self) void {
             self.mutex.lockUncancelable(self.io);
             var iterator = self.actors.valueIterator();
@@ -54,8 +54,10 @@ pub fn Runtime(comptime Message: type) type {
             self.* = undefined;
         }
 
-        /// Registers a bounded mailbox as one logical actor. Task scheduling is
-        /// deliberately separate from registry ownership.
+        /// Registers a fresh bounded mailbox as one logical actor. Storage must
+        /// outlive all send/receive operations, including sends already resolved
+        /// when terminate() removes the name. A live mailbox cannot be shared
+        /// by two entries; task scheduling remains caller-owned.
         pub fn spawn(self: *Self, name: ?[]const u8, mailbox: *MessageMailbox) !Handle {
             const owned_name = if (name) |value| try self.allocator.dupe(u8, value) else null;
             errdefer if (owned_name) |value| self.allocator.free(value);
@@ -64,6 +66,11 @@ pub fn Runtime(comptime Message: type) type {
             defer self.mutex.unlock(self.io);
             if (owned_name) |value| {
                 if (self.names.contains(value)) return error.NameTaken;
+            }
+            // ponytail: O(n) at registration; index mailboxes only if spawn profiling warrants it.
+            var entries = self.actors.valueIterator();
+            while (entries.next()) |entry| {
+                if (entry.mailbox == mailbox) return error.MailboxRegistered;
             }
             // IDs only need uniqueness, not cross-thread memory publication;
             // registry insertion under the mutex provides the ordering.
@@ -123,6 +130,8 @@ test "runtime registers, addresses, and terminates a bounded mailbox" {
     defer runtime.deinit();
 
     const handle = try runtime.spawn("worker", &mailbox);
+    try std.testing.expectError(error.NameTaken, runtime.spawn("worker", &mailbox));
+    try std.testing.expectError(error.MailboxRegistered, runtime.spawn("other", &mailbox));
     try std.testing.expectEqual(handle.id, runtime.whereis("worker").?);
     try runtime.sendNamed("worker", 42);
     try std.testing.expectEqual(@as(u8, 42), try mailbox.receive(io, handle.token));

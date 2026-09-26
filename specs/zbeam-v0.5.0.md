@@ -1,9 +1,10 @@
 # zbeam — Technical Specification
 
 > [!IMPORTANT]
-> **Design target, not implementation status.** The repository is currently a pre-alpha scaffold. Pseudocode and statements such as “implemented” or “conformance-tested” describe the proposed v0.5 design relative to earlier drafts; they are not claims about the current code. See [`docs/implementation-status.md`](../docs/implementation-status.md).
+> **Design target, not implementation status.** The repository implements a restricted single-actor MVP, not the full design below. Pseudocode and statements such as “implemented” or “conformance-tested” describe proposals relative to earlier drafts; they are not current-code or safety proofs. See [`docs/implementation-status.md`](../docs/implementation-status.md).
 
-**Document Status**: Working Draft / Unimplemented Design Target
+**Document Status**: Working Draft / Broader Design Target
+**MVP contract update**: 2026-09-26 — [`docs/mvp.md`](../docs/mvp.md) specifies the implemented subset, limits, lifecycle and verification gates. It takes precedence over historical pseudocode for current API behavior. The node uses owned copies, unbuffered demand-gated reads and sequential peers; it has no arena, `BufferHandle`, actor task scheduler or process-link/monitor implementation.
 **Version**: 0.5.0-draft
 **Date**: 2026-07-11
 **Language**: Zig 0.16.0 (`std.Io` interface mandatory)
@@ -116,6 +117,8 @@ The transport/protocol prior-art analysis is unchanged from v0.4.0. The atomic-C
 
 #### 5.3.1 BufferHandle — Atomic Consumed State (rewritten)
 
+**Unimplemented design caveat (2026-09-26):** an atomic consumed flag does not protect a slice already returned by `access()` from concurrent transfer or recycling. Copying this struct also copies state instead of enforcing a single ownership identity. The historical claims below therefore do not establish race-free access. The MVP copies decoded bytes and enforces a 32 MiB aggregate storage budget per ETF term; handle lifecycle remains open research.
+
 The `consumed: bool` field from v0.4.0 is replaced with `consumed: std.atomic.Value(bool)`. `promote()` and `access()` are unchanged in signature — only the internal check-then-act sequence changes, from two separate operations to one.
 
 ```zig
@@ -159,6 +162,8 @@ pub const BufferHandle = struct {
 **Closed concurrent hazard**: this design closes the *concurrent* hazard — two threads racing `promote()` against each other, or a concurrent `access()` observing a stale `false` while a `promote()` on another thread is mid-flight. It does **not** close the *same-thread logic* hazard flagged in v0.4.0 §18.1 — a handler that copies `.bytes` into a local variable and keeps using that local copy *after* calling `promote()` on the original handle is still not caught by any flag, atomic or not, because nothing about that pattern is a race; it is a single-threaded aliasing mistake, and Zig's type system has no way to invalidate a `[]const u8` that was copied out of a struct before the struct changed state. `ForwardOnlyHandle` (§5.3.2) closes this for the subset of actors that never need `.access()` at all; the general case remains open per §18.1.
 
 #### 5.3.2 ForwardOnlyHandle — Static Enforcement for the Common Case (NEW, closes §18.1 for one subset)
+
+**Unimplemented design caveat (2026-09-26):** Zig fields remain accessible, so the shown `inner` wrapper is not proof that byte access is impossible. A future implementation must demonstrate actual escape/compile-failure tests before making this static guarantee.
 
 v0.5.0 defines static enforcement for the unconditional “always forward, never inspect” subset identified in v0.4.0 §18.1. `ForwardOnlyHandle` removes byte-access operations from that subset's API:
 
@@ -258,7 +263,11 @@ pub const Term = union(enum) {
 
 ### 5.5 Transport Layer
 
+**Implemented MVP contract (2026-09-26):** after authentication, one positive actor credit is atomically reserved before a frame read. `readDemandedPacket` rejects buffered readers and zero credit before I/O/allocation; the synchronous dispatcher restores credit only after handling and flushing. EPMD/handshake reads precede this data-plane contract. Partial reads are terminal; new connections start with one fresh credit. Frame lengths are bounded before allocation. There is no fragment assembler, cache or arena. See [`docs/mvp.md`](../docs/mvp.md#demand-and-lifecycle) and Phase C evidence.
+
 #### 5.5.1 Buffer Arena — Atomic Claim, Fixed Recycle (rewritten)
+
+**Unimplemented design caveat (2026-09-26):** publishing a zero count and subsequently resetting that slot can overwrite an intervening successful claim. The proposed separate `release()`/`recycleSlot()` sequence below must not be copied as a verified reclamation algorithm. Generation identity and final-release ownership remain open.
 
 Three changes: `SlotRefCount.release()` gains an underflow guard (panics instead of silently corrupting), `recycleSlot()` no longer touches the refcount at all, and `acquireSlot()` claims a slot via CAS instead of load-then-write.
 
@@ -527,6 +536,8 @@ fn myTerminalActor(io: std.Io, ctx: ActorContext) !void {
 
 ## 6. NodeConfig & Public API
 
+The current API is `runtime.node.Config` (`src/zbeam/runtime/node.zig`), not the proposed struct below. Its frame/ETF limits, message bound and sequential-connection bound are documented in [`docs/mvp.md`](../docs/mvp.md). The current `Runtime(T).spawn` registers caller-owned mailbox storage and does not schedule tasks. Tokens enforce logical ownership and reject overlapping receives, not unforgeable task identity.
+
 ```zig
 pub const NodeConfig = struct {
     // --- Identity, Network, Transport Buffer Ring, Demand/Flow Control ---
@@ -567,6 +578,8 @@ pub const NodeConfig = struct {
 ---
 
 ## 7. Node Lifecycle
+
+The MVP listener retains its EPMD registration across sequential peer connections. Each connection gets fresh handshake challenge, demand and packet ownership; none of that state is retained after disconnect. Invalid peer input closes the connection; cancellation/allocation failure propagates. There is no outbound retry/backoff, EPMD-loss recovery or read deadline. CLI `echo` accepts one peer, `serve` accepts sequential peers, and `probe` validates an initiating request/reply.
 
 *(§7.1 startup sequence unchanged from v0.4.0, with one addition at step 5: `TransportArena.init()` now initializes every slot via `SlotRefCount.initFree()` rather than `SlotRefCount.init()` — the arena starts with zero owned slots, not `count` owned slots, correcting an implicit assumption in v0.3.0/v0.4.0 that was harmless only because nothing ever read an uninitialized slot's refcount before its first `acquireSlot()`.)*
 
@@ -659,6 +672,8 @@ This does not make every use of these primitives free — `cmpxchgWeak` in `Slot
 *(§14 body from v0.3.0/v0.4.0 unchanged. New subsection:)*
 
 ### 14.1 Fault Isolation & Crash Domain (NEW)
+
+**Current evidence (2026-09-26):** the OTP 25/26/27 matrix kills a child zbeam process with SIGKILL and asserts bounded `nodedown`, an unchanged OTP OS PID and a responsive unrelated local process. This is process-loss evidence only. The deliberate panic/corruption tests proposed below, and isolation between native actors, remain unverified.
 
 This subsection formalizes a property that has been true since v0.3.0's architectural decision to implement zbeam as a distribution-protocol peer rather than a NIF, but which v0.3.0 and v0.4.0 only ever stated informally in `README.md`'s comparison table, never as a numbered spec invariant with a conformance test behind it.
 

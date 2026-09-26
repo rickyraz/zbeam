@@ -1,0 +1,5 @@
+RUN development with OTP 28
+ISOLATION_READY
+PASS acceptor roundtrips idle-ticks cookie-rejection reconnect malformed-payload process-loss-isolation
+probe PASS otp_echo_development_393815@127.0.0.1
+PASS development OTP 28: initiating and accepting roles

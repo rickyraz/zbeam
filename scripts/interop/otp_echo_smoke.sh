@@ -6,39 +6,92 @@ zbeam_bin=${2:?usage: otp_echo_smoke.sh ERL ZBEAM LABEL}
 label=${3:?usage: otp_echo_smoke.sh ERL ZBEAM LABEL}
 short_name="zbeam_${label}_$$"
 client_name="client_${label}_$$@127.0.0.1"
-log=${TMPDIR:-/tmp}/"${short_name}.log"
+logs=$(mktemp -d)
 peer_pid=
+otp_pid=
+client_pid=
 cleanup() {
-    [ -z "$peer_pid" ] || kill "$peer_pid" 2>/dev/null || true
-    rm -f "$log"
+    status=$?
+    if [ "$status" -ne 0 ]; then
+        for log in "$logs"/*; do [ ! -f "$log" ] || { printf '\n%s\n' "$log"; cat "$log"; }; done >&2
+    fi
+    [ -z "$peer_pid" ] || { kill "$peer_pid" 2>/dev/null || true; wait "$peer_pid" 2>/dev/null || true; }
+    [ -z "$otp_pid" ] || { kill "$otp_pid" 2>/dev/null || true; wait "$otp_pid" 2>/dev/null || true; }
+    [ -z "$client_pid" ] || { kill "$client_pid" 2>/dev/null || true; wait "$client_pid" 2>/dev/null || true; }
+    rm -rf "$logs"
 }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+trap 'exit 130' INT TERM
 
-otp_release=$("$erl_bin" -noshell -eval 'io:format("~s",[erlang:system_info(otp_release)]),halt().' 2>/dev/null)
+wait_registered() {
+    tries=0
+    until epmd -names 2>/dev/null | grep -q "name $1 "; do
+        tries=$((tries + 1))
+        if [ "$tries" -ge 100 ]; then echo "FAIL registration: $1" >&2; return 1; fi
+        sleep 0.1
+    done
+}
+
+otp_release=$(timeout 15 "$erl_bin" +S 2:2 -noshell -eval 'io:format("~s",[erlang:system_info(otp_release)]),halt().')
 echo "RUN $label with OTP $otp_release"
 epmd -daemon
-"$zbeam_bin" echo "$short_name" zbeam_test_cookie >"$log" 2>&1 &
+"$zbeam_bin" serve "$short_name" zbeam_test_cookie >"$logs/zbeam.log" 2>&1 &
 peer_pid=$!
+wait_registered "$short_name"
+
+# A rejected cookie must close only that connection, not the listening service.
+timeout 15 "$erl_bin" +S 2:2 -noshell -name "bad_$client_name" -setcookie wrong_cookie -eval \
+    "false=net_kernel:connect_node(list_to_atom(\"$short_name@127.0.0.1\")),halt()."
+kill -0 "$peer_pid"
+
+# Exact assertions, not output substring matching. SIGKILL is confined to the
+# child created above; this is process-loss evidence, not a panic-safety proof.
+timeout 40 "$erl_bin" +S 2:2 -noshell -name "$client_name" -setcookie zbeam_test_cookie -kernel net_ticktime 4 -eval \
+    "N=list_to_atom(\"$short_name@127.0.0.1\"),
+     Connect=fun() -> true=net_kernel:connect_node(N),true=monitor_node(N,true) end,
+     Down=fun() -> receive {nodedown,N} -> ok after 3000 -> error(no_nodedown) end end,
+     Echo=fun(M) -> {echo,N}!M, receive M -> ok after 3000 -> error(echo_timeout) end end,
+     Connect(),
+     lists:foreach(Echo,[hello,-2147483648,2147483647,{},[],[1,2,300],{self(),hello},binary:copy(<<90>>,65536)]),
+     {absent,N}!ignored,Echo(after_unknown_route),
+     timer:sleep(5000),Echo(after_idle_ticks),
+     true=erlang:disconnect_node(N),Down(),Connect(),Echo(after_reconnect),
+     {echo,N}!#{unsupported=>map},Down(),Connect(),Echo(after_bad_payload),
+     Before=os:getpid(),
+     Other=spawn(fun Loop() -> receive {P,ping} -> P!pong,Loop() end end),
+     io:format(\"ISOLATION_READY~n\"),Down(),
+     Before=os:getpid(),true=is_process_alive(Other),Other!{self(),ping},
+     receive pong -> ok after 1000 -> error(sibling_stopped) end,
+     io:format(\"PASS acceptor roundtrips idle-ticks cookie-rejection reconnect malformed-payload process-loss-isolation~n\"),halt()." >"$logs/client.log" 2>&1 &
+client_pid=$!
 tries=0
-until epmd -names 2>/dev/null | grep -q "name $short_name "; do
-    tries=$((tries + 1))
-    if [ "$tries" -ge 50 ]; then
-        echo "FAIL $label: zbeam did not register with EPMD" >&2
-        cat "$log" >&2
-        exit 1
-    fi
-    sleep 0.1
+until grep -q '^ISOLATION_READY$' "$logs/client.log"; do
+    kill -0 "$client_pid" 2>/dev/null || { wait "$client_pid"; exit 1; }
+    tries=$((tries + 1)); [ "$tries" -lt 150 ] || exit 1; sleep 0.1
+done
+kill -KILL "$peer_pid"
+wait "$client_pid"
+client_pid=
+cat "$logs/client.log"
+wait "$peer_pid" 2>/dev/null || true
+peer_pid=
+# Registration lifetime must end with the child, not leak a stale EPMD entry.
+tries=0
+while epmd -names | grep -q "name $short_name "; do
+    tries=$((tries + 1)); [ "$tries" -lt 50 ] || exit 1; sleep 0.1
 done
 
-output=$("$erl_bin" -noshell -name "$client_name" -setcookie zbeam_test_cookie -eval \
-    "N=list_to_atom(\"$short_name@127.0.0.1\"),
-     io:format(\"connect=~p~n\",[net_kernel:connect_node(N)]),
-     {echo,N}!{self(),hello},
-     receive M -> io:format(\"reply=~p~n\",[M]) after 3000 -> halt(2) end,
-     halt().")
-wait "$peer_pid"
-peer_pid=
-printf '%s\n' "$output"
-printf '%s' "$output" | grep -q 'connect=true'
-printf '%s' "$output" | grep -q 'reply=.*hello'
-echo "PASS $label"
+# Reverse direction: real OTP accepts, zbeam discovers it through EPMD and
+# initiates, sends a registered message, then validates its SEND reply.
+otp_name="otp_echo_${label}_$$"
+"$erl_bin" +S 2:2 -noshell -name "$otp_name@127.0.0.1" -setcookie zbeam_test_cookie -eval \
+    'register(echo,spawn(fun Loop() -> receive {From,Value} -> From!{From,Value},Loop() end end)),
+     io:format("ready~n"),receive stop -> halt() after 30000 -> halt(3) end.' >"$logs/otp.log" 2>&1 &
+otp_pid=$!
+wait_registered "$otp_name"
+tries=0
+until grep -q '^ready$' "$logs/otp.log"; do
+    tries=$((tries + 1)); [ "$tries" -lt 100 ] || exit 1; sleep 0.1
+done
+timeout 15 "$zbeam_bin" probe "probe_${label}_$$" zbeam_test_cookie "$otp_name"
+echo "PASS $label OTP $otp_release: initiating and accepting roles"

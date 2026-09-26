@@ -57,16 +57,16 @@ Control is decoded first because it answers where the message goes. Payload rema
 
 A mailbox must be bounded or it can hide backpressure by turning a slow actor into unbounded memory growth. `std.Io.Queue` supplies thread-safe bounded storage; caller-provided storage makes capacity explicit.
 
-Many producers may deliver, but one logical actor token may receive. The mailbox atomically changes owner from reserved ID zero to the first valid actor ID and rejects different tokens afterward.
+Many producers may deliver, but one logical actor token may receive. The mailbox atomically changes owner from reserved ID zero to the first valid actor ID and rejects different tokens afterward. A separate atomic guard rejects overlapping receives even when callers copy the same token. Tokens are not unforgeable task identities.
 
-Demand is a separate atomic credit counter. One credit means permission for one message. Compare/exchange loops prevent concurrent updates from losing increments, and checked addition prevents integer wraparound. Transport demand gating is still pending; the primitive alone does not prove TCP backpressure.
+Demand is a separate atomic credit counter. One credit authorizes one frame. The runtime reserves it before an unbuffered read and restores it only after handling and reply flushing. Checked addition prevents wraparound. A zero-credit oracle verifies no read/allocation, and the TCP stress test verifies a paused handler stops a sender until processing resumes. Handshake and EPMD control-plane reads happen before this actor-demand contract.
 
 ## Runtime boundaries
 
-The registry owns names and identity mappings. Callers own mailbox storage, and scheduling remains separate. Named delivery resolves a mailbox while holding the registry lock, then releases the lock before a potentially blocking queue operation. Otherwise one full mailbox could freeze all registry activity.
+The registry owns names and identity mappings. Callers own mailbox storage, and scheduling remains separate. Named delivery resolves a mailbox while holding the registry lock, then releases the lock before a potentially blocking queue operation. Otherwise one full mailbox could freeze all registry activity. The caller must preserve that mailbox until every resolved operation has finished, even after termination removes its name. Registry destruction requires all users to be joined.
 
 Transport parses bytes and owns sockets. Actor code handles behavior. Runtime code composes them. Keeping these responsibilities separate prevents actor business logic from controlling buffer or connection lifetime.
 
 ## Benchmark boundary
 
-The Port baseline echoes a fixed 32-byte payload with four-byte packet framing. The distribution path echoes the same payload through EPMD, authentication, routing, and ETF control framing. The result is an initial end-to-end comparison, not an algorithmic equivalence or performance claim.
+The Port baseline echoes a fixed 32-byte payload with four-byte packet framing. The distribution path uses the same payload with ETF routing; EPMD and authentication occur at startup, outside steady-state latency samples. Both paths report percentiles, sequential throughput, memory snapshots, restart and scheduler activity. The result is one local workload, not algorithmic equivalence or a general performance claim.

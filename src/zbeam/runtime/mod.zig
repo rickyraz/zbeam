@@ -1,7 +1,7 @@
 //! Runtime composition and lifecycle battery.
 //!
-//! This module may compose actor, transport, protocol, and ETF batteries. No
-//! runtime behavior is implemented yet.
+//! Composes the synchronous single-actor node and caller-scheduled local
+//! mailbox registry. General actor task scheduling remains unimplemented.
 
 pub const core = @import("core.zig");
 pub const Echo = @import("echo.zig").Echo;

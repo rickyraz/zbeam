@@ -1,0 +1,6 @@
+Build Summary: 5/5 steps succeeded
+install success
++- install zbeam success
+|  +- compile exe zbeam Debug native cached 24ms MaxRSS:38M
++- install zbeam-port-echo success
+   +- compile exe zbeam-port-echo Debug native cached 22ms MaxRSS:38M

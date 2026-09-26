@@ -48,6 +48,32 @@ test "distribution framing vectors decode deterministically" {
     try std.testing.expect(packet.message.payload_etf == null);
 }
 
+test "MVP capability profile excludes optional monitors caches and fragments" {
+    try std.testing.expectEqual(@as(u64, 0), protocol.flags.m1 & protocol.flags.dist_monitor);
+    // DFLAG_DIST_HDR_ATOM_CACHE and DFLAG_FRAGMENTS, OTP distribution flags.
+    try std.testing.expectEqual(@as(u64, 0), protocol.flags.m1 & (0x2000 | 0x0080_0000));
+    for ([_]u8{ 68, 69, 70 }) |header| {
+        try std.testing.expectError(error.UnexpectedHeader, protocol.distribution.decodePacket(std.testing.allocator, &.{ 0, 0, 0, 2, 131, header }, .{}));
+    }
+}
+
+test "REG_SEND requires the legacy cookie atom and bounded ETF storage" {
+    var fields = [_]etf.Term{
+        .{ .integer = protocol.distribution.reg_send },
+        .{ .pid = .{ .node = "n@host", .id = 1, .serial = 0, .creation = 1 } },
+        .{ .integer = 0 },
+        .{ .atom = "echo" },
+    };
+    var control = etf.Term{ .tuple = &fields };
+    try std.testing.expectError(error.InvalidControl, protocol.distribution.regSendDestination(&control));
+    fields[2] = .{ .atom = "" };
+    const bytes = try protocol.distribution.encodePacket(std.testing.allocator, &control, null);
+    defer std.testing.allocator.free(bytes);
+    try std.testing.expectError(error.PacketTooLarge, protocol.distribution.decodePacket(std.testing.allocator, bytes, .{ .max_packet_bytes = 1 }));
+    try std.testing.expectError(error.LimitExceeded, protocol.distribution.decodePacket(std.testing.allocator, bytes, .{ .etf = .{ .max_allocated_bytes = 0 } }));
+    try std.testing.expectEqualStrings("echo", (try protocol.distribution.regSendDestination(&control)).name);
+}
+
 test "malformed handshake name length is rejected" {
     const truncated = [_]u8{
         'N',

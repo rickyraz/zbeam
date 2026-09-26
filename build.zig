@@ -104,6 +104,10 @@ pub fn build(b: *std.Build) void {
     const integration_tests = b.addTest(.{ .root_module = integration_tests_mod });
     const test_integration_step = b.step("test-integration", "Verify independent and umbrella imports");
     test_integration_step.dependOn(&b.addRunArtifact(integration_tests).step);
+    const cli_smoke = b.addSystemCommand(&.{"sh"});
+    cli_smoke.addFileArg(b.path("scripts/test/cli_smoke.sh"));
+    cli_smoke.addArtifactArg(exe);
+    test_integration_step.dependOn(&cli_smoke.step);
 
     const etf_fixtures_mod = b.createModule(.{
         .root_source_file = b.path("fixtures/etf/manifest.zig"),
@@ -149,9 +153,16 @@ pub fn build(b: *std.Build) void {
     test_interop_cmd.step.dependOn(b.getInstallStep());
     test_interop_step.dependOn(&test_interop_cmd.step);
 
+    const docker_interop_step = b.step("test-interop-docker", "Run all OTP targets with pinned Docker images (Linux)");
+    const docker_interop_cmd = b.addSystemCommand(&.{"sh"});
+    docker_interop_cmd.addFileArg(b.path("scripts/interop/otp_docker_matrix.sh"));
+    docker_interop_cmd.step.dependOn(b.getInstallStep());
+    docker_interop_step.dependOn(&docker_interop_cmd.step);
+
     const benchmark_step = b.step("bench-port-vs-zbeam", "Run local Erlang Port comparison");
     const benchmark_cmd = b.addSystemCommand(&.{"sh"});
     benchmark_cmd.addFileArg(b.path("scripts/bench_port_vs_zbeam.sh"));
+    if (b.args) |args| benchmark_cmd.addArgs(args);
     benchmark_cmd.step.dependOn(b.getInstallStep());
     benchmark_step.dependOn(&benchmark_cmd.step);
 
