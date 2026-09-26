@@ -89,6 +89,8 @@ Transport never imports actor/runtime. The actor-facing dispatcher reserves dema
 - [MVP scope, commands, limits and remaining work](docs/mvp.md)
 - [Implementation status](docs/implementation-status.md)
 - [Roadmap](ROADMAP.md) and [research/risk backlog](docs/research-needed.md)
+- [Development sequence and final release gates](docs/development-plan.md)
+- [snmalloc research and evaluation plan](docs/snmalloc-evaluation.md), not an integrated backend
 - [Protocol primary sources](docs/protocol-sources.md)
 - [Architecture decisions](docs/adr/README.md)
 - [Verification evidence](docs/evidence/README.md)

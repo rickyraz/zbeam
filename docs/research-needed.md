@@ -2,6 +2,8 @@
 
 **Reviewed:** 2026-09-26. The [single-actor MVP](mvp.md) is implemented; the full v0.5 design is not. [Implementation status](implementation-status.md) distinguishes executed evidence from proposals.
 
+The [development plan](development-plan.md) defines execution order and final release gates. The [snmalloc evaluation](snmalloc-evaluation.md) specifies the allocator experiment without changing the default build.
+
 ## Priority labels
 
 - **P0 — restricted MVP gate:** required for the documented single-actor development profile.
@@ -70,7 +72,7 @@ SIGKILL process-loss checks pass with a surviving BEAM VM and unrelated local pr
 
 ### Broader baseline and deployment
 
-The committed Port comparison is a single sequential payload/workload on one host, with scheduler-wall-time instrumentation and memory snapshots. Restart includes orderly shutdown, launch, readiness polling and first reply; it is one sample, not a distribution or crash-recovery SLO.
+The committed Port comparison is a single sequential payload/workload on one host, with scheduler-wall-time instrumentation and memory snapshots. The source audit identifies `DebugAllocator` in the no-libc ReleaseSafe zbeam build; the Port payload path uses fixed storage. These results do not isolate allocator cost. Restart includes orderly shutdown, launch, readiness polling and first reply; it is one sample, not a distribution or crash-recovery SLO.
 
 **Required evidence:** larger payloads, concurrent clients, repetitions/confidence intervals, ordering effects, allocator profiles, loaded BEAM workloads and operational restart policies. Production work also requires non-argv cookie handling, TLS/trusted-network policy and security review.
 
@@ -93,6 +95,16 @@ Zig wrapper fields are accessible; removing an `access()` method while exposing 
 The current representation uses owned copies. Compare that baseline with ownership transfer and arena-backed payloads only after measuring a bottleneck. No raw slice may cross an actor/async boundary without an explicit lifetime strategy. No ETF re-encoding is a different claim from zero-copy transfer.
 
 ## P2 — Deferred optimization research
+
+### Allocator selection and snmalloc
+
+**Hypothesis:** batched remote frees may benefit future owned-message producer/consumer workloads. The synchronous MVP does not establish that workload or an allocator bottleneck.
+
+**Risks:** linking libc changes Zig's default allocator selection; preload may affect the benchmark harness without replacing the static zbeam allocator; alignment/OOM/resize semantics, mixed allocator domains, thread/TLS teardown, remote-free retention and added C++ build requirements require validation.
+
+**Required evidence:** explicit standard-allocator baselines, allocation-routing checks, a pinned namespaced C ABI adapter, ownership/cancellation/producer-exit tests, repeated service measurements and peak/post-idle memory results. Promotion requires a separate decision against the [predeclared evaluation gates](snmalloc-evaluation.md#e3--promotion-decision). The [source audit](evidence/phase-a/2026-09-26-allocator-source-audit.md) does not establish integration or performance.
+
+### Other measured-need optimizations
 
 - **Copy threshold/buffer sizing:** use measured payload distributions rather than copying a BEAM constant without workload evidence.
 - **io_uring registered buffers:** prove descriptor/buffer ownership, cancellation, exhaustion and fallback before replacing portable `std.Io`.

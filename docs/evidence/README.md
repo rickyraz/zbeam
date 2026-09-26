@@ -9,6 +9,11 @@ Evidence records support implementation and compatibility claims. Passing tests 
 
 These records supersede earlier pending-matrix/demand status for the restricted MVP. Historical files remain unchanged; the full v0.5 design is still unimplemented.
 
+## Allocator research
+
+- [2026-09-26 allocator source and binary audit](phase-a/2026-09-26-allocator-source-audit.md) — baseline selection/linkage and pinned snmalloc source findings, not snmalloc integration or performance evidence.
+- [Evaluation plan](../snmalloc-evaluation.md) — proposed experiment and promotion criteria.
+
 ## Phases
 
 - `phase-a/` — local logic, type/API contract, and compile-fail evidence.

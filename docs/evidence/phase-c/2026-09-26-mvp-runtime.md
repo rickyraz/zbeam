@@ -62,6 +62,10 @@ Raw [summary](2026-09-26-mvp/port-comparison.tsv) and [2,000 individual latency 
 
 Restart includes orderly stop, relaunch, readiness checks and first reply. Distribution readiness polls at 5 ms intervals, so polling affects that sample. This is not externally supervised crash recovery or a restart percentile. Memory is sampled from `/proc`; BEAM memory includes the whole VM, not only one transport.
 
+## Allocator provenance clarification — 2026-09-26
+
+The subsequent [source/binary audit](../phase-a/2026-09-26-allocator-source-audit.md) identifies `DebugAllocator` as `std.process.Init.gpa` for this Zig 0.16.0, no-libc ReleaseSafe configuration. The distribution path uses that allocator for owned packets/terms; the Port worker uses a fixed payload array. The raw samples and negative result above remain unchanged. This configuration fact is not a profile or proof that allocation caused the gap. An explicit standard-allocator comparison is required before evaluating snmalloc.
+
 ## Remaining limits
 
 No confidence intervals, randomized benchmark ordering, concurrent workload, high-load BEAM scheduler test, allocator profile, additional payload-size matrix or sanitizer campaign was run. SIGKILL/nodedown evidence is recorded separately in [Phase B](../phase-b/2026-09-26-mvp.md). Actor-local panic isolation, transport deadlines and arena lifecycle remain unimplemented.

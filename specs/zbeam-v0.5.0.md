@@ -629,6 +629,8 @@ The MVP listener retains its EPMD registration across sequential peer connection
 
 ### 12.1 Allocator Architecture
 
+**Allocator research (2026-09-26):** the MVP accepts caller-supplied `std.mem.Allocator` and has no snmalloc dependency. The [snmalloc evaluation plan](../docs/snmalloc-evaluation.md) proposes an optional application-side adapter, matched standard-allocator baselines and ownership/teardown gates. This is not an implemented backend or a change to the battery DAG. [Development sequencing](../docs/development-plan.md) keeps reliability and protocol coverage ahead of default allocator promotion.
+
 *(Table unchanged from v0.4.0, with one addition:)*
 
 | Tier | Allocator | Scope | Purpose |
