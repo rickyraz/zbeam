@@ -1,10 +1,14 @@
 # snmalloc Evaluation and Integration Plan
 
-- **Status:** researched candidate; not linked, integrated or benchmarked in zbeam.
+- **Status:** experimental execution is recorded on `explore/snmalloc`; not a default or production-supported backend.
 - **Review date:** 2026-09-26.
 - **Upstream snapshot:** release `0.7.5`, commit `526c55bdffa17aae20a9a3d24fe68a7a3b8d9894`.
 - **Project baseline:** MVP commit `090bb60`, Zig 0.16.0.
 - **Decision:** preserve allocator injection; evaluate an optional backend before changing any default.
+
+## Experimental result — 2026-09-27
+
+The [branch experiment](evidence/phase-c/2026-09-27-snmalloc.md) compiled and tested the adapter, capacity reuse and hardening. It records 225 repeated workload runs and real OTP 25/26/27 verification. The predeclared memory/tail gates are not met; default adoption is rejected. The sections below preserve the research plan and remaining gates rather than implying all proposed validation is complete.
 
 ## Recommendation
 
@@ -164,9 +168,9 @@ Possible outcomes:
 
 ## Evidence required before implementation claims
 
-The current [source audit](evidence/phase-a/2026-09-26-allocator-source-audit.md) establishes only source/ABI observations and the baseline's linkage/allocator selection. No snmalloc binary was built, no adapter was compiled, and no snmalloc performance or security result was obtained for zbeam.
+The current [source audit](evidence/phase-a/2026-09-26-allocator-source-audit.md) establishes only source/ABI observations and the baseline's linkage/allocator selection. At that audit date no snmalloc binary or adapter had been built. The subsequent [branch record](evidence/phase-c/2026-09-27-snmalloc.md) supplies experimental execution evidence, with scope and failures stated explicitly.
 
-The next artifacts are a lab implementation, runnable contract tests, matched raw benchmark results and an allocator decision record. Until those exist, implementation status remains unchanged.
+The branch now contains the lab, contract tests, matched raw results and a reject-default decision. Native-host, long-soak, useful-job and broader security validation remain open; mainline promotion is not implied.
 
 ## Primary sources
 

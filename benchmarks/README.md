@@ -4,7 +4,7 @@ Benchmarks are evidence tooling, not product claims. Results record environment,
 
 ## Allocator research
 
-The [snmalloc evaluation plan](../docs/snmalloc-evaluation.md) defines a future isolated experiment; no snmalloc build target or result exists yet. The [source audit](../docs/evidence/phase-a/2026-09-26-allocator-source-audit.md) identifies `DebugAllocator` in the recorded no-libc ReleaseSafe executable. The Port payload path uses fixed storage, so the Port comparison alone cannot identify an allocator bottleneck. Compare an explicit `smp_allocator` configuration before adding an external backend, and preserve the existing results rather than relabeling them.
+The [snmalloc evaluation plan](../docs/snmalloc-evaluation.md) defines the experiment gates; [snmalloc branch results](../docs/evidence/phase-c/2026-09-27-snmalloc.md) now exist without changing the default. The [source audit](../docs/evidence/phase-a/2026-09-26-allocator-source-audit.md) identifies `DebugAllocator` in the recorded no-libc ReleaseSafe executable. The Port payload path uses fixed storage, so the Port comparison alone cannot identify an allocator bottleneck. Compare an explicit `smp_allocator` configuration before adding an external backend, and preserve the existing results rather than relabeling them.
 
 The experimental `explore/allocator-baselines` branch provides [isolated workloads and a seeded matrix](memory/README.md). Its [standard-allocator results](../docs/evidence/phase-c/2026-09-27-allocator-baselines.md) preserve raw samples and do not change the default allocator. `ZBEAM_BENCH_PAYLOAD_BYTES` selects 1–1048576 bytes for the Port comparison; the default remains 32 bytes.
 

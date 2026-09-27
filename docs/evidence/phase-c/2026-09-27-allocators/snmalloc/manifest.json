@@ -1,0 +1,101 @@
+{
+  "platform": "Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "cpu_count": 4,
+  "affinity": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "zig": "0.16.0",
+  "base_commit": "27b0feed2c55cfc1087ab32e9fe525e8337ec8e6",
+  "source_sha256": {
+    "build.zig": "b94ff5c8db52a8cae2ee5275c6d7d8363406e24d8515ea16f465b5f3dc535791",
+    "benchmarks/port_vs_zbeam.exs": "862db218abf51ce20c7aac1f5619025517599396a15c18e668fbe825507eaea0",
+    "scripts/bench/allocator_matrix.py": "1491dee3c73dd03c81cdb5549bce9afe1d697f0c6976deb9aa6fd845e3f3dfbc",
+    "benchmarks/memory/allocator_compare.zig": "66c601588309bbd2bf5d2e524005a32e833fdc1416da45eab69d6c4ea903daae",
+    "benchmarks/memory/snmalloc_allocator.zig": "d23dfa965d03320414f83bea314523ea87f3d553a513d36f461a5437f50de5a5",
+    "src/app_allocator.zig": "ac76bf534831e7d55c7c6d4bb77f2dac295ea7d9083c1546184310265426a015",
+    "src/main.zig": "43f2e440e7e8fef2d2b2e25e3bb7510faacc6314897030e33c8bf556d9ce4ac3",
+    "src/root.zig": "3e02d98d4bdd70606e6016d4b2baf29b16f4812f173bf983f0068b3fdb41c927",
+    "src/zbeam/actor/demand.zig": "018f9992fc5ead5b58229b41b5490a304fc32b744e684cf6e53a6a906cb36ad0",
+    "src/zbeam/actor/mailbox.zig": "db4bacdd7328191295b9bddcde90a1bae07498047dc7c548852ee34942b6d912",
+    "src/zbeam/actor/mod.zig": "e2fba82e11bb04197cec408f4f6302df0218cb64ffc132e2312805ed7da410ae",
+    "src/zbeam/etf/codec.zig": "c9d6a5d6e6e26cebbb9d253762dc5715337d33162f1e4981474b545eb25002fb",
+    "src/zbeam/etf/mod.zig": "b771c97091d0779ce6314c07235c89e61b28eadf231a917b014e8b60f62d2536",
+    "src/zbeam/etf/term.zig": "8319566b13695aa3dc82e9ea7f2cce39fea1fc439792240bb207aa096019fbed",
+    "src/zbeam/protocol/distribution.zig": "79cb43599beb3b3bd07dda390ce28e5912ddc6ec12b09e6024e4249e71404f46",
+    "src/zbeam/protocol/epmd.zig": "34df00a89c2cf097f05ff90c6ed2734cfea50b97514eb47dc46895a99f7603af",
+    "src/zbeam/protocol/flags.zig": "d9d16e2b45e3a6bbcee3876227e12ff3576a971deeda81793276a7a2eae7f43f",
+    "src/zbeam/protocol/handshake.zig": "68b7226856fe1c60f953eab597d1e6d9b7edd89de4b8c20710a885f987da16c9",
+    "src/zbeam/protocol/mod.zig": "f10254f8182de3cd29fe18afa18924d3592d7ac39c4083c1a90c4cc718e58318",
+    "src/zbeam/runtime/actors.zig": "e9d759f3b39c44b0a2ffd89f72cc1acb630a97c75bbaabc3528d9997deb99d9d",
+    "src/zbeam/runtime/core.zig": "19b7ec8965636ad2e6ac71105eb6ed77d49ed554e460eca3dc274ab8893bae0f",
+    "src/zbeam/runtime/echo.zig": "8a138431c3f48a0005566065b47eaf646baf45afe01dac8e4f452838c0145058",
+    "src/zbeam/runtime/mod.zig": "32db5fd9a21bf79547cdf785b6ab4ddcb24d82d87a8c20e7522c3c13b78a8fa5",
+    "src/zbeam/runtime/node.zig": "c93165196287505c0c505ae9017d74f527b0402a4aff3cba342ce94b7dd856f2",
+    "src/zbeam/transport/distribution_io.zig": "de1f890ab58354e4a91080e1c0d41b7e999a412c507fac27ce40b1e3cc8d64a2",
+    "src/zbeam/transport/epmd_client.zig": "24032b4ac1bbf40a9ac0d96292f0569e68ea93d80523114a2e7be4c697b228f3",
+    "src/zbeam/transport/handshake_io.zig": "533a0c14420a81b2f202e8316c27bbe2698d34078d0e135bb9bb53596b5553dd",
+    "src/zbeam/transport/mod.zig": "fbddb8734bddc5fa967890ce7f6e0a8cc183347d9ca48696cc3ba3e56014f22c"
+  },
+  "binaries": {
+    "smp-control": {
+      "zbeam": "/tmp/zbeam-explore/smp-control/bin/zbeam",
+      "zbeam-port-echo": "/tmp/zbeam-explore/smp-control/bin/zbeam-port-echo",
+      "zbeam-allocator-bench": "/tmp/zbeam-explore/smp-control/bin/zbeam-allocator-bench"
+    },
+    "libc-control": {
+      "zbeam": "/tmp/zbeam-explore/libc-control/bin/zbeam",
+      "zbeam-port-echo": "/tmp/zbeam-explore/libc-control/bin/zbeam-port-echo",
+      "zbeam-allocator-bench": "/tmp/zbeam-explore/libc-control/bin/zbeam-allocator-bench"
+    },
+    "sn-basic": {
+      "zbeam": "/tmp/zbeam-explore/sn-basic/bin/zbeam",
+      "zbeam-port-echo": "/tmp/zbeam-explore/sn-basic/bin/zbeam-port-echo",
+      "zbeam-allocator-bench": "/tmp/zbeam-explore/sn-basic/bin/zbeam-allocator-bench"
+    },
+    "sn-resize": {
+      "zbeam": "/tmp/zbeam-explore/sn-resize/bin/zbeam",
+      "zbeam-port-echo": "/tmp/zbeam-explore/sn-resize/bin/zbeam-port-echo",
+      "zbeam-allocator-bench": "/tmp/zbeam-explore/sn-resize/bin/zbeam-allocator-bench"
+    },
+    "sn-checks": {
+      "zbeam": "/tmp/zbeam-explore/sn-checks/bin/zbeam",
+      "zbeam-port-echo": "/tmp/zbeam-explore/sn-checks/bin/zbeam-port-echo",
+      "zbeam-allocator-bench": "/tmp/zbeam-explore/sn-checks/bin/zbeam-allocator-bench"
+    }
+  },
+  "binary_sha256": {
+    "smp-control": {
+      "zbeam": "d4a8c9afe9c5b55cd2071b036a0beddbda9084e89fa2f2bc116282386da4b19c",
+      "zbeam-port-echo": "ddf5acf69201b1995004dc44b8ab4abc117d841b252c948a5a10743c9626da0e",
+      "zbeam-allocator-bench": "8059cea84461b76d30e7a44039a19c64e3371714bfb76ef353310ba840cca12a"
+    },
+    "libc-control": {
+      "zbeam": "b080d6fa97ec3da844de1d57bafe35b22b228e01545060ec9d9b28fe0af217c8",
+      "zbeam-port-echo": "ddf5acf69201b1995004dc44b8ab4abc117d841b252c948a5a10743c9626da0e",
+      "zbeam-allocator-bench": "9e795bb8f848aea7e5e76bcf2a6bc904bf5561ee219732cf3c455441a4e05875"
+    },
+    "sn-basic": {
+      "zbeam": "d7e97c54ee0db173adc82f2d2e3659e5bc4231aaceccc3c161931db58c806785",
+      "zbeam-port-echo": "ddf5acf69201b1995004dc44b8ab4abc117d841b252c948a5a10743c9626da0e",
+      "zbeam-allocator-bench": "c3810b138cd3ac4b819e865feafded3565fd1e2021876214824ec56888f4fe41"
+    },
+    "sn-resize": {
+      "zbeam": "31d2db3a49534d6cf6f1ea8dc83a09e72dbecf99f4de397f9cfc5d1880ecc2f2",
+      "zbeam-port-echo": "ddf5acf69201b1995004dc44b8ab4abc117d841b252c948a5a10743c9626da0e",
+      "zbeam-allocator-bench": "180407918eca84ed16c284b3928982a0a6589a831963b854dd6119732967e2f4"
+    },
+    "sn-checks": {
+      "zbeam": "8c8e3f5c3ae9dc662d8c05734b00cb76023dbfd06a70973974f799bbd8d2c248",
+      "zbeam-port-echo": "ddf5acf69201b1995004dc44b8ab4abc117d841b252c948a5a10743c9626da0e",
+      "zbeam-allocator-bench": "beb7e014309553cbfa8079d18f5d4447469a3099166fdce0482f59b9f0b30c75"
+    }
+  },
+  "seed": 260927,
+  "repeats": 5,
+  "iterations": 2000,
+  "network_iterations": 1000,
+  "network": true
+}

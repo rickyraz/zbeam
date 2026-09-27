@@ -3,17 +3,35 @@ const std = @import("std");
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
-    const allocator = b.option(enum { process, debug, smp, libc }, "allocator", "Experimental application allocator (default: process)") orelse .process;
-    const link_libc = (b.option(bool, "link-libc", "Match libc linkage for allocator comparisons") orelse false) or allocator == .libc;
+    const allocator = b.option(enum { process, debug, smp, libc, snmalloc }, "allocator", "Experimental application allocator (default: process)") orelse .process;
+    const snmalloc_object = b.option([]const u8, "snmalloc-object", "Pinned namespaced malloc-only object built by scripts/bench/build_snmalloc.sh");
+    if (allocator == .snmalloc and snmalloc_object == null) @panic("snmalloc requires -Dsnmalloc-object=/path/to/object.o");
+    const link_libc = (b.option(bool, "link-libc", "Match libc linkage for allocator comparisons") orelse false) or allocator == .libc or snmalloc_object != null;
     const allocator_options = b.addOptions();
     allocator_options.addOption(@TypeOf(allocator), "allocator", allocator);
+    allocator_options.addOption(bool, "snmalloc_resize", b.option(bool, "snmalloc-resize", "Reuse verified snmalloc allocation capacity without moving") orelse false);
+    const allocator_options_mod = allocator_options.createModule();
+    const snmalloc_mod = if (snmalloc_object) |object| blk: {
+        if (target.result.os.tag != .linux or target.result.cpu.arch != .x86_64 or target.result.abi != .gnu)
+            @panic("snmalloc object experiment requires native Linux x86-64 GNU ABI");
+        const mod = b.createModule(.{
+            .root_source_file = b.path("benchmarks/memory/snmalloc_allocator.zig"),
+            .target = target,
+            .optimize = optimize,
+            .link_libc = true,
+        });
+        mod.addImport("allocator_options", allocator_options_mod);
+        mod.addObjectFile(.{ .cwd_relative = object });
+        break :blk mod;
+    } else null;
     const app_allocator = b.createModule(.{
         .root_source_file = b.path("src/app_allocator.zig"),
         .target = target,
         .optimize = optimize,
         .link_libc = link_libc,
     });
-    app_allocator.addOptions("allocator_options", allocator_options);
+    app_allocator.addImport("allocator_options", allocator_options_mod);
+    if (snmalloc_mod) |mod| app_allocator.addImport("snmalloc-allocator", mod);
 
     const etf_mod = b.addModule("zbeam-etf", .{
         .root_source_file = b.path("src/zbeam/etf/mod.zig"),
@@ -184,6 +202,12 @@ pub fn build(b: *std.Build) void {
     benchmark_cmd.step.dependOn(b.getInstallStep());
     benchmark_step.dependOn(&benchmark_cmd.step);
 
+    const backpressure_oracle = b.createModule(.{
+        .root_source_file = b.path("tests/stress/backpressure_stress.zig"),
+        .target = target,
+        .optimize = optimize,
+        .imports = &.{.{ .name = "zbeam-runtime", .module = runtime_mod }},
+    });
     const allocator_bench = b.addExecutable(.{
         .name = "zbeam-allocator-bench",
         .root_module = b.createModule(.{
@@ -196,6 +220,7 @@ pub fn build(b: *std.Build) void {
             },
         }),
     });
+    allocator_bench.root_module.addImport("backpressure-oracle", backpressure_oracle);
     b.step("build-allocator-bench", "Install the isolated allocator benchmark").dependOn(&b.addInstallArtifact(allocator_bench, .{}).step);
     const allocator_bench_step = b.step("bench-allocators", "Run the isolated allocator workload (echo|handoff iterations bytes)");
     const allocator_bench_run = b.addRunArtifact(allocator_bench);
@@ -205,6 +230,10 @@ pub fn build(b: *std.Build) void {
     const allocator_test_step = b.step("test-allocators", "Check the selected allocator and measured workload cleanup");
     allocator_test_step.dependOn(&b.addRunArtifact(allocator_tests).step);
     allocator_test_step.dependOn(&app_allocator_tests_run.step);
+    if (snmalloc_mod) |mod| {
+        const tests = b.addTest(.{ .root_module = mod });
+        allocator_test_step.dependOn(&b.addRunArtifact(tests).step);
+    }
 
     const test_all_step = b.step("test-all", "Run deterministic test suites (excludes external OTP matrix)");
     test_all_step.dependOn(test_unit_step);

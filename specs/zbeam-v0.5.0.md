@@ -633,6 +633,8 @@ The MVP listener retains its EPMD registration across sequential peer connection
 
 **Experimental executable choice (2026-09-27):** `explore/allocator-baselines` adds `-Dallocator=process|debug|smp|libc` outside the batteries. `process` remains the default; `-Dlink-libc=true` is a comparison control, not an ownership or decoder-budget change. See the [baseline evidence](../docs/evidence/phase-c/2026-09-27-allocator-baselines.md).
 
+**snmalloc branch (2026-09-27):** `explore/snmalloc` tests an optional pinned namespaced object, aligned allocation/unsized free and opt-in capacity-based non-moving resize. It remains outside the batteries. [Measured evidence](../docs/evidence/phase-c/2026-09-27-snmalloc.md) rejects default promotion; existing ownership and demand contracts still apply.
+
 *(Table unchanged from v0.4.0, with one addition:)*
 
 | Tier | Allocator | Scope | Purpose |

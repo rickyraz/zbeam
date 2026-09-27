@@ -106,6 +106,8 @@ The current representation uses owned copies. Compare that baseline with ownersh
 
 **Required evidence:** explicit standard-allocator baselines, allocation-routing checks, a pinned namespaced C ABI adapter, ownership/cancellation/producer-exit tests, repeated service measurements and peak/post-idle memory results. Promotion requires a separate decision against the [predeclared evaluation gates](snmalloc-evaluation.md#e3--promotion-decision). The [source audit](evidence/phase-a/2026-09-26-allocator-source-audit.md) does not establish integration or performance.
 
+**Experimental outcome:** [snmalloc branch measurements](evidence/phase-c/2026-09-27-snmalloc.md) pass the checks performed here but fail the default-promotion memory/tail gates. Retained-memory/reclamation policy, native-host repetitions, useful workloads and broader fault/sanitizer campaigns remain open. No default switch is justified.
+
 ### Other measured-need optimizations
 
 - **Copy threshold/buffer sizing:** use measured payload distributions rather than copying a BEAM constant without workload evidence.

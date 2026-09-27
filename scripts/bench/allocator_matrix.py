@@ -45,7 +45,7 @@ def main():
     binaries = {label: {name: str((Path(prefix) / "bin" / name).resolve()) for name in ("zbeam", "zbeam-port-echo", "zbeam-allocator-bench")} for label, prefix in variants.items()}
     hashes = {label: {name: hashlib.sha256(Path(path).read_bytes()).hexdigest() for name, path in files.items()} for label, files in binaries.items()}
     args.output.mkdir(parents=True, exist_ok=False)
-    files = [root / "build.zig", root / "benchmarks/memory/allocator_compare.zig", root / "benchmarks/port_vs_zbeam.exs", Path(__file__).resolve(), *sorted((root / "src").rglob("*.zig"))]
+    files = [root / "build.zig", root / "benchmarks/port_vs_zbeam.exs", Path(__file__).resolve(), *sorted((root / "benchmarks/memory").glob("*.zig")), *sorted((root / "src").rglob("*.zig"))]
     manifest = {"platform": platform.platform(), "cpu_count": os.cpu_count(), "affinity": sorted(os.sched_getaffinity(0)), "zig": subprocess.check_output(["zig", "version"], text=True).strip(), "base_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip(), "source_sha256": {str(path.relative_to(root)): hashlib.sha256(path.read_bytes()).hexdigest() for path in files}, "binaries": binaries, "binary_sha256": hashes, "seed": 260927, "repeats": args.repeats, "iterations": args.iterations, "network_iterations": args.network_iterations, "network": not args.skip_network}
     (args.output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     workloads = ("echo", "handoff") if args.skip_network else ("echo", "handoff", "network")

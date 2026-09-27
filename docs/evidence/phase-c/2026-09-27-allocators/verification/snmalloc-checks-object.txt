@@ -1,0 +1,38 @@
+revision=526c55bdffa17aae20a9a3d24fe68a7a3b8d9894
+hardening=checks
+0.16.0
+clang version 21.1.0
+Target: x86_64-unknown-linux5.10.0-gnu2.39.0
+Thread model: posix
+InstalledDir: /home/rickyraz/.local/share/mise/installs/zig/0.16.0
+compiler_flag=-std=c++20
+compiler_flag=-O3
+compiler_flag=-DNDEBUG
+compiler_flag=-fno-exceptions
+compiler_flag=-mcx16
+compiler_flag=-DSNMALLOC_USE_WAIT_ON_ADDRESS=1
+compiler_flag=-DSNMALLOC_USE_PTHREAD_DESTRUCTORS
+compiler_flag=-DSNMALLOC_STATIC_LIBRARY_PREFIX=zbeam_sn_
+compiler_flag=-DSNMALLOC_CHECK_CLIENT
+2cedc6062569e167a3b11807414e51e88db0792a29bc10d744955c93a2179fd0  /tmp/zbeam-explore/snmalloc-checks.o
+432f05b7112b6243e833b098257aba27847c70d667f2b1a0fc2974ccae8e3800  /tmp/zbeam-snmalloc-wpQERk/src/snmalloc/override/malloc.cc
+
+Undefined symbols (no C++ runtime expected):
+                 U __errno_location
+                 U __tls_get_addr
+                 U abort
+                 U clock_gettime
+                 U close
+                 U fsync
+                 U madvise
+                 U memcpy
+                 U memset
+                 U mmap
+                 U mprotect
+                 U open
+                 U pthread_key_create
+                 U pthread_setspecific
+                 U read
+                 U strlen
+                 U syscall
+                 U writev

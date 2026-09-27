@@ -19,6 +19,18 @@ The Linux-only executable reads `/proc` through a streaming reader with fixed sc
 
 Raw samples are optional in single runs, mandatory in the matrix. Reported percentiles use nearest rank. Checks include allocation-failure cleanup, over-aligned realloc preservation, bounded remote handoff, and the procfs zero-size-file regression.
 
+## Optional snmalloc branch
+
+`explore/snmalloc` adds an externally built, revision-checked object, not a default dependency:
+
+```sh
+sh scripts/bench/build_snmalloc.sh /path/to/pinned/checkout /tmp/snmalloc.o normal
+zig build test-allocators -Dallocator=snmalloc -Dsnmalloc-object=/tmp/snmalloc.o
+zig build bench-allocators -Doptimize=ReleaseSafe -Dallocator=snmalloc -Dsnmalloc-object=/tmp/snmalloc.o -Dsnmalloc-resize=true -- echo 2000 65536
+```
+
+The checkout must be clean at `526c55bdffa17aae20a9a3d24fe68a7a3b8d9894`. `checks` instead of `normal` builds upstream client hardening. `-Dsnmalloc-resize=true` reuses existing capacity without moving; it defaults to false. Native Linux x86-64 GNU ABI is the only tested target. The [recorded results](../../docs/evidence/phase-c/2026-09-27-snmalloc.md) reject default adoption and include matched controls, lifecycle tests and limitations.
+
 ## Predeclared comparison
 
 Use 32, 4096 and 65536-byte payloads; five independent launches per variant/workload; 2000 isolated operations per cycle and 1000 network round trips. Run serially in seed-260927 shuffled order. The network benchmark retains its Port comparison, and `ZBEAM_BENCH_PAYLOAD_BYTES` selects the payload within the Port's 1 MiB limit.

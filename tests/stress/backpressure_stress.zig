@@ -6,6 +6,7 @@ const payload_size = 64 * 1024;
 
 const SlowActor = struct {
     server: *std.Io.net.Server,
+    allocator: std.mem.Allocator,
     stalled: std.Io.Event = .unset,
     resume_event: std.Io.Event = .unset,
     done: std.Io.Event = .unset,
@@ -32,7 +33,7 @@ const SlowActor = struct {
         const stream = try self.server.accept(io);
         defer stream.close(io);
         // Exercise the real post-authentication dispatcher with a paused actor.
-        runtime.node.dispatch(io, std.testing.allocator, stream, .{
+        runtime.node.dispatch(io, self.allocator, stream, .{
             .node_name = "slow@host",
             .cookie = "cookie",
             .creation = 1,
@@ -71,19 +72,19 @@ const Sender = struct {
 };
 
 test "paused actor stops TCP consumption and sender resumes after grant" {
-    try exercise(false);
+    try exercise(std.testing.allocator, false);
 }
 
 test "canceling a paused actor releases its owned packet and joins network tasks" {
-    try exercise(true);
+    try exercise(std.testing.allocator, true);
 }
 
-fn exercise(cancel: bool) !void {
+pub fn exercise(allocator: std.mem.Allocator, cancel: bool) !void {
     const io = std.testing.io;
     const address: std.Io.net.IpAddress = .{ .ip4 = .loopback(0) };
     var server = try address.listen(io, .{ .reuse_address = true });
     defer server.deinit(io);
-    var actor = SlowActor{ .server = &server };
+    var actor = SlowActor{ .server = &server, .allocator = allocator };
     var sender = Sender{ .address = server.socket.address };
     var group: std.Io.Group = .init;
     defer group.cancel(io);

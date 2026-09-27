@@ -202,6 +202,17 @@ test "bounded handoff frees on a different OS thread and joins producers" {
     try handoff(std.testing.io, allocator, 137, &samples);
 }
 
+test "selected allocator backs demand pause and canceled network packet ownership" {
+    const allocator = app.get(std.testing.allocator);
+    defer app.deinit();
+    // Only the receiver uses this non-atomic counter; inspect after tasks join.
+    var profile = std.testing.FailingAllocator.init(allocator, .{});
+    try @import("backpressure-oracle").exercise(profile.allocator(), false);
+    try @import("backpressure-oracle").exercise(profile.allocator(), true);
+    try std.testing.expect(profile.allocated_bytes > 0);
+    try std.testing.expectEqual(profile.allocated_bytes, profile.freed_bytes);
+}
+
 test "proc memory reads a zero-size virtual file as a stream" {
     if (builtin.os.tag != .linux) return error.SkipZigTest;
     const result = try memory(std.testing.io);

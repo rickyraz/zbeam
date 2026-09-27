@@ -33,7 +33,7 @@ Details and commands are in [mvp.md](mvp.md). Verification records are [Phase B]
 - Distributed registry semantics, RPC, OTP behaviours, process links/monitors or a general actor task scheduler.
 - Concurrent peer servicing, transport deadlines, stalled-handler recovery, outbound reconnect/backoff or EPMD-loss recovery.
 - Arena-backed buffers, `BufferHandle`, typestate/linear ownership, io_uring or zero-copy transfer.
-- snmalloc integration or allocator-comparison results; the [evaluation plan](snmalloc-evaluation.md) and source audit are research only.
+- A production-supported snmalloc backend or packaged dependency. The experimental branch requires an externally built, pinned object; it is not enabled by default.
 - BEAM distribution-sender throttling measurements, multi-workload performance conclusions or isolation between actors inside the native process.
 - Panic/corruption crash-injection coverage, sanitizers/TSAN or a production security audit.
 
@@ -41,11 +41,11 @@ The service deliberately uses synchronous owned-copy processing. The reusable ma
 
 ## Allocator provenance
 
-The executable passes `std.process.Init.gpa` to the runtime. The [source/binary audit](evidence/phase-a/2026-09-26-allocator-source-audit.md) establishes that the recorded Zig 0.16.0, no-libc ReleaseSafe configuration selects `DebugAllocator`; it is not an explicit `smp_allocator` baseline. The Port worker uses fixed payload storage. This does not attribute the latency gap to allocation, and no snmalloc benchmark has been run.
+The executable passes `std.process.Init.gpa` to the runtime. The [source/binary audit](evidence/phase-a/2026-09-26-allocator-source-audit.md) establishes that the recorded Zig 0.16.0, no-libc ReleaseSafe configuration selects `DebugAllocator`; it is not an explicit `smp_allocator` baseline. The Port worker uses fixed payload storage. This does not attribute the latency gap to allocation. Separate [experimental snmalloc results](evidence/phase-c/2026-09-27-snmalloc.md) now exist; the original MVP results remain unchanged.
 
 ## Experimental branch — 2026-09-27
 
-`explore/allocator-baselines` adds an executable/lab-only allocator selector, preserving the `process` default and battery DAG. Standard-allocator comparisons, over-aligned realloc/OOM cleanup checks and a bounded OS-thread handoff workload are recorded in [baseline evidence](evidence/phase-c/2026-09-27-allocator-baselines.md). These are branch experiments, not snmalloc integration or a production release.
+`explore/allocator-baselines` adds an executable/lab-only allocator selector, preserving the `process` default and battery DAG. Standard-allocator comparisons, over-aligned realloc/OOM cleanup checks and a bounded OS-thread handoff workload are recorded in [baseline evidence](evidence/phase-c/2026-09-27-allocator-baselines.md). `explore/snmalloc` additionally tests a namespaced adapter, optional in-place capacity reuse and hardening against matched controls. Its [evidence](evidence/phase-c/2026-09-27-snmalloc.md) fails the default-promotion memory/tail gates. These remain branch experiments, not a production release.
 
 ## Compatibility scope
 

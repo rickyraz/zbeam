@@ -9,6 +9,7 @@ pub fn get(process_allocator: std.mem.Allocator) std.mem.Allocator {
         .debug => diagnostic.allocator(),
         .smp => std.heap.smp_allocator,
         .libc => std.heap.c_allocator,
+        .snmalloc => @import("snmalloc-allocator").allocator,
     };
 }
 

@@ -1,0 +1,49 @@
+test-all
++- test-integration
+   +- run test w
+[default] (warn): peer disconnected: InvalidDigest
+[default] (warn): peer disconnected: PacketTooLarge
+failed command: ./.zig-cache/o/d958570655bc609fea6f65b7638201e5/test --cache-dir=./.zig-cache --seed=0xaaeee650 --listen=-
+
+PASS CLI streaming stdout and argument validation
+Build Summary: 35/35 steps succeeded; 57/57 tests passed
+test-all success
++- test-unit success
+|  +- run test 1 pass (1 total) 6ms MaxRSS:5M
+|  |  +- compile test ReleaseSafe native cached 24ms MaxRSS:40M
+|  +- run test 12 pass (12 total) 11ms MaxRSS:5M
+|  |  +- compile test ReleaseSafe native cached 30ms MaxRSS:40M
+|  +- run test 6 pass (6 total) 8ms MaxRSS:5M
+|  |  +- compile test ReleaseSafe native cached 29ms MaxRSS:40M
+|  +- run test 2 pass (2 total) 6ms MaxRSS:5M
+|  |  +- compile test ReleaseSafe native cached 22ms MaxRSS:40M
+|  +- run test 4 pass (4 total) 8ms MaxRSS:4M
+|  |  +- compile test ReleaseSafe native cached 18ms MaxRSS:40M
+|  +- run test 3 pass (3 total) 8ms MaxRSS:5M
+|  |  +- compile test ReleaseSafe native cached 21ms MaxRSS:40M
+|  +- run test 1 pass (1 total) 7ms MaxRSS:6M
+|  |  +- compile test ReleaseSafe native success 33s MaxRSS:386M
+|  |     +- options cached
+|  +- run test 1 pass (1 total) 8ms MaxRSS:5M
+|     +- compile test ReleaseSafe native cached 52ms MaxRSS:40M
+|        +- options (reused)
++- test-integration success
+|  +- run test 7 pass (7 total) 263ms MaxRSS:5M
+|  |  +- compile test ReleaseSafe native cached 25ms MaxRSS:40M
+|  +- run sh success 31ms
+|     +- compile exe zbeam ReleaseSafe native cached 45ms MaxRSS:40M
+|        +- options (reused)
++- test-conformance success
+|  +- run test 7 pass (7 total) 8ms MaxRSS:5M
+|     +- compile test ReleaseSafe native cached 18ms MaxRSS:40M
++- test-stress success
+   +- run test 4 pass (4 total) 482ms MaxRSS:6M
+      +- compile test ReleaseSafe native success 35s MaxRSS:400M
+test-allocators success
++- run test 5 pass (5 total) 388ms MaxRSS:5M
+|  +- compile test ReleaseSafe native cached 47ms MaxRSS:40M
+|     +- options (reused)
++- run test (+1 more reused dependencies)
++- run test 4 pass (4 total) 32ms MaxRSS:6M
+   +- compile test ReleaseSafe native cached 47ms MaxRSS:40M
+      +- options (reused)
