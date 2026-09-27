@@ -2,7 +2,9 @@
 iterations = String.to_integer(iterations_arg)
 if iterations < 1, do: raise("iterations must be positive")
 warmup = min(100, max(1, div(iterations, 10)))
-payload = :binary.copy(<<0x5A>>, 32)
+payload_bytes = String.to_integer(System.get_env("ZBEAM_BENCH_PAYLOAD_BYTES", "32"))
+if payload_bytes < 1 or payload_bytes > 1_048_576, do: raise("payload must be between 1 and 1048576 bytes")
+payload = :binary.copy(<<0x5A>>, payload_bytes)
 now = fn -> System.monotonic_time(:nanosecond) end
 :erlang.system_flag(:scheduler_wall_time, true)
 

@@ -1,7 +1,9 @@
 const std = @import("std");
 const zbeam = @import("zbeam");
+const app_allocator = @import("app-allocator");
 
 pub fn main(init: std.process.Init) !void {
+    defer app_allocator.deinit();
     var args = try std.process.Args.Iterator.initAllocator(init.minimal.args, init.gpa);
     defer args.deinit();
     _ = args.next();
@@ -47,7 +49,7 @@ fn printStatus(init: std.process.Init) !void {
 }
 
 fn run(init: std.process.Init, short_name: []const u8, cookie: []const u8, max_messages: usize, serving: bool, peer_name: ?[]const u8) !void {
-    const allocator = init.gpa;
+    const allocator = app_allocator.get(init.gpa);
     const io = init.io;
     const full_name = try std.fmt.allocPrint(allocator, "{s}@127.0.0.1", .{short_name});
     defer allocator.free(full_name);

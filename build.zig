@@ -3,6 +3,17 @@ const std = @import("std");
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
+    const allocator = b.option(enum { process, debug, smp, libc }, "allocator", "Experimental application allocator (default: process)") orelse .process;
+    const link_libc = (b.option(bool, "link-libc", "Match libc linkage for allocator comparisons") orelse false) or allocator == .libc;
+    const allocator_options = b.addOptions();
+    allocator_options.addOption(@TypeOf(allocator), "allocator", allocator);
+    const app_allocator = b.createModule(.{
+        .root_source_file = b.path("src/app_allocator.zig"),
+        .target = target,
+        .optimize = optimize,
+        .link_libc = link_libc,
+    });
+    app_allocator.addOptions("allocator_options", allocator_options);
 
     const etf_mod = b.addModule("zbeam-etf", .{
         .root_source_file = b.path("src/zbeam/etf/mod.zig"),
@@ -59,7 +70,10 @@ pub fn build(b: *std.Build) void {
             .root_source_file = b.path("src/main.zig"),
             .target = target,
             .optimize = optimize,
-            .imports = &.{.{ .name = "zbeam", .module = lib_mod }},
+            .imports = &.{
+                .{ .name = "zbeam", .module = lib_mod },
+                .{ .name = "app-allocator", .module = app_allocator },
+            },
         }),
     });
     b.installArtifact(exe);
@@ -70,6 +84,7 @@ pub fn build(b: *std.Build) void {
             .root_source_file = b.path("benchmarks/port_echo.zig"),
             .target = target,
             .optimize = optimize,
+            .link_libc = link_libc,
         }),
     });
     b.installArtifact(port_echo);
@@ -87,6 +102,9 @@ pub fn build(b: *std.Build) void {
     }
     const exe_tests = b.addTest(.{ .root_module = exe.root_module });
     test_unit_step.dependOn(&b.addRunArtifact(exe_tests).step);
+    const app_allocator_tests = b.addTest(.{ .root_module = app_allocator });
+    const app_allocator_tests_run = b.addRunArtifact(app_allocator_tests);
+    test_unit_step.dependOn(&app_allocator_tests_run.step);
 
     const integration_tests_mod = b.createModule(.{
         .root_source_file = b.path("tests/integration/basic_integration.zig"),
@@ -165,6 +183,28 @@ pub fn build(b: *std.Build) void {
     if (b.args) |args| benchmark_cmd.addArgs(args);
     benchmark_cmd.step.dependOn(b.getInstallStep());
     benchmark_step.dependOn(&benchmark_cmd.step);
+
+    const allocator_bench = b.addExecutable(.{
+        .name = "zbeam-allocator-bench",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("benchmarks/memory/allocator_compare.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{
+                .{ .name = "zbeam", .module = lib_mod },
+                .{ .name = "app-allocator", .module = app_allocator },
+            },
+        }),
+    });
+    b.step("build-allocator-bench", "Install the isolated allocator benchmark").dependOn(&b.addInstallArtifact(allocator_bench, .{}).step);
+    const allocator_bench_step = b.step("bench-allocators", "Run the isolated allocator workload (echo|handoff iterations bytes)");
+    const allocator_bench_run = b.addRunArtifact(allocator_bench);
+    if (b.args) |args| allocator_bench_run.addArgs(args);
+    allocator_bench_step.dependOn(&allocator_bench_run.step);
+    const allocator_tests = b.addTest(.{ .root_module = allocator_bench.root_module });
+    const allocator_test_step = b.step("test-allocators", "Check the selected allocator and measured workload cleanup");
+    allocator_test_step.dependOn(&b.addRunArtifact(allocator_tests).step);
+    allocator_test_step.dependOn(&app_allocator_tests_run.step);
 
     const test_all_step = b.step("test-all", "Run deterministic test suites (excludes external OTP matrix)");
     test_all_step.dependOn(test_unit_step);

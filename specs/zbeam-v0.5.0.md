@@ -631,6 +631,8 @@ The MVP listener retains its EPMD registration across sequential peer connection
 
 **Allocator research (2026-09-26):** the MVP accepts caller-supplied `std.mem.Allocator` and has no snmalloc dependency. The [snmalloc evaluation plan](../docs/snmalloc-evaluation.md) proposes an optional application-side adapter, matched standard-allocator baselines and ownership/teardown gates. This is not an implemented backend or a change to the battery DAG. [Development sequencing](../docs/development-plan.md) keeps reliability and protocol coverage ahead of default allocator promotion.
 
+**Experimental executable choice (2026-09-27):** `explore/allocator-baselines` adds `-Dallocator=process|debug|smp|libc` outside the batteries. `process` remains the default; `-Dlink-libc=true` is a comparison control, not an ownership or decoder-budget change. See the [baseline evidence](../docs/evidence/phase-c/2026-09-27-allocator-baselines.md).
+
 *(Table unchanged from v0.4.0, with one addition:)*
 
 | Tier | Allocator | Scope | Purpose |

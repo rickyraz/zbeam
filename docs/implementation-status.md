@@ -43,6 +43,10 @@ The service deliberately uses synchronous owned-copy processing. The reusable ma
 
 The executable passes `std.process.Init.gpa` to the runtime. The [source/binary audit](evidence/phase-a/2026-09-26-allocator-source-audit.md) establishes that the recorded Zig 0.16.0, no-libc ReleaseSafe configuration selects `DebugAllocator`; it is not an explicit `smp_allocator` baseline. The Port worker uses fixed payload storage. This does not attribute the latency gap to allocation, and no snmalloc benchmark has been run.
 
+## Experimental branch — 2026-09-27
+
+`explore/allocator-baselines` adds an executable/lab-only allocator selector, preserving the `process` default and battery DAG. Standard-allocator comparisons, over-aligned realloc/OOM cleanup checks and a bounded OS-thread handoff workload are recorded in [baseline evidence](evidence/phase-c/2026-09-27-allocator-baselines.md). These are branch experiments, not snmalloc integration or a production release.
+
 ## Compatibility scope
 
 The checked-in runner passed on real OTP 25, 26 and 27 using pinned Docker images on Linux x86-64. OTP 28 is additional local development evidence. Only the MVP operations are covered; mandatory handshake bits do not establish complete support for every corresponding ETF tag. Unsupported matching payloads are rejected by disconnecting that peer.

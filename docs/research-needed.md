@@ -98,6 +98,8 @@ The current representation uses owned copies. Compare that baseline with ownersh
 
 ### Allocator selection and snmalloc
 
+**Standard baseline evidence:** the [2026-09-27 branch experiment](evidence/phase-c/2026-09-27-allocator-baselines.md) compares explicit standard allocators, linkage and three payload sizes. It does not establish the best external backend or remove the transport/liveness backlog.
+
 **Hypothesis:** batched remote frees may benefit future owned-message producer/consumer workloads. The synchronous MVP does not establish that workload or an allocator bottleneck.
 
 **Risks:** linking libc changes Zig's default allocator selection; preload may affect the benchmark harness without replacing the static zbeam allocator; alignment/OOM/resize semantics, mixed allocator domains, thread/TLS teardown, remote-free retention and added C++ build requirements require validation.
