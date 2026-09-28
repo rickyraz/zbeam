@@ -127,6 +127,102 @@ test "handshake handoff preserves coalesced distribution bytes in both roles" {
     }
 }
 
+const TimedAcceptor = struct {
+    server: *std.Io.net.Server,
+    outcomes: [3]?anyerror = .{ null, null, null },
+
+    fn run(self: *@This()) void {
+        const io = std.testing.io;
+        for (0..3) |index| {
+            const stream = self.server.accept(io) catch |err| {
+                self.outcomes[index] = err;
+                return;
+            };
+            defer stream.close(io);
+            var peer = transport.handshake_io.accept(stream, io, std.testing.allocator, .{
+                .node_name = "acceptor@127.0.0.1",
+                .cookie = "cookie",
+                .flags = 1,
+                .creation = 2,
+                .challenge = 200,
+                .timeout = .fromMilliseconds(120),
+            }) catch |err| {
+                self.outcomes[index] = err;
+                continue;
+            };
+            peer.deinit(std.testing.allocator);
+        }
+    }
+};
+
+test "partial NAME and REPLY expire without consuming the next peer" {
+    const io = std.testing.io;
+    const allocator = std.testing.allocator;
+    const address: std.Io.net.IpAddress = .{ .ip4 = .loopback(0) };
+    var server = try address.listen(io, .{ .reuse_address = true });
+    defer server.deinit(io);
+    var context = TimedAcceptor{ .server = &server };
+    var group: std.Io.Group = .init;
+    defer group.cancel(io);
+    try group.concurrent(io, TimedAcceptor.run, .{&context});
+    for (0..3) |attempt| {
+        const stream = try server.socket.address.connect(io, .{ .mode = .stream });
+        defer stream.close(io);
+        if (attempt == 2) {
+            var peer = try transport.handshake_io.initiate(stream, io, allocator, .{
+                .node_name = "client@127.0.0.1",
+                .cookie = "cookie",
+                .flags = 1,
+                .creation = 1,
+                .challenge = 100,
+                .timeout = .fromSeconds(2),
+            });
+            peer.deinit(allocator);
+            continue;
+        }
+        var writer = stream.writer(io, &.{});
+        if (attempt == 0) {
+            try writer.interface.writeAll(&.{0}); // partial NAME length
+        } else {
+            const name = try handshake.encodeName(allocator, .{ .flags = 1, .creation = 1, .node_name = "client@127.0.0.1" });
+            defer allocator.free(name);
+            try writer.interface.writeAll(name);
+            var reader = stream.reader(io, &.{});
+            const status = try Pipeline.read(&reader.interface);
+            defer allocator.free(status);
+            const challenge = try Pipeline.read(&reader.interface);
+            defer allocator.free(challenge);
+            try writer.interface.writeAll(&.{ 0, 21, 114 }); // partial REPLY
+        }
+        var byte: [1]u8 = undefined;
+        var reader = stream.reader(io, &.{});
+        try std.testing.expectError(error.EndOfStream, reader.interface.readSliceAll(&byte));
+    }
+    try group.await(io);
+    try std.testing.expectEqual(error.Timeout, context.outcomes[0].?);
+    try std.testing.expectEqual(error.Timeout, context.outcomes[1].?);
+    try std.testing.expectEqual(@as(?anyerror, null), context.outcomes[2]);
+}
+
+test "initiating handshake expires when status never arrives" {
+    const io = std.testing.io;
+    const address: std.Io.net.IpAddress = .{ .ip4 = .loopback(0) };
+    var server = try address.listen(io, .{ .reuse_address = true });
+    defer server.deinit(io);
+    const stream = try server.socket.address.connect(io, .{ .mode = .stream });
+    defer stream.close(io);
+    const stalled = try server.accept(io);
+    defer stalled.close(io);
+    try std.testing.expectError(error.Timeout, transport.handshake_io.initiate(stream, io, std.testing.allocator, .{
+        .node_name = "client@127.0.0.1",
+        .cookie = "cookie",
+        .flags = 1,
+        .creation = 1,
+        .challenge = 100,
+        .timeout = .fromMilliseconds(40),
+    }));
+}
+
 test "initiating and accepting handshake roles interoperate over TCP" {
     const io = std.testing.io;
     var address: std.Io.net.IpAddress = .{ .ip4 = .loopback(0) };

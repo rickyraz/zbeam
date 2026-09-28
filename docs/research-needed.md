@@ -26,7 +26,9 @@ Completion is deliberately limited to the MVP scope. It does not close the broad
 
 ### Transport deadlines and liveness diagnostics
 
-**Risk:** the service accepts one peer at a time. An incomplete handshake/frame, blocked writer or nonreturning handler can occupy it indefinitely. Zero demand also pauses heartbeat processing. EPMD socket loss is not actively detected.
+**Current boundary (2026-09-28):** the runtime has a five-second total handshake budget; partial NAME/REPLY and silent initiating peers expire and the next peer succeeds. Direct transport callers may set their own budget; `null` remains an explicit unbounded override. [Verification](evidence/phase-b/2026-09-28-handshake-deadline.md).
+
+**Risk:** the service accepts one peer at a time. An incomplete distribution frame, blocked writer or nonreturning handler can occupy it indefinitely. Zero demand also pauses heartbeat processing. EPMD socket loss is not actively detected.
 
 **Required evidence:** bounded handshake/read/write deadlines using `std.Io` cancellation, stalled-handler diagnostics with no fabricated demand, tests for cancellation in every wait state, and an explicit policy for EPMD loss. Preserve the zero-read invariant rather than introducing a heartbeat-prefetch exception.
 

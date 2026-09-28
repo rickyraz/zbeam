@@ -17,6 +17,8 @@ pub const Config = struct {
     max_messages: usize = 1,
     /// One preserves the one-shot API; zero serves sequential peers until canceled.
     max_connections: usize = 1,
+    /// One total budget per handshake; null is an explicit unbounded override.
+    handshake_timeout: ?std.Io.Duration = .fromSeconds(5),
 };
 
 /// One synchronous actor, one active peer, no prefetch and no detached tasks.
@@ -50,6 +52,7 @@ pub fn probe(io: std.Io, allocator: std.mem.Allocator, stream: std.Io.net.Stream
         .creation = config.creation,
         .flags = config.flags,
         .challenge = config.challenge orelse @bitCast(random),
+        .timeout = config.handshake_timeout,
     });
     defer peer.deinit(allocator);
     if (!std.mem.eql(u8, peer.node_name, expected_peer)) return error.UnexpectedPeer;
@@ -107,6 +110,7 @@ pub fn serveConnection(io: std.Io, allocator: std.mem.Allocator, stream: std.Io.
         .flags = config.flags,
         .creation = config.creation,
         .challenge = config.challenge orelse @bitCast(challenge_bytes),
+        .timeout = config.handshake_timeout,
     });
     defer peer.deinit(allocator);
     try dispatch(io, allocator, stream, config, Echo{ .registered_name = config.registered_name, .limits = config.limits });
