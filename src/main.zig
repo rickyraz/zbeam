@@ -82,7 +82,45 @@ fn run(init: std.process.Init, short_name: []const u8, cookie: []const u8, max_m
     }
     try writer.interface.print("registered {s} on port {d}; waiting for peer\n", .{ full_name, server.socket.address.getPort() });
     try writer.interface.flush();
-    try zbeam.runtime.node.serve(io, allocator, &server, config);
+    try serveRegistered(io, allocator, &server, &registration, config);
+}
+
+/// Fail closed if EPMD loses the registration, rather than serving an
+/// undiscoverable node. Cancellation joins the active socket task first.
+fn serveRegistered(io: std.Io, allocator: std.mem.Allocator, server: *std.Io.net.Server, registration: *zbeam.transport.epmd_client.Registration, config: zbeam.runtime.node.Config) !void {
+    const U = union(enum) { service: anyerror!void, registration: anyerror!void };
+    var storage: [2]U = undefined;
+    var select = std.Io.Select(U).init(io, &storage);
+    try select.concurrent(.service, zbeam.runtime.node.serve, .{ io, allocator, server, config });
+    defer select.cancelDiscard();
+    try select.concurrent(.registration, zbeam.transport.epmd_client.Registration.waitLost, .{ registration, io });
+    switch (try select.await()) {
+        .service => |result| try result,
+        .registration => |result| {
+            try result;
+            return error.EpmdRegistrationLost;
+        },
+    }
+}
+
+test "closed registration cancels listening service" {
+    const io = std.testing.io;
+    const address: std.Io.net.IpAddress = .{ .ip4 = .loopback(0) };
+    var epmd_server = try address.listen(io, .{ .reuse_address = true });
+    defer epmd_server.deinit(io);
+    const stream = try epmd_server.socket.address.connect(io, .{ .mode = .stream });
+    var registration: zbeam.transport.epmd_client.Registration = .{ .stream = stream, .creation = 1 };
+    defer registration.close(io);
+    const epmd_side = try epmd_server.accept(io);
+    var worker_server = try address.listen(io, .{ .reuse_address = true });
+    defer worker_server.deinit(io);
+    epmd_side.close(io);
+    try std.testing.expectError(error.EpmdRegistrationLost, serveRegistered(io, std.testing.allocator, &worker_server, &registration, .{
+        .node_name = "worker@127.0.0.1",
+        .cookie = "cookie",
+        .creation = 1,
+        .max_connections = 0,
+    }));
 }
 
 test "CLI restricts node names to safe short loopback identities" {

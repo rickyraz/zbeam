@@ -15,7 +15,8 @@ const PeerContext = struct {
             .cookie = "cookie",
             .creation = 2,
             .max_messages = 1,
-            .max_connections = 5,
+            .max_connections = 7,
+            .frame_timeout = .fromMilliseconds(500),
             .limits = .{ .max_packet_bytes = 1024 },
         }) catch |err| {
             self.failure = err;
@@ -34,7 +35,7 @@ test "runtime rejects bad peers and handles ticks, dropped routes and reconnects
     defer group.cancel(io);
     try group.concurrent(io, PeerContext.run, .{&context});
 
-    for (0..5) |attempt| {
+    for (0..7) |attempt| {
         const stream = try server.socket.address.connect(io, .{ .mode = .stream });
         defer stream.close(io);
         const config = transport.handshake_io.Config{
@@ -53,6 +54,12 @@ test "runtime rejects bad peers and handles ticks, dropped routes and reconnects
         if (attempt == 4) continue; // Clean EOF at a frame boundary.
         var reader = stream.reader(io, &.{});
         var writer = stream.writer(io, &.{});
+        if (attempt == 5) {
+            try writer.interface.writeAll(&.{ 0, 0 }); // partial distribution header
+            var byte: [1]u8 = undefined;
+            try std.testing.expectError(error.EndOfStream, reader.interface.readSliceAll(&byte));
+            continue;
+        }
         if (attempt == 1) {
             try writer.interface.writeAll(&.{ 0, 0, 4, 1 }); // 1025 > configured bound
             var byte: [1]u8 = undefined;

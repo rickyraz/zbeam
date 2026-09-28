@@ -5,10 +5,15 @@ const std = @import("std");
 pub fn run(io: std.Io, allocator: std.mem.Allocator, duration: ?std.Io.Duration, comptime operation: anytype, args: anytype, comptime drop: anytype) anyerror!@typeInfo(@TypeOf(@call(.auto, operation, args))).error_union.payload {
     if (duration == null) return @call(.auto, operation, args);
     const Result = @TypeOf(@call(.auto, operation, args));
+    const Work = struct {
+        fn call(bound_args: @TypeOf(args)) Result {
+            return @call(.auto, operation, bound_args);
+        }
+    };
     const U = union(enum) { work: Result, timer: std.Io.Cancelable!void };
     var storage: [2]U = undefined;
     var select = std.Io.Select(U).init(io, &storage);
-    try select.concurrent(.work, operation, args);
+    try select.concurrent(.work, Work.call, .{args});
     defer {
         while (select.cancel()) |finished| switch (finished) {
             .work => |result| if (result) |value| drop(value, allocator) else |_| {},

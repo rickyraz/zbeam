@@ -105,13 +105,13 @@ The dispatcher owns one input packet at a time. `handle(allocator, packet)` borr
 
 ## Demand and lifecycle
 
-After authentication, the actor starts with one credit. A read atomically reserves it before touching the reader or allocator. No buffered read-ahead is permitted. Handling and reply flushing finish before the next credit is granted. Ticks and ignored destinations also restore the reserved credit. A slow handler or blocked reply therefore stops subsequent reads; no queue hides this pause.
+After authentication, the actor starts with one credit. A read atomically reserves it before touching the reader or allocator. No buffered read-ahead is permitted. Handling and reply flushing finish before the next credit is granted. Ticks and ignored destinations also restore the reserved credit. A slow handler or blocked reply therefore stops subsequent reads; no queue hides this pause. The branch runtime bounds an active frame read to 90 seconds and a reply write to five seconds. Expiry closes that connection, not the listener. Those are cancelable I/O budgets, not a watchdog for arbitrary CPU-bound Zig handlers.
 
 EPMD and handshake reads are control-plane operations before actor demand applies. The lower-level `readPacket` helper is ungated; actor-facing code uses `readDemandedPacket`, which returns `NoDemand` without reading or allocating and rejects buffered readers. A failed partial read is terminal, so its credit is not refunded into a reusable connection.
 
 Each accepted connection starts with fresh reader and demand state. No packet, queue, atom cache or fragment state survives reconnect. TCP reconnect retains the running node's EPMD creation; OS restart requires a new EPMD registration. No outbound retry/backoff or resumption of interrupted messages is implemented.
 
-The service closes malformed/authentication-failing connections and accepts the next peer. The runtime now applies a five-second total handshake budget in both roles (transport callers can configure or disable it); timed-out peers release resources before the next accept. Cancellation and allocation failure propagate to its caller. EOF at a frame boundary is a clean disconnect; a partial header/body is `Truncated`. There are no detached runtime tasks.
+The service closes malformed/authentication-failing or read/write-timed-out connections and accepts the next peer. The runtime now applies a five-second total handshake budget in both roles (transport callers can configure or disable it); timed-out peers release resources before the next accept. Cancellation and allocation failure propagate to its caller. EOF at a frame boundary is a clean disconnect; a partial header/body is `Truncated`. Timeout workers are joined before packet/stream teardown. There are no detached runtime tasks. The executable watches the EPMD registration socket and stops if it closes; it does not silently re-register or retain an obsolete creation.
 
 The local `Mailbox(T)` and `Runtime(T)` remain separate reusable primitives. `spawn` registers a mailbox; it does not schedule an actor task. Storage is caller-owned, bounded and must outlive all users. Tokens enforce logical ownership, reject zero IDs and prohibit concurrent receives even with a copied token; they are not unforgeable task capabilities. All operations must be joined before registry/mailbox destruction. Termination closes the queue but does not make already-resolved mailbox pointers safe to free immediately. `Mailbox(T)` copies message values; it does not destroy nested allocations. Senders/consumers must define payload transfer and drain/release queued owned payloads themselves.
 
@@ -140,7 +140,7 @@ ERL_FLAGS='+S 2:2' zig build bench-port-vs-zbeam -Doptimize=ReleaseSafe -- 1000
 
 ## Remaining work outside this MVP
 
-1. Distribution read/write deadlines and stalled-handler diagnostics; handshake now has an independently verified total deadline. A peer can currently monopolize the single connection; prolonged pauses also delay ticks and can trigger OTP disconnects.
+1. Stalled-handler diagnostics, separate idle/partial-frame policy and recovery after EPMD restarts. I/O waits have bounded budgets, but a CPU-bound handler can still monopolize the single connection; prolonged demand pauses also delay ticks and can trigger OTP disconnects.
 2. Complete mandatory ETF coverage, control semantics, process links/monitors and broader version/architecture tests before a general compatibility claim.
 3. An OTP-sender backpressure oracle. Current socket saturation evidence uses a Zig TCP sender, not a measured BEAM distribution queue.
 4. Crash injection for panic, allocator failure and deliberate corruption; SIGKILL evidence alone does not prove those cases or isolation between local actors.

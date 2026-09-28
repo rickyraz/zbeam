@@ -28,9 +28,11 @@ Completion is deliberately limited to the MVP scope. It does not close the broad
 
 **Current boundary (2026-09-28):** the runtime has a five-second total handshake budget; partial NAME/REPLY and silent initiating peers expire and the next peer succeeds. Direct transport callers may set their own budget; `null` remains an explicit unbounded override. [Verification](evidence/phase-b/2026-09-28-handshake-deadline.md).
 
-**Risk:** the service accepts one peer at a time. An incomplete distribution frame, blocked writer or nonreturning handler can occupy it indefinitely. Zero demand also pauses heartbeat processing. EPMD socket loss is not actively detected.
+**Current boundary (2026-09-28):** the runtime now bounds one frame read to 90 seconds and one reply write to five seconds; a synthetic registration-socket loss makes the executable stop rather than serve an undiscoverable node. The [connection-liveness record](evidence/phase-c/2026-09-28-connection-liveness.md) covers partial-frame recovery, blocked writer cleanup, real OTP and synthetic EPMD loss. Neither timer reads without demand or safely preempts arbitrary handler code.
 
-**Required evidence:** bounded handshake/read/write deadlines using `std.Io` cancellation, stalled-handler diagnostics with no fabricated demand, tests for cancellation in every wait state, and an explicit policy for EPMD loss. Preserve the zero-read invariant rather than introducing a heartbeat-prefetch exception.
+**Risk:** one nonreturning handler still monopolizes the peer. Demand pauses ticks and may prompt a BEAM-side disconnect. The 90-second idle/partial-frame timeout does not distinguish slowloris data from a silent peer, and the CLI fail-stops on EPMD loss rather than re-registering.
+
+**Required evidence:** stalled-handler diagnostics, separate idle/partial deadlines and externally observed tick policy, controlled error/OOM during each wait, EPMD restart and re-registration policy. Preserve the zero-read invariant instead of introducing heartbeat-prefetch.
 
 ### Mandatory ETF capability coverage
 
