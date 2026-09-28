@@ -65,6 +65,7 @@ fn run(init: std.process.Init, short_name: []const u8, cookie: []const u8, max_m
         .creation = registration.creation,
         .max_messages = max_messages,
         .max_connections = if (serving) 0 else 1,
+        .request_arena_retained_bytes = app_allocator.options.request_arena_retain,
     };
     var buffer: [1024]u8 = undefined;
     var writer: std.Io.File.Writer = .initStreaming(.stdout(), io, &buffer);

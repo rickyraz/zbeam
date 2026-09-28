@@ -106,6 +106,10 @@ The current representation uses owned copies. Compare that baseline with ownersh
 
 **Required evidence:** explicit standard-allocator baselines, allocation-routing checks, a pinned namespaced C ABI adapter, ownership/cancellation/producer-exit tests, repeated service measurements and peak/post-idle memory results. Promotion requires a separate decision against the [predeclared evaluation gates](snmalloc-evaluation.md#e3--promotion-decision). The [source audit](evidence/phase-a/2026-09-26-allocator-source-audit.md) does not establish integration or performance.
 
+### Request-local arena (experimental branch)
+
+The [2026-09-28 arena record](evidence/phase-c/2026-09-28-request-arena.md) covers the opt-in synchronous scope: packet, decoding and reply use one arena per authenticated connection, reset after each frame. The 1 MiB-retention variant improves a short 64 KiB echo workload but exceeds the 10% post-idle RSS guardrail; `-Drequest-arena-retain=0` has a smaller performance effect. This is not the `BufferHandle`/transport arena, and it does not validate escaped messages or async handlers. Require a useful worker workload, explicit lifetime enforcement, native-host repeats and longer memory observation before considering a default or general API.
+
 ### Other measured-need optimizations
 
 - **Copy threshold/buffer sizing:** use measured payload distributions rather than copying a BEAM constant without workload evidence.

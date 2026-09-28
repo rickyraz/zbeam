@@ -4,7 +4,7 @@
 > **Design target, not implementation status.** The repository implements a restricted single-actor MVP, not the full design below. Pseudocode and statements such as “implemented” or “conformance-tested” describe proposals relative to earlier drafts; they are not current-code or safety proofs. See [`docs/implementation-status.md`](../docs/implementation-status.md).
 
 **Document Status**: Working Draft / Broader Design Target
-**MVP contract update**: 2026-09-26 — [`docs/mvp.md`](../docs/mvp.md) specifies the implemented subset, limits, lifecycle and verification gates. It takes precedence over historical pseudocode for current API behavior. The node uses owned copies, unbuffered demand-gated reads and sequential peers; it has no arena, `BufferHandle`, actor task scheduler or process-link/monitor implementation.
+**MVP contract update**: 2026-09-26 — [`docs/mvp.md`](../docs/mvp.md) specifies the implemented subset, limits, lifecycle and verification gates. It takes precedence over historical pseudocode for current API behavior. The default node uses owned copies, unbuffered demand-gated reads and sequential peers; it has no transport arena, `BufferHandle`, actor task scheduler or process-link/monitor implementation. A separate branch tests an opt-in synchronous request-local arena without those broader features.
 **Version**: 0.5.0-draft
 **Date**: 2026-07-11
 **Language**: Zig 0.16.0 (`std.Io` interface mandatory)
@@ -536,7 +536,7 @@ fn myTerminalActor(io: std.Io, ctx: ActorContext) !void {
 
 ## 6. NodeConfig & Public API
 
-The current API is `runtime.node.Config` (`src/zbeam/runtime/node.zig`), not the proposed struct below. Its frame/ETF limits, message bound and sequential-connection bound are documented in [`docs/mvp.md`](../docs/mvp.md). The current `Runtime(T).spawn` registers caller-owned mailbox storage and does not schedule tasks. Tokens enforce logical ownership and reject overlapping receives, not unforgeable task identity.
+The current API is `runtime.node.Config` (`src/zbeam/runtime/node.zig`), not the proposed struct below. Its frame/ETF limits, message bound and sequential-connection bound are documented in [`docs/mvp.md`](../docs/mvp.md). On `explore/request-arena`, the optional `request_arena_retained_bytes: ?usize = null` enables a synchronous per-frame arena; omitted leaves the existing allocator path, zero frees all after every frame, and a positive value caps retained logical capacity (not peak memory/RSS). Packet/response storage and the supplied handler allocator expire after the frame; neither may escape. A reset failure frees all backing storage. This is not the speculative transport arena or `BufferHandle` API. The current `Runtime(T).spawn` registers caller-owned mailbox storage and does not schedule tasks. Tokens enforce logical ownership and reject overlapping receives, not unforgeable task identity.
 
 ```zig
 pub const NodeConfig = struct {
@@ -632,6 +632,8 @@ The MVP listener retains its EPMD registration across sequential peer connection
 **Allocator research (2026-09-26):** the MVP accepts caller-supplied `std.mem.Allocator` and has no snmalloc dependency. The [snmalloc evaluation plan](../docs/snmalloc-evaluation.md) proposes an optional application-side adapter, matched standard-allocator baselines and ownership/teardown gates. This is not an implemented backend or a change to the battery DAG. [Development sequencing](../docs/development-plan.md) keeps reliability and protocol coverage ahead of default allocator promotion.
 
 **Experimental executable choice (2026-09-27):** `explore/allocator-baselines` adds `-Dallocator=process|debug|smp|libc` outside the batteries. `process` remains the default; `-Dlink-libc=true` is a comparison control, not an ownership or decoder-budget change. See the [baseline evidence](../docs/evidence/phase-c/2026-09-27-allocator-baselines.md).
+
+**Request-local arena branch (2026-09-28):** `explore/request-arena` adds the opt-in `-Drequest-arena-retain=N` choice to the synchronous server only. Frame read/decode, handler scratch and reply share an arena reset after each frame; zero releases all, and failed bounded retention falls back to free-all. The enabled handler allocator cannot escape across that reset. ETF/frame caps and demand remain unchanged. This does not implement §12's speculative shared `TransportArena`, buffer handles or zero-copy. [Results and verification](../docs/evidence/phase-c/2026-09-28-request-arena.md) do not support a default switch.
 
 *(Table unchanged from v0.4.0, with one addition:)*
 

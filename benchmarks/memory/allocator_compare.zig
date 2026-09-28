@@ -34,19 +34,21 @@ pub fn main(init: std.process.Init) !void {
     // Stdlib instrumentation runs separately; timed operations use the backend directly.
     var profile = std.testing.FailingAllocator.init(allocator, .{});
     if (mode == .echo) {
-        try echoOnce(profile.allocator(), request, expected);
+        try echoSession(profile.allocator(), request, expected);
     } else {
         const bytes = try profile.allocator().alloc(u8, size);
         profile.allocator().free(bytes);
     }
     if (profile.allocated_bytes != profile.freed_bytes) return error.LeakedWorkload;
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    defer arena.deinit();
     const before = try memory(init.io);
-    _ = try measure(init.io, allocator, mode, request, expected, size, samples[0..@min(100, iterations)]);
+    _ = try measure(init.io, allocator, &arena, mode, request, expected, size, samples[0..@min(100, iterations)]);
     var out_buffer: [4096]u8 = undefined;
     var out = std.Io.File.Writer.initStreaming(.stdout(), init.io, &out_buffer);
-    try out.interface.writeAll("allocator\tlibc\toptimize\tworkload\tbytes\tcycle\titerations\tp50_ns\tp95_ns\tp99_ns\tops_per_second\trss_before_kib\trss_after_kib\trss_idle_kib\thwm_kib\tprofile_allocations\tprofile_allocated_bytes\tprofile_resizes_succeeded\n");
+    try out.interface.writeAll("allocator\tlibc\toptimize\tworkload\tarena_retain_bytes\tbytes\tcycle\titerations\tp50_ns\tp95_ns\tp99_ns\tops_per_second\trss_before_kib\trss_after_kib\trss_idle_kib\thwm_kib\tprofile_allocations\tprofile_allocated_bytes\tprofile_resizes_succeeded\n");
     for (1..4) |cycle| {
-        const elapsed = try measure(init.io, allocator, mode, request, expected, size, samples);
+        const elapsed = try measure(init.io, allocator, &arena, mode, request, expected, size, samples);
         const after = try memory(init.io);
         try std.Io.sleep(init.io, .fromMilliseconds(100), .awake);
         const idle = try memory(init.io);
@@ -55,10 +57,10 @@ pub fn main(init: std.process.Init) !void {
             try raw.interface.flush();
         }
         std.mem.sort(u64, samples, {}, std.sort.asc(u64));
-        try out.interface.print("{s}\t{}\t{s}\t{s}\t{d}\t{d}\t{d}\t{d}\t{d}\t{d}\t{d:.1}\t{d}\t{d}\t{d}\t{d}\t{d}\t{d}\t{d}\n", .{
-            @tagName(app.options.allocator), builtin.link_libc,       @tagName(builtin.mode),  @tagName(mode),                                                                        size,       cycle,     iterations,
-            percentile(samples, 50),         percentile(samples, 95), percentile(samples, 99), @as(f64, @floatFromInt(iterations)) * 1e9 / @as(f64, @floatFromInt(@max(1, elapsed))), before.rss, after.rss, idle.rss,
-            idle.hwm,                        profile.allocations,     profile.allocated_bytes, profile.resize_index,
+        try out.interface.print("{s}\t{}\t{s}\t{s}\t{?d}\t{d}\t{d}\t{d}\t{d}\t{d}\t{d}\t{d:.1}\t{d}\t{d}\t{d}\t{d}\t{d}\t{d}\t{d}\n", .{
+            @tagName(app.options.allocator), builtin.link_libc,       @tagName(builtin.mode),  @tagName(mode),                                                                        app.options.request_arena_retain, size,      cycle,    iterations,
+            percentile(samples, 50),         percentile(samples, 95), percentile(samples, 99), @as(f64, @floatFromInt(iterations)) * 1e9 / @as(f64, @floatFromInt(@max(1, elapsed))), before.rss,                       after.rss, idle.rss, idle.hwm,
+            profile.allocations,             profile.allocated_bytes, profile.resize_index,
         });
         try out.interface.flush();
     }
@@ -85,12 +87,25 @@ fn echoOnce(allocator: Allocator, request: []const u8, expected: []const u8) !vo
     if (!std.mem.eql(u8, response, expected)) return error.WrongReply;
 }
 
-fn measure(io: std.Io, allocator: Allocator, mode: Mode, request: []const u8, expected: []const u8, size: usize, samples: []u64) !u64 {
+fn echoStep(allocator: Allocator, arena: *std.heap.ArenaAllocator, request: []const u8, expected: []const u8, limit: ?usize) !void {
+    defer if (limit) |cap| {
+        if (!arena.reset(.{ .retain_with_limit = cap })) _ = arena.reset(.free_all);
+    };
+    try echoOnce(if (limit != null) arena.allocator() else allocator, request, expected);
+}
+
+fn echoSession(allocator: Allocator, request: []const u8, expected: []const u8) !void {
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    defer arena.deinit();
+    try echoStep(allocator, &arena, request, expected, app.options.request_arena_retain);
+}
+
+fn measure(io: std.Io, allocator: Allocator, arena: *std.heap.ArenaAllocator, mode: Mode, request: []const u8, expected: []const u8, size: usize, samples: []u64) !u64 {
     const started = std.Io.Clock.awake.now(io);
     if (mode == .echo) {
         for (samples) |*sample| {
             const begin = std.Io.Clock.awake.now(io);
-            try echoOnce(allocator, request, expected);
+            try echoStep(allocator, arena, request, expected, app.options.request_arena_retain);
             sample.* = @intCast(begin.untilNow(io, .awake).nanoseconds);
         }
     } else try handoff(io, allocator, size, samples);
@@ -192,7 +207,35 @@ test "echo workload releases all logical bytes including allocation failures" {
     defer std.testing.allocator.free(request);
     const expected = (try (zbeam.runtime.Echo{ .registered_name = "echo" }).handle(std.testing.allocator, request)).?;
     defer std.testing.allocator.free(expected);
-    try std.testing.checkAllAllocationFailures(allocator, echoOnce, .{ request, expected });
+    var reference = std.testing.FailingAllocator.init(allocator, .{ .resize_fail_index = 0 });
+    try echoSession(reference.allocator(), request, expected);
+    try std.testing.expectEqual(reference.allocated_bytes, reference.freed_bytes);
+    for (0..reference.allocations) |index| {
+        var failure = std.testing.FailingAllocator.init(allocator, .{ .fail_index = index, .resize_fail_index = 0 });
+        // Reset retention is best effort: a handled OOM legitimately succeeds.
+        echoSession(failure.allocator(), request, expected) catch |err| if (err != error.OutOfMemory) return err;
+        try std.testing.expectEqual(index, failure.alloc_index);
+        try std.testing.expectEqual(failure.allocated_bytes, failure.freed_bytes);
+    }
+}
+
+test "request arena reuses warmed capacity and enforces a zero-retention policy" {
+    const a = std.testing.allocator;
+    const request = try makeRequest(a, 65536);
+    defer a.free(request);
+    const expected = (try (zbeam.runtime.Echo{ .registered_name = "echo" }).handle(a, request)).?;
+    defer a.free(expected);
+    var profile = std.testing.FailingAllocator.init(a, .{});
+    var arena = std.heap.ArenaAllocator.init(profile.allocator());
+    defer arena.deinit();
+    try echoStep(profile.allocator(), &arena, request, expected, 1024 * 1024);
+    const allocations = profile.allocations;
+    try echoStep(profile.allocator(), &arena, request, expected, 1024 * 1024);
+    try std.testing.expectEqual(allocations, profile.allocations);
+    try std.testing.expect(arena.queryCapacity() <= 1024 * 1024);
+    try echoStep(profile.allocator(), &arena, request, expected, 0);
+    try std.testing.expectEqual(@as(usize, 0), arena.queryCapacity());
+    try std.testing.expectEqual(profile.allocated_bytes, profile.freed_bytes);
 }
 
 test "bounded handoff frees on a different OS thread and joins producers" {
@@ -200,6 +243,17 @@ test "bounded handoff frees on a different OS thread and joins producers" {
     defer app.deinit();
     var samples: [257]u64 = undefined;
     try handoff(std.testing.io, allocator, 137, &samples);
+}
+
+test "selected allocator and request policy preserve paused and canceled packet ownership" {
+    const allocator = app.get(std.testing.allocator);
+    defer app.deinit();
+    // Only the receiver mutates the counter; inspect after both tasks join.
+    var profile = std.testing.FailingAllocator.init(allocator, .{});
+    try @import("backpressure-oracle").exercise(profile.allocator(), false, app.options.request_arena_retain);
+    try @import("backpressure-oracle").exercise(profile.allocator(), true, app.options.request_arena_retain);
+    try std.testing.expect(profile.allocated_bytes > 0);
+    try std.testing.expectEqual(profile.allocated_bytes, profile.freed_bytes);
 }
 
 test "proc memory reads a zero-size virtual file as a stream" {

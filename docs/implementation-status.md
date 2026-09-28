@@ -1,6 +1,6 @@
 # Implementation Status
 
-- **Last verified:** 2026-09-26
+- **MVP last verified:** 2026-09-26; experimental branch verification: 2026-09-28
 - **Package version:** 0.0.1 pre-alpha (no release tag created)
 - **Implemented milestone:** [restricted single-actor MVP](mvp.md)
 - **Broader design target:** v0.5.0 draft, not a release description
@@ -32,8 +32,8 @@ Details and commands are in [mvp.md](mvp.md). Verification records are [Phase B]
 - Cached distribution headers, fragmentation, proactive heartbeat scheduling or control operations beyond the documented send subset.
 - Distributed registry semantics, RPC, OTP behaviours, process links/monitors or a general actor task scheduler.
 - Concurrent peer servicing, transport deadlines, stalled-handler recovery, outbound reconnect/backoff or EPMD-loss recovery.
-- Arena-backed buffers, `BufferHandle`, typestate/linear ownership, io_uring or zero-copy transfer.
-- snmalloc integration or allocator-comparison results; the [evaluation plan](snmalloc-evaluation.md) and source audit are research only.
+- A transport/shared arena, `BufferHandle`, typestate/linear ownership, io_uring or zero-copy transfer. The separate request-local `std.heap.ArenaAllocator` experiment below does not implement those.
+- A default or packaged snmalloc backend. The optional adapter and measured results live on a separate `explore/snmalloc` branch (`62c511c`), not in this branch.
 - BEAM distribution-sender throttling measurements, multi-workload performance conclusions or isolation between actors inside the native process.
 - Panic/corruption crash-injection coverage, sanitizers/TSAN or a production security audit.
 
@@ -41,11 +41,11 @@ The service deliberately uses synchronous owned-copy processing. The reusable ma
 
 ## Allocator provenance
 
-The executable passes `std.process.Init.gpa` to the runtime. The [source/binary audit](evidence/phase-a/2026-09-26-allocator-source-audit.md) establishes that the recorded Zig 0.16.0, no-libc ReleaseSafe configuration selects `DebugAllocator`; it is not an explicit `smp_allocator` baseline. The Port worker uses fixed payload storage. This does not attribute the latency gap to allocation, and no snmalloc benchmark has been run.
+The executable passes `std.process.Init.gpa` to the runtime. The [source/binary audit](evidence/phase-a/2026-09-26-allocator-source-audit.md) establishes that the recorded Zig 0.16.0, no-libc ReleaseSafe configuration selects `DebugAllocator`; it is not an explicit `smp_allocator` baseline. The Port worker uses fixed payload storage. This does not attribute the latency gap to allocation. The separate `explore/snmalloc` branch has experimental benchmark results; the original MVP baseline is unchanged.
 
 ## Experimental branch — 2026-09-27
 
-`explore/allocator-baselines` adds an executable/lab-only allocator selector, preserving the `process` default and battery DAG. Standard-allocator comparisons, over-aligned realloc/OOM cleanup checks and a bounded OS-thread handoff workload are recorded in [baseline evidence](evidence/phase-c/2026-09-27-allocator-baselines.md). These are branch experiments, not snmalloc integration or a production release.
+`explore/allocator-baselines` adds an executable/lab-only allocator selector, preserving the `process` default and battery DAG. Standard-allocator comparisons, over-aligned realloc/OOM cleanup checks and a bounded OS-thread handoff workload are recorded in [baseline evidence](evidence/phase-c/2026-09-27-allocator-baselines.md). `explore/request-arena` additionally tests a synchronous per-frame `std.heap.ArenaAllocator` with opt-in retained-capacity control and error fallback; see the [arena evidence](evidence/phase-c/2026-09-28-request-arena.md). The default remains disabled. It is not a transport arena, async ownership mechanism, broad compatibility expansion or production release.
 
 ## Compatibility scope
 

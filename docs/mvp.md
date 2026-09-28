@@ -103,6 +103,8 @@ Primary field definitions are indexed in [protocol-sources.md](protocol-sources.
 
 The dispatcher owns one input packet at a time. `handle(allocator, packet)` borrows the packet only until it returns and returns either `null` or an owned response. The dispatcher frees both on success, error or cancellation. Escaping a borrowed packet requires an explicit copy. All decoded ETF bytes are owned copies; there is no transport arena, promotion API or zero-copy claim.
 
+The default remains this contract. On the experimental `explore/request-arena` branch, `-Drequest-arena-retain=N` optionally uses `std.heap.ArenaAllocator` for one synchronous frame and response, resetting **after** the reply flush/cleanup; its retained-capacity limit is not a live-byte or RSS bound. A handler must not keep the supplied allocator, input slice, decoded bytes or response across the frame. This experiment does not add transferable arena handles or async task ownership. [Branch evidence](evidence/phase-c/2026-09-28-request-arena.md) preserves tests and measured trade-offs.
+
 ## Demand and lifecycle
 
 After authentication, the actor starts with one credit. A read atomically reserves it before touching the reader or allocator. No buffered read-ahead is permitted. Handling and reply flushing finish before the next credit is granted. Ticks and ignored destinations also restore the reserved credit. A slow handler or blocked reply therefore stops subsequent reads; no queue hides this pause.
@@ -146,6 +148,6 @@ ERL_FLAGS='+S 2:2' zig build bench-port-vs-zbeam -Doptimize=ReleaseSafe -- 1000
 4. Crash injection for panic, allocator failure and deliberate corruption; SIGKILL evidence alone does not prove those cases or isolation between local actors.
 5. Performance across payload sizes, concurrent workloads and external supervision/restart policies; the committed baseline is one small sequential workload.
 6. EPMD-loss detection, outbound reconnect policy and production cookie/TLS configuration.
-7. Ownership/arena research only after the copied implementation demonstrates a measured bottleneck.
+7. Ownership/arena research remains experimental: a request-local branch measures a large-payload benefit but does not establish a general ownership solution or qualify a default switch.
 
 These are tracked in [research-needed.md](research-needed.md); none is silently treated as implemented.

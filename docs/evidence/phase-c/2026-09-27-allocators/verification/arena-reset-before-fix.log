@@ -1,0 +1,39 @@
+test-unit
++- run test 3 pass, 1 fail (4 total)
+ct/zbeam/src/zbeam/runtime/node.zig:162:5: 0x124ea13 in test.request arena retention stays bounded when reset allocation fails (mod.zig)
+    try std.testing.expectEqual(@as(usize, 0), arena.queryCapacity());
+    ^
+error: 'node.test.request arena retention stays bounded when reset allocation fails' failed:
+       expected 0, found 12326
+       /home/rickyraz/.local/share/mise/installs/zig/0.16.0/lib/std/testing.zig:118:17: 0x124e639 in expectEqualInner__anon_44806 (std.zig)
+                       return error.TestExpectedEqual;
+                       ^
+       /home/rickyraz/.local/share/mise/installs/zig/0.16.0/lib/std/testing.zig:83:5: 0x124e985 in expectEqual (mod.zig)
+           return expectEqualInner(T, expected, actual);
+           ^
+       /home/rickyraz/zig-proje
+failed command: ./.zig-cache/o/85ba0e8a79bd42b9d4ed54d922366a78/test --cache-dir=./.zig-cache --seed=0xb35b8355 --listen=-
+
+Build Summary: 16/18 steps succeeded (1 failed); 30/31 tests passed (1 failed)
+test-unit transitive failure
++- run test 1 pass (1 total) 19ms MaxRSS:5M
+|  +- compile test Debug native success 1s MaxRSS:138M
++- run test 12 pass (12 total) 62ms MaxRSS:5M
+|  +- compile test Debug native cached 34ms MaxRSS:39M
++- run test 6 pass (6 total) 17ms MaxRSS:5M
+|  +- compile test Debug native cached 17ms MaxRSS:39M
++- run test 2 pass (2 total) 15ms MaxRSS:4M
+|  +- compile test Debug native cached 21ms MaxRSS:39M
++- run test 4 pass (4 total) 17ms MaxRSS:5M
+|  +- compile test Debug native cached 19ms MaxRSS:39M
++- run test 3 pass, 1 fail (4 total)
+|  +- compile test Debug native success 1s MaxRSS:141M
++- run test 1 pass (1 total) 14ms MaxRSS:5M
+|  +- compile test Debug native success 1s MaxRSS:139M
+|     +- options success
++- run test 1 pass (1 total) 15ms MaxRSS:5M
+   +- compile test Debug native success 1s MaxRSS:139M
+      +- options (reused)
+
+error: the following build command failed with exit code 1:
+.zig-cache/o/63798282c74cb04bfc3ba8d794c18c44/build /home/rickyraz/.local/share/mise/installs/zig/0.16.0/zig /home/rickyraz/.local/share/mise/installs/zig/0.16.0/lib /home/rickyraz/zig-project/zbeam .zig-cache /home/rickyraz/.cache/zig --seed 0xb35b8355 -Zea454d9f413877d4 test-unit -j2 --summary all

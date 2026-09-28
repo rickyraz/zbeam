@@ -13,6 +13,8 @@ These records supersede earlier pending-matrix/demand status for the restricted 
 
 - [2026-09-26 allocator source and binary audit](phase-a/2026-09-26-allocator-source-audit.md) — baseline selection/linkage and pinned snmalloc source findings, not snmalloc integration or performance evidence.
 - [Evaluation plan](../snmalloc-evaluation.md) — proposed experiment and promotion criteria.
+- [Standard allocator baseline](phase-c/2026-09-27-allocator-baselines.md) — branch evidence, unchanged default.
+- [Request-local arena experiment](phase-c/2026-09-28-request-arena.md) — opt-in synchronous ownership/cap and matched results; does not promote a default. The separate snmalloc results live on `explore/snmalloc` (`62c511c`).
 
 ## Phases
 

@@ -17,6 +17,10 @@ pub const Config = struct {
     max_messages: usize = 1,
     /// One preserves the one-shot API; zero serves sequential peers until canceled.
     max_connections: usize = 1,
+    /// Opt-in request lifetime: null disables, zero releases after every frame.
+    /// Limits retained arena capacity, excluding node metadata/backend rounding.
+    /// This is not a live-allocation or process-RSS budget.
+    request_arena_retained_bytes: ?usize = null,
 };
 
 /// One synchronous actor, one active peer, no prefetch and no detached tasks.
@@ -116,6 +120,9 @@ pub fn serveConnection(io: std.Io, allocator: std.mem.Allocator, stream: std.Io.
 /// the duration of handle(); a returned response is owned and freed here.
 /// A credit is restored only after handling and flushing the reply. Thus a slow
 /// handler or blocked write stops all subsequent socket reads, including ticks.
+/// With a request arena, the supplied handler allocator expires after the reply
+/// flush; all users must finish before handle returns. Long-lived state must use
+/// a separately owned allocator. Reset never overlaps work using the arena.
 /// Callers needing a custom actor can reuse this loop after authenticating.
 pub fn dispatch(io: std.Io, allocator: std.mem.Allocator, stream: std.Io.net.Stream, config: Config, handler: anytype) !void {
     var reader = stream.reader(io, &.{});
@@ -123,15 +130,36 @@ pub fn dispatch(io: std.Io, allocator: std.mem.Allocator, stream: std.Io.net.Str
     var writer = stream.writer(io, &writer_buffer);
     var demand = actor.Demand.init(1);
     var handled: usize = 0;
+    var arena = std.heap.ArenaAllocator.init(allocator);
+    defer arena.deinit();
     while (config.max_messages == 0 or handled < config.max_messages) {
-        const packet = transport.distribution_io.readDemandedPacket(allocator, &reader.interface, config.limits.max_packet_bytes, &demand) catch |err|
+        const message_allocator = if (config.request_arena_retained_bytes != null) arena.allocator() else allocator;
+        defer if (config.request_arena_retained_bytes) |limit| resetRequestArena(&arena, limit);
+        const packet = transport.distribution_io.readDemandedPacket(message_allocator, &reader.interface, config.limits.max_packet_bytes, &demand) catch |err|
             return reader.err orelse err;
-        defer allocator.free(packet);
-        if (try handler.handle(allocator, packet)) |response| {
-            defer allocator.free(response);
+        defer message_allocator.free(packet);
+        if (try handler.handle(message_allocator, packet)) |response| {
+            defer message_allocator.free(response);
             transport.distribution_io.writePacket(&writer.interface, response) catch |err| return writer.err orelse err;
             if (packet.len != 4 and config.max_messages != 0) handled += 1;
         }
         try demand.grant(1);
     }
+}
+
+fn resetRequestArena(arena: *std.heap.ArenaAllocator, limit: usize) void {
+    // A failed best-effort resize can retain an oversized backing node.
+    if (!arena.reset(.{ .retain_with_limit = limit })) _ = arena.reset(.free_all);
+}
+
+test "request arena retention stays bounded when reset allocation fails" {
+    var profile = std.testing.FailingAllocator.init(std.testing.allocator, .{ .resize_fail_index = 0 });
+    var arena = std.heap.ArenaAllocator.init(profile.allocator());
+    defer arena.deinit();
+    _ = try arena.allocator().alloc(u8, 8192);
+    profile.fail_index = profile.alloc_index;
+    resetRequestArena(&arena, 512);
+    try std.testing.expect(profile.has_induced_failure);
+    try std.testing.expectEqual(@as(usize, 0), arena.queryCapacity());
+    try std.testing.expectEqual(profile.allocated_bytes, profile.freed_bytes);
 }

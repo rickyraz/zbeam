@@ -19,6 +19,18 @@ The Linux-only executable reads `/proc` through a streaming reader with fixed sc
 
 Raw samples are optional in single runs, mandatory in the matrix. Reported percentiles use nearest rank. Checks include allocation-failure cleanup, over-aligned realloc preservation, bounded remote handoff, and the procfs zero-size-file regression.
 
+## Request-local arena branch
+
+On `explore/request-arena`, `-Drequest-arena-retain=N` applies an opt-in arena to synchronous dispatch and the isolated echo path; omitted means no arena, `N=0` frees all after each frame, and `N=1048576` retains at most 1 MiB of arena capacity between frames. The bounded cross-thread handoff workload does **not** use the arena and acts only as a negative control. Response bytes are verified and freed before reset. The cap excludes physical rounding and is not an RSS limit. A failed retain resize falls back to free-all. No new library dependency is required.
+
+```sh
+zig build -j2 -Doptimize=ReleaseSafe -Dallocator=smp -Drequest-arena-retain=1048576 -p /tmp/arena-1m
+zig build build-allocator-bench -j2 -Doptimize=ReleaseSafe -Dallocator=smp -Drequest-arena-retain=1048576 -p /tmp/arena-1m
+zig build test-allocators -j2 -Dallocator=smp -Drequest-arena-retain=1048576
+```
+
+Use [matched results and the full three-prefix recipe](../../docs/evidence/phase-c/2026-09-28-request-arena.md). The default remains unchanged; no escaped packet/allocator reference is safe across a reset.
+
 ## Predeclared comparison
 
 Use 32, 4096 and 65536-byte payloads; five independent launches per variant/workload; 2000 isolated operations per cycle and 1000 network round trips. Run serially in seed-260927 shuffled order. The network benchmark retains its Port comparison, and `ZBEAM_BENCH_PAYLOAD_BYTES` selects the payload within the Port's 1 MiB limit.

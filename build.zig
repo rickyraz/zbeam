@@ -7,6 +7,7 @@ pub fn build(b: *std.Build) void {
     const link_libc = (b.option(bool, "link-libc", "Match libc linkage for allocator comparisons") orelse false) or allocator == .libc;
     const allocator_options = b.addOptions();
     allocator_options.addOption(@TypeOf(allocator), "allocator", allocator);
+    allocator_options.addOption(?usize, "request_arena_retain", b.option(usize, "request-arena-retain", "Enable request arena; maximum retained capacity in bytes (0 frees each request)"));
     const app_allocator = b.createModule(.{
         .root_source_file = b.path("src/app_allocator.zig"),
         .target = target,
@@ -184,6 +185,12 @@ pub fn build(b: *std.Build) void {
     benchmark_cmd.step.dependOn(b.getInstallStep());
     benchmark_step.dependOn(&benchmark_cmd.step);
 
+    const backpressure_oracle = b.createModule(.{
+        .root_source_file = b.path("tests/stress/backpressure_stress.zig"),
+        .target = target,
+        .optimize = optimize,
+        .imports = &.{.{ .name = "zbeam-runtime", .module = runtime_mod }},
+    });
     const allocator_bench = b.addExecutable(.{
         .name = "zbeam-allocator-bench",
         .root_module = b.createModule(.{
@@ -196,6 +203,7 @@ pub fn build(b: *std.Build) void {
             },
         }),
     });
+    allocator_bench.root_module.addImport("backpressure-oracle", backpressure_oracle);
     b.step("build-allocator-bench", "Install the isolated allocator benchmark").dependOn(&b.addInstallArtifact(allocator_bench, .{}).step);
     const allocator_bench_step = b.step("bench-allocators", "Run the isolated allocator workload (echo|handoff iterations bytes)");
     const allocator_bench_run = b.addRunArtifact(allocator_bench);
