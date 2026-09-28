@@ -60,6 +60,8 @@ erl +S 2:2 -noshell -name client@127.0.0.1 -setcookie development_cookie -eval '
 | `zbeam echo NAME COOKIE [COUNT]` | One accepted connection; default one handled message; zero runs until disconnect |
 | `zbeam serve NAME COOKIE [COUNT]` | Sequential accepted connections until stopped; COUNT is per-peer, default unlimited |
 | `zbeam probe NAME COOKIE PEER` | Register locally, look up PEER, initiate a handshake, verify one request/reply and exit |
+| `zbeam sha256 NAME COOKIE [COUNT]` | One peer; hash bounded binary messages; default one reply |
+| `zbeam serve-sha256 NAME COOKIE [COUNT]` | Sequential peers; hash bounded binaries; default unlimited messages per peer |
 
 Names are short names; the CLI appends `@127.0.0.1`. The service listens only on IPv4 loopback. Counts exclude ticks and ignored destinations. `probe` expects an OTP process registered as `echo` that receives `{From, Value}` and sends `From ! {From, Value}`. Example OTP peer:
 
@@ -80,7 +82,7 @@ Cookies in CLI arguments are visible in process listings. These commands are dev
 - EPMD: ALIVE2 registration and PORT_PLEASE2 lookup, including the two-byte error response. The registration socket remains open for the node lifetime.
 - Handshake: version-6, OTP 23+ `N` format, mutual cookie challenge/response, fresh random challenge for each service connection. A deterministic challenge override exists only for tests.
 - Distribution: four-byte lengths, zero-length ticks and PASS_THROUGH (`112`). Each control/payload external term has its own ETF version marker.
-- Service: `{6, FromPid, CookieAtom, RegisteredName}` (`REG_SEND`); matching `echo` receives a `{2, CookieAtom, FromPid}` (`SEND`) reply containing the same supported value. Unknown registered names are discarded without decoding their payload.
+- Service: `{6, FromPid, CookieAtom, RegisteredName}` (`REG_SEND`); matching `echo` receives a `{2, CookieAtom, FromPid}` (`SEND`) reply containing the same supported value. The separate `sha256` registered service accepts only a raw ETF binary (up to the configured ETF limit) and replies to `FromPid` with its 32-byte SHA-256 digest. Unsupported matching terms disconnect that peer. Unknown registered names are discarded without decoding their payload.
 - ETF: signed i32-valued integers (stored in i64), UTF-8 atoms, tuples, binaries, proper lists/byte strings, nil and `NEW_PID_EXT`. Maps, floats, large integers, references, ports, functions, bitstrings, compressed ETF and improper lists are not accepted.
 - Optional process-monitor, atom-cache and fragmentation flags are not advertised. Required modern OTP baseline flags are still advertised to establish connections; those flags must not be interpreted as a complete ETF implementation. A matching unsupported payload closes that connection.
 - Ordinary `net_kernel:connect_node/1` plus registered send is supported. `net_adm:ping`, `rpc:call`, `gen_server:call`, distributed `global`, process links and process monitors are not implemented. Node-down observation is separate from process monitoring.
@@ -144,7 +146,7 @@ ERL_FLAGS='+S 2:2' zig build bench-port-vs-zbeam -Doptimize=ReleaseSafe -- 1000
 2. Complete mandatory ETF coverage, control semantics, process links/monitors and broader version/architecture tests before a general compatibility claim.
 3. An OTP-sender backpressure oracle. Current socket saturation evidence uses a Zig TCP sender, not a measured BEAM distribution queue.
 4. Crash injection for panic, allocator failure and deliberate corruption; SIGKILL evidence alone does not prove those cases or isolation between local actors.
-5. Performance across payload sizes, concurrent workloads and external supervision/restart policies; the committed baseline is one small sequential workload.
+5. Performance across concurrent/useful workloads and external supervision/restart policies; a short SHA-256 Port/distribution comparison now exists, but cannot establish general superiority.
 6. EPMD-loss detection, outbound reconnect policy and production cookie/TLS configuration.
 7. Ownership/arena research only after the copied implementation demonstrates a measured bottleneck.
 

@@ -78,7 +78,9 @@ SIGKILL process-loss checks pass with a surviving BEAM VM and unrelated local pr
 
 The committed Port comparison is a single sequential payload/workload on one host, with scheduler-wall-time instrumentation and memory snapshots. The source audit identifies `DebugAllocator` in the no-libc ReleaseSafe zbeam build; the Port payload path uses fixed storage. These results do not isolate allocator cost. Restart includes orderly shutdown, launch, readiness polling and first reply; it is one sample, not a distribution or crash-recovery SLO.
 
-**Required evidence:** larger payloads, concurrent clients, repetitions/confidence intervals, ordering effects, allocator profiles, loaded BEAM workloads and operational restart policies. Production work also requires non-argv cookie handling, TLS/trusted-network policy and security review.
+**Current additional evidence (2026-09-28):** a fixed SHA-256 binary worker has exact OTP 25/26/27 checks, a runnable BEAM client and repeated 32 B/64 KiB Port comparisons. The [SHA-256 record](evidence/phase-c/2026-09-28-sha256-worker.md) retains its negative distribution-latency result. This is one useful computation, not general process/monitor support or a worker-supervision framework.
+
+**Required evidence:** concurrent clients, more useful workload mixtures, confidence intervals, randomized path ordering, allocator/CPU profiles, loaded BEAM workloads and operational restart policies. Production work also requires non-argv cookie handling, TLS/trusted-network policy and security review.
 
 ## P1 — Ownership design before implementation
 

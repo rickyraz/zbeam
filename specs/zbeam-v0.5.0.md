@@ -536,7 +536,7 @@ fn myTerminalActor(io: std.Io, ctx: ActorContext) !void {
 
 ## 6. NodeConfig & Public API
 
-The current API is `runtime.node.Config` (`src/zbeam/runtime/node.zig`), not the proposed struct below. Its frame/ETF limits, message bound and sequential-connection bound are documented in [`docs/mvp.md`](../docs/mvp.md). The current `Runtime(T).spawn` registers caller-owned mailbox storage and does not schedule tasks. Tokens enforce logical ownership and reject overlapping receives, not unforgeable task identity.
+The current API is `runtime.node.Config` (`src/zbeam/runtime/node.zig`), not the proposed struct below. It selects either the original fixed echo worker or a fixed `sha256` service accepting only a bounded ETF binary and returning its 32-byte digest; this is not a general actor scheduler, monitor/link implementation or arbitrary RPC. [Executed OTP and performance evidence](../docs/evidence/phase-c/2026-09-28-sha256-worker.md). Its frame/ETF limits, message bound and sequential-connection bound are documented in [`docs/mvp.md`](../docs/mvp.md). The current `Runtime(T).spawn` registers caller-owned mailbox storage and does not schedule tasks. Tokens enforce logical ownership and reject overlapping receives, not unforgeable task identity.
 
 ```zig
 pub const NodeConfig = struct {

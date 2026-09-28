@@ -4,6 +4,13 @@ const std = @import("std");
 /// it reads `[u32 length][payload]` and writes the same frame back, isolating
 /// basic BEAM-to-OS-process round-trip cost.
 pub fn main(init: std.process.Init) !void {
+    var args = try std.process.Args.Iterator.initAllocator(init.minimal.args, init.gpa);
+    defer args.deinit();
+    _ = args.next();
+    const job = args.next() orelse "echo";
+    if (!std.mem.eql(u8, job, "echo") and !std.mem.eql(u8, job, "sha256")) return error.InvalidJob;
+    if (args.next() != null) return error.UnexpectedArgument;
+    const hashing = std.mem.eql(u8, job, "sha256");
     const io = init.io;
     var input_buffer: [4096]u8 = undefined;
     var output_buffer: [4096]u8 = undefined;
@@ -23,8 +30,15 @@ pub fn main(init: std.process.Init) !void {
         const length = readU32(&header);
         if (length > payload.len) return error.PacketTooLarge;
         try reader.interface.readSliceAll(payload[0..length]);
-        try writer.interface.writeAll(&header);
-        try writer.interface.writeAll(payload[0..length]);
+        if (hashing) {
+            var digest: [32]u8 = undefined;
+            std.crypto.hash.sha2.Sha256.hash(payload[0..length], &digest, .{});
+            try writer.interface.writeAll(&.{ 0, 0, 0, 32 });
+            try writer.interface.writeAll(&digest);
+        } else {
+            try writer.interface.writeAll(&header);
+            try writer.interface.writeAll(payload[0..length]);
+        }
         try writer.interface.flush();
     }
 }

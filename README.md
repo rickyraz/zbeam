@@ -5,7 +5,7 @@
 
 > **A bounded, single-actor Erlang Distribution peer in Zig.**
 
-zbeam implements a development MVP: a separate Zig process registers through EPMD, authenticates with OTP, exposes one registered echo actor, and supports repeated messages and sequential reconnects. Both handshake directions are verified against real OTP 25, 26 and 27.
+zbeam implements a development MVP: a separate Zig process registers through EPMD, authenticates with OTP, exposes one registered echo or SHA-256 binary worker, and supports repeated messages and sequential reconnects. Both handshake directions are verified against real OTP 25, 26 and 27.
 
 **Not a production Erlang node.** Compatibility is limited to the [MVP wire subset](docs/mvp.md). Arbitrary ETF terms, RPC, process links/monitors, distributed registry semantics and the full v0.5 runtime are not implemented.
 
@@ -23,7 +23,7 @@ The current benchmark includes negative results. It does not establish a perform
 | ETF | Bounded owned subset, including aggregate allocation limits |
 | EPMD and handshake | Registration/lookup; both handshake roles verified on OTP 25–27 |
 | Distribution | Pass-through framing, tick echo, REG_SEND/SEND subset |
-| Service lifecycle | One synchronous actor; repeated messages; sequential peer recovery |
+| Service lifecycle | One synchronous echo or SHA-256 worker; repeated messages; sequential peer recovery; bounded socket waits |
 | Backpressure | Demand-gated unbuffered reads; TCP saturation/resume evidence |
 | Local actor primitives | Bounded mailbox, logical receive ownership, registry and termination |
 | Process-loss isolation | SIGKILL/nodedown tests with surviving OTP VM and local process |
@@ -62,9 +62,9 @@ erl +S 2:2 -noshell -name client@127.0.0.1 -setcookie development_cookie -eval '
   halt().'
 ```
 
-The service binds IPv4 loopback and handles one active peer at a time. `echo` provides a bounded one-shot variant; `probe` initiates a request to a real OTP echo actor. See [MVP usage and contracts](docs/mvp.md).
+The service binds IPv4 loopback and handles one active peer at a time. `echo` provides a bounded one-shot variant; `probe` initiates a request to a real OTP echo actor. `serve-sha256` and `sha256` serve bounded binary-hashing requests; see the [runnable Elixir client](examples/sha256_worker.exs). See [MVP usage and contracts](docs/mvp.md).
 
-Cookies in arguments are visible in process listings. There are no network deadlines or TLS integration; do not expose this development service to untrusted peers.
+Cookies in arguments are visible in process listings. Handshake, frame and write waits have bounded defaults, but CPU-bound handlers are not preempted. There is no TLS integration; do not expose this development service to untrusted peers.
 
 ## Battery-pack architecture
 
@@ -94,7 +94,7 @@ Transport never imports actor/runtime. The actor-facing dispatcher reserves dema
 - [Protocol primary sources](docs/protocol-sources.md)
 - [Architecture decisions](docs/adr/README.md)
 - [Verification evidence](docs/evidence/README.md)
-- [Port comparison](benchmarks/README.md)
+- [Port and SHA-256 worker comparisons](benchmarks/README.md)
 - [v0.5.0 draft](specs/zbeam-v0.5.0.md), a design target with unimplemented pseudocode
 
 Contribution requirements are in [CONTRIBUTING.md](CONTRIBUTING.md). Security limits are in [SECURITY.md](SECURITY.md).

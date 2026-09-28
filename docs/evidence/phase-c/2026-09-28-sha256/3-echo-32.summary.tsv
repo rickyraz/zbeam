@@ -1,0 +1,4 @@
+# job=echo; OTP 28; Elixir 1.19.5; schedulers_online=2
+implementation	iterations	payload_bytes	p50_ns	p95_ns	p99_ns	roundtrips_per_second	child_rss_kib	child_hwm_kib	beam_total_bytes	restart_ns	scheduler_busy_pct
+erlang_port	500	32	99794	154094	199897	9664.3	2012	2012	55764392	4543018	9.628
+zbeam_distribution	500	32	825290	988974	1167190	1198.5	2728	2728	56016536	23157272	1.915

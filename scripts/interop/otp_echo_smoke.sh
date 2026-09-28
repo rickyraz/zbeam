@@ -10,6 +10,7 @@ logs=$(mktemp -d)
 peer_pid=
 otp_pid=
 client_pid=
+hash_pid=
 cleanup() {
     status=$?
     if [ "$status" -ne 0 ]; then
@@ -18,6 +19,7 @@ cleanup() {
     [ -z "$peer_pid" ] || { kill "$peer_pid" 2>/dev/null || true; wait "$peer_pid" 2>/dev/null || true; }
     [ -z "$otp_pid" ] || { kill "$otp_pid" 2>/dev/null || true; wait "$otp_pid" 2>/dev/null || true; }
     [ -z "$client_pid" ] || { kill "$client_pid" 2>/dev/null || true; wait "$client_pid" 2>/dev/null || true; }
+    [ -z "$hash_pid" ] || { kill "$hash_pid" 2>/dev/null || true; wait "$hash_pid" 2>/dev/null || true; }
     rm -rf "$logs"
 }
 trap cleanup EXIT
@@ -94,4 +96,24 @@ until grep -q '^ready$' "$logs/otp.log"; do
     tries=$((tries + 1)); [ "$tries" -lt 100 ] || exit 1; sleep 0.1
 done
 timeout 15 "$zbeam_bin" probe "probe_${label}_$$" zbeam_test_cookie "$otp_name"
-echo "PASS $label OTP $otp_release: initiating and accepting roles"
+hash_name="sha_${short_name}"
+"$zbeam_bin" serve-sha256 "$hash_name" zbeam_test_cookie >"$logs/sha256.log" 2>&1 &
+hash_pid=$!
+wait_registered "$hash_name"
+timeout 25 "$erl_bin" +S 2:2 -noshell -name "sha_$client_name" -setcookie zbeam_test_cookie -eval \
+    "N=list_to_atom(\"$hash_name@127.0.0.1\"),
+     true=net_kernel:connect_node(N),
+     lists:foreach(fun(B) -> D=crypto:hash(sha256,B),{sha256,N}!B,
+       receive D -> ok after 3000 -> error(sha256_timeout) end end,
+       [<<>>,<<97,98,99>>,binary:copy(<<90>>,65536)]),
+     true=monitor_node(N,true),{sha256,N}!42,
+     receive {nodedown,N} -> ok after 3000 -> error(expected_rejection) end,
+     true=net_kernel:connect_node(N),
+     D=crypto:hash(sha256,<<114,101,99,111,110,110,101,99,116>>),
+     {sha256,N}!<<114,101,99,111,110,110,101,99,116>>,
+     receive D -> ok after 3000 -> error(reconnect_timeout) end,
+     halt()."
+kill "$hash_pid"
+wait "$hash_pid" 2>/dev/null || true
+hash_pid=
+echo "PASS $label OTP $otp_release: echo both roles; sha256 exact digest, rejection and reconnect"
