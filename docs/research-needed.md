@@ -102,6 +102,14 @@ The current representation uses owned copies. Compare that baseline with ownersh
 
 ## P2 — Deferred optimization research
 
+### Native worker performance versus NIF and ETF Port
+
+The [native-worker research plan](native-worker-research.md) initializes six experiment branches from the deadline/SHA-256 worker baseline. It defines direct Zigler NIF, raw Port, ETF-over-Port and distribution controls, plus profiling, BEAM backpressure, recovery, batching and two-worker admission tracks. These are planned experiments, not additional implemented behavior.
+
+**Risk:** Zigler's direct NIF term marshalling is not inherently ETF serialization; zbeam itself uses ETF. Unequal CPU budgets, unsuitable NIF scheduling, unmatched batching, hidden queue memory or disabled deadlines can manufacture a misleading advantage.
+
+**Required evidence:** pinned runnable competitors, matched work/resources, end-to-end raw samples, run-level uncertainty, native-host replication and separate performance versus isolation conclusions. Existing allocator experiments are controls, not proof that zbeam outperforms a direct NIF.
+
 ### Allocator selection and snmalloc
 
 **Hypothesis:** batched remote frees may benefit future owned-message producer/consumer workloads. The synchronous MVP does not establish that workload or an allocator bottleneck.

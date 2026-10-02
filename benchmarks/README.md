@@ -2,6 +2,10 @@
 
 Benchmarks are evidence tooling, not product claims. Results record environment, optimization mode, payload, iteration count and raw output. Allocator comparisons must additionally identify the explicit backend, libc/linkage, I/O backend and allocator-specific flags.
 
+## NIF, ETF and distribution research
+
+The [native-worker research plan](../docs/native-worker-research.md) defines six research branches and matched Zigler NIF, raw Port, ETF-over-Port and zbeam comparisons. Zigler is an in-process NIF path, not inherently an ETF transport. NIF and ETF-Port adapters are planned, not implemented by the existing runner. Performance, BEAM responsiveness and process-loss recovery are separate claims.
+
 ## Allocator research
 
 The [snmalloc evaluation plan](../docs/snmalloc-evaluation.md) defines a future isolated experiment; no snmalloc build target or result exists yet. The [source audit](../docs/evidence/phase-a/2026-09-26-allocator-source-audit.md) identifies `DebugAllocator` in the recorded no-libc ReleaseSafe executable. The Port payload path uses fixed storage, so the Port comparison alone cannot identify an allocator bottleneck. Compare an explicit `smp_allocator` configuration before adding an external backend, and preserve the existing results rather than relabeling them.
