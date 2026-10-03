@@ -3,7 +3,7 @@ defmodule ZbeamResearch.ComparisonTest do
   alias ZbeamResearch.Comparison, as: C
 
   test "all NIF adapters use the requested job and reject mismatches" do
-    for label <- ["zigler_sync", "zigler_dirty_cpu", "zigler_threaded"] do
+    for label <- ["zigler_sync", "zigler_dirty_cpu"] do
       assert C.call(C.start(label, "echo", 1), "abc") == "abc"
       assert C.call(C.start(label, "sha256", 1), "abc") == :crypto.hash(:sha256, "abc")
     end

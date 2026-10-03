@@ -1,0 +1,18 @@
+1/10 zbeam_distribution sha256 65536: 1101655 ns
+1/10 port_raw echo 1048576: 4838184 ns
+1/10 zbeam_distribution echo 1048576: 7752265 ns
+1/10 zigler_dirty_cpu sha256 32: 1663 ns
+1/10 zigler_dirty_cpu echo 4096: 2955 ns
+1/10 zigler_threaded echo 1048576: 662724 ns
+1/10 port_raw sha256 65536: 378837 ns
+1/10 zigler_dirty_cpu sha256 1048576: 1078078 ns
+1/10 zigler_threaded sha256 65536: 588545 ns
+1/10 port_etf sha256 1048576: 6328292 ns
+1/10 zbeam_distribution echo 32: 632192 ns
+Traceback (most recent call last):
+  File "/home/rickyraz/projects/objective/zbeam/scripts/bench/native_matrix.py", line 168, in <module>
+    main()
+    ~~~~^^
+  File "/home/rickyraz/projects/objective/zbeam/scripts/bench/native_matrix.py", line 148, in main
+    raise RuntimeError(f'comparator failed ({process.returncode}): {log}')
+RuntimeError: comparator failed (1): /home/rickyraz/projects/objective/zbeam/docs/evidence/phase-c/2026-10-02-native-comparison/repeated/0-zigler_threaded-echo-32.log

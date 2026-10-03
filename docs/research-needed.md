@@ -108,6 +108,8 @@ The [native-worker research plan](native-worker-research.md) initializes six exp
 
 **Risk:** Zigler's direct NIF term marshalling is not inherently ETF serialization; zbeam itself uses ETF. Unequal CPU budgets, unsuitable NIF scheduling, unmatched batching, hidden queue memory or disabled deadlines can manufacture a misleading advantage.
 
+**Comparator blocker (2026-10-03):** the Zigler threaded adapter failed repeated exact-result/VM-lifetime checks and is quarantined, not a defeated competitor. Its disposable-VM reproducer and logs are recorded in the baseline evidence; the remaining cause needs independent investigation.
+
 **Required evidence:** pinned runnable competitors, matched work/resources, end-to-end raw samples, run-level uncertainty, native-host replication and separate performance versus isolation conclusions. Existing allocator experiments are controls, not proof that zbeam outperforms a direct NIF.
 
 ### Allocator selection and snmalloc

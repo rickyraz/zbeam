@@ -81,7 +81,7 @@ def main():
     parser.add_argument('--repeats', type=int, default=10)
     parser.add_argument('--iterations', type=int, default=1000)
     parser.add_argument('--sizes', default='32,4096,65536,1048576')
-    parser.add_argument('--labels', default=','.join(LABELS))
+    parser.add_argument('--labels', default=','.join(label for label in LABELS if label != 'zigler_threaded'))
     parser.add_argument('--jobs', default='echo,sha256')
     parser.add_argument('--workers', type=Path, default=ROOT / 'zig-out/bin')
     parser.add_argument('--self-test', action='store_true')
@@ -99,6 +99,8 @@ def main():
     labels, jobs = args.labels.split(','), args.jobs.split(',')
     if not all(1 <= s <= 1048576 for s in sizes) or not set(labels) <= set(LABELS) or not set(jobs) <= {'echo', 'sha256'}:
         parser.error('invalid workload or comparator')
+    if 'zigler_threaded' in labels:
+        parser.error('threaded adapter is quarantined after a VM segfault; use the disposable ExUnit reproducer, not performance scoring')
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
     workers = args.workers.resolve()
@@ -117,6 +119,7 @@ def main():
                              '1000 samples per launch gives only ten upper-1% observations; tail intervals remain exploratory',
                              'unloaded sequential workload; no universal or production performance conclusion'])
     (output / 'manifest.json').write_text(json.dumps(manifest, indent=2, default=str) + '\n')
+    (output / 'unavailable.json').write_text(json.dumps({'zigler_threaded': 'quarantined: incorrect raw-term reply followed by VM segfault in repeated thread/send stress; no performance claim'}) + '\n')
     subprocess.run(['epmd', '-daemon'], check=True)
     cases = list(itertools.product(labels, jobs, sizes))
     skipped = [c for c in cases if c[0] == 'zigler_sync' and c[1] == 'sha256' and c[2] > 65536]

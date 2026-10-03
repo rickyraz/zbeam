@@ -1,0 +1,31 @@
+Compiling 1 file (.ex)
+
+13:38:08.074 [info] zig expected (via env variable) in /home/rickyraz/.local/share/mise/installs/zig/0.16.0/bin/zig
+
+13:38:08.076 [debug] running command: /home/rickyraz/.local/share/mise/installs/zig/0.16.0/bin/zig fmt /tmp/Elixir.ZbeamResearch.Native/build.zig
+
+13:38:08.105 [debug] wrote build.zig to /tmp/Elixir.ZbeamResearch.Native/build.zig
+
+13:38:08.146 [info] zig expected (via env variable) in /home/rickyraz/.local/share/mise/installs/zig/0.16.0/bin/zig
+
+13:38:08.146 [debug] running command: /home/rickyraz/.local/share/mise/installs/zig/0.16.0/bin/zig build -Dzigler-mode=sema -Derts_include=/home/rickyraz/.local/share/mise/installs/erlang/29.1.1/erts-17.1/include -Derl_nif_header=/home/rickyraz/.local/share/mise/installs/erlang/29.1.1/erts-17.1/include/erl_nif.h -Derl_nif_win_path=/home/rickyraz/projects/objective/zbeam/benchmarks/zigler/_build/test/lib/zigler/priv/erl_nif_win -Dzigler_priv=/home/rickyraz/projects/objective/zbeam/benchmarks/zigler/_build/test/lib/zigler/priv -Dmodule_root=/home/rickyraz/projects/objective/zbeam/benchmarks/zigler/lib
+Compiling lib/native.ex (it's taking more than 10s)
+
+13:38:28.324 [info] zig expected (via env variable) in /home/rickyraz/.local/share/mise/installs/zig/0.16.0/bin/zig
+
+13:38:28.324 [debug] running command: /home/rickyraz/.local/share/mise/installs/zig/0.16.0/bin/zig fmt /tmp/Elixir.ZbeamResearch.Native/module.zig
+
+13:38:28.332 [debug] wrote module code to /tmp/Elixir.ZbeamResearch.Native/module.zig
+
+13:38:28.332 [info] zig expected (via env variable) in /home/rickyraz/.local/share/mise/installs/zig/0.16.0/bin/zig
+
+13:38:28.332 [debug] running command: /home/rickyraz/.local/share/mise/installs/zig/0.16.0/bin/zig build -Derts_include=/home/rickyraz/.local/share/mise/installs/erlang/29.1.1/erts-17.1/include -Derl_nif_header=/home/rickyraz/.local/share/mise/installs/erlang/29.1.1/erts-17.1/include/erl_nif.h -Derl_nif_win_path=/home/rickyraz/projects/objective/zbeam/benchmarks/zigler/_build/test/lib/zigler/priv/erl_nif_win -Dzigler_priv=/home/rickyraz/projects/objective/zbeam/benchmarks/zigler/_build/test/lib/zigler/priv -Dmodule_root=/home/rickyraz/projects/objective/zbeam/benchmarks/zigler/lib --prefix /home/rickyraz/projects/objective/zbeam/benchmarks/zigler/_build/test/lib/zbeam_research/priv
+
+13:38:47.292 [debug] compiled lib at: /home/rickyraz/projects/objective/zbeam/benchmarks/zigler/_build/test/lib/zbeam_research/priv
+
+13:38:47.297 [debug] moved library to /home/rickyraz/projects/objective/zbeam/benchmarks/zigler/_build/test/lib/zbeam_research/priv/lib/Elixir.ZbeamResearch.Native.so
+Running ExUnit with seed: 541326, max_cases: 4
+
+
+13:38:47.589 [debug] loaded module at Elixir.ZbeamResearch.Native
+..

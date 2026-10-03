@@ -1,0 +1,1 @@
+Rejected: raw beam.term from a threaded NIF did not survive environment teardown; exact-result guard stopped the matrix.

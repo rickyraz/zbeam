@@ -1,0 +1,10 @@
+
+13:34:10.868 [debug] loaded module at Elixir.ZbeamResearch.Native
+** (RuntimeError) incorrect worker result
+    (zbeam_research 0.1.0) lib/comparison.ex:169: ZbeamResearch.Comparison.check/2
+    (zbeam_research 0.1.0) lib/comparison.ex:20: anonymous fn/4 in ZbeamResearch.Comparison.run/4
+    (elixir 1.20.4) lib/enum.ex:4636: Enum.map_range/4
+    (elixir 1.20.4) lib/enum.ex:4636: Enum.map_range/4
+    (elixir 1.20.4) lib/enum.ex:4636: Enum.map/2
+    (zbeam_research 0.1.0) lib/comparison.ex:18: ZbeamResearch.Comparison.run/4
+    run.exs:4: (file)

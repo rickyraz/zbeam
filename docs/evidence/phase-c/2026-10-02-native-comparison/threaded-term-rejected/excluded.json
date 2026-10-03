@@ -1,0 +1,1 @@
+{"cases": [["zigler_sync", "sha256", 1048576]], "reason": "large SHA-256 work uses dirty/threaded schedulers; synchronous eligibility not established"}
