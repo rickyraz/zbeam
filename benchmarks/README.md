@@ -4,7 +4,7 @@ Benchmarks are evidence tooling, not product claims. Results record environment,
 
 ## NIF, ETF and distribution research
 
-The [native-worker research plan](../docs/native-worker-research.md) defines six research branches and matched Zigler NIF, raw Port, ETF-over-Port and zbeam comparisons. Zigler is an in-process NIF path, not inherently an ETF transport. NIF and ETF-Port adapters are planned, not implemented by the existing runner. Performance, BEAM responsiveness and process-loss recovery are separate claims.
+The [native-worker research plan](../docs/native-worker-research.md) defines six research branches and matched Zigler NIF, raw Port, ETF-over-Port and zbeam comparisons. Zigler is an in-process NIF path, not inherently an ETF transport. [Optional NIF and ETF-Port adapters](zigler/README.md) and a fresh-VM matrix are implemented separately from the historical runner. Performance, BEAM responsiveness and process-loss recovery are separate claims.
 
 ## Allocator research
 

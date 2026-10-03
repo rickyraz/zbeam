@@ -1,0 +1,1 @@
+{"cases": [], "reason": "large SHA-256 work uses dirty/threaded schedulers; synchronous eligibility not established"}

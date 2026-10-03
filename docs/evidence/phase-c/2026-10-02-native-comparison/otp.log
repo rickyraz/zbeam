@@ -1,0 +1,61 @@
+docker.io/library/erlang@sha256:d838e3fd8b61d29f60be47e826253d97e5758a22cbf070b9686365fa8b498106: Pulling from library/erlang
+ce9765ff14d2: Pulling fs layer
+53f8f5e03afd: Pulling fs layer
+71e0c18ac0cd: Download complete
+eb8cbf12f844: Download complete
+53f8f5e03afd: Download complete
+53f8f5e03afd: Pull complete
+ce9765ff14d2: Download complete
+ce9765ff14d2: Pull complete
+Digest: sha256:d838e3fd8b61d29f60be47e826253d97e5758a22cbf070b9686365fa8b498106
+Status: Downloaded newer image for erlang@sha256:d838e3fd8b61d29f60be47e826253d97e5758a22cbf070b9686365fa8b498106
+docker.io/library/erlang@sha256:d838e3fd8b61d29f60be47e826253d97e5758a22cbf070b9686365fa8b498106
+OTP 25 image: erlang@sha256:d838e3fd8b61d29f60be47e826253d97e5758a22cbf070b9686365fa8b498106
+docker.io/library/erlang@sha256:cb3039645b89c9fbae3beb608e55cd06df131328d608a1e51beb2bce8ef3a2d3: Pulling from library/erlang
+e39e90d869da: Pulling fs layer
+0ea358edeb16: Download complete
+88d4f4243713: Download complete
+e39e90d869da: Download complete
+e39e90d869da: Pull complete
+Digest: sha256:cb3039645b89c9fbae3beb608e55cd06df131328d608a1e51beb2bce8ef3a2d3
+Status: Downloaded newer image for erlang@sha256:cb3039645b89c9fbae3beb608e55cd06df131328d608a1e51beb2bce8ef3a2d3
+docker.io/library/erlang@sha256:cb3039645b89c9fbae3beb608e55cd06df131328d608a1e51beb2bce8ef3a2d3
+OTP 26 image: erlang@sha256:cb3039645b89c9fbae3beb608e55cd06df131328d608a1e51beb2bce8ef3a2d3
+docker.io/library/erlang@sha256:f64e891340b38f89adc33e63be00eb027bffa84481f230f981422707efe3fa5e: Pulling from library/erlang
+af406eb2139a: Pulling fs layer
+f7ee36c9aa34: Pulling fs layer
+f7ee36c9aa34: Download complete
+f7ee36c9aa34: Pull complete
+39541f669f02: Download complete
+85bf8de1f381: Download complete
+af406eb2139a: Download complete
+af406eb2139a: Pull complete
+Digest: sha256:f64e891340b38f89adc33e63be00eb027bffa84481f230f981422707efe3fa5e
+Status: Downloaded newer image for erlang@sha256:f64e891340b38f89adc33e63be00eb027bffa84481f230f981422707efe3fa5e
+docker.io/library/erlang@sha256:f64e891340b38f89adc33e63be00eb027bffa84481f230f981422707efe3fa5e
+OTP 27 image: erlang@sha256:f64e891340b38f89adc33e63be00eb027bffa84481f230f981422707efe3fa5e
+RUN otp25 with OTP 25
+ISOLATION_READY
+PASS acceptor roundtrips idle-ticks cookie-rejection reconnect malformed-payload process-loss-isolation
+probe PASS otp_echo_otp25_364999@127.0.0.1
+PASS otp25 OTP 25: echo both roles; sha256 exact digest, rejection and reconnect
+RUN otp26 with OTP 26
+ISOLATION_READY
+PASS acceptor roundtrips idle-ticks cookie-rejection reconnect malformed-payload process-loss-isolation
+probe PASS otp_echo_otp26_365806@127.0.0.1
+PASS otp26 OTP 26: echo both roles; sha256 exact digest, rejection and reconnect
+RUN otp27 with OTP 27
+ISOLATION_READY
+PASS acceptor roundtrips idle-ticks cookie-rejection reconnect malformed-payload process-loss-isolation
+probe PASS otp_echo_otp27_366616@127.0.0.1
+PASS otp27 OTP 27: echo both roles; sha256 exact digest, rejection and reconnect
+Target entries passed: 3; missing: 0
+Build Summary: 7/7 steps succeeded
+test-interop-docker success
++- run sh success 52s
+   +- install cached
+      +- install zbeam cached
+      |  +- compile exe zbeam ReleaseSafe native cached 9ms MaxRSS:39M
+      +- install zbeam-port-echo cached
+         +- compile exe zbeam-port-echo ReleaseSafe native cached 9ms MaxRSS:39M
+

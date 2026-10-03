@@ -26,6 +26,10 @@ This file is authoritative when code and historical specifications differ.
 
 The [handshake deadline record](evidence/phase-b/2026-09-28-handshake-deadline.md), [connection-liveness record](evidence/phase-c/2026-09-28-connection-liveness.md), and [SHA-256 worker record](evidence/phase-c/2026-09-28-sha256-worker.md) cover the extensions. Details and commands for the original MVP are in [mvp.md](mvp.md). Verification records are [Phase B](evidence/phase-b/2026-09-26-mvp.md) and [Phase C](evidence/phase-c/2026-09-26-mvp-runtime.md).
 
+## Research branch extension — 2026-10-02
+
+This branch adds optional direct Zigler NIF and ETF-over-Port benchmark adapters, not a runtime dependency or production behavior change. Exact-result and allocation-bound tests, a fresh-VM smoke and core/OTP regression checks are recorded in [native comparison evidence](evidence/phase-c/2026-10-02-native-comparison.md). Benchmark OTP 29 is distinct from the supported regression targets. No performance-win or native-host replication claim follows from adapter availability.
+
 ## Not implemented or not established
 
 - Complete ETF coverage, old handshakes, simultaneous-connection arbitration or general Erlang-node compatibility.

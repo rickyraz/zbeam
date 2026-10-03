@@ -74,6 +74,21 @@ pub fn build(b: *std.Build) void {
     });
     b.installArtifact(port_echo);
 
+    const port_etf = b.addExecutable(.{
+        .name = "zbeam-port-etf",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("benchmarks/port_etf.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{.{ .name = "zbeam-etf", .module = etf_mod }},
+        }),
+    });
+    const research_step = b.step("build-research", "Build optional native comparison workers");
+    research_step.dependOn(&b.addInstallArtifact(port_etf, .{}).step);
+    research_step.dependOn(b.getInstallStep());
+    const research_tests = b.step("test-research", "Test native comparison workers");
+    research_tests.dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = port_etf.root_module })).step);
+
     const run_step = b.step("run", "Run the zbeam executable");
     const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(b.getInstallStep());

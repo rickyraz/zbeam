@@ -1,0 +1,292 @@
+==> earmark_parser
+Compiling 2 files (.xrl)
+Compiling 1 file (.yrl)
+Compiling 3 files (.erl)
+Compiling 32 files (.ex)
+Generated earmark_parser app
+==> protoss
+Compiling 1 file (.ex)
+Generated protoss app
+==> zig_get
+Compiling 1 file (.ex)
+Generated zig_get app
+==> nimble_parsec
+Compiling 4 files (.ex)
+Generated nimble_parsec app
+==> pegasus
+Compiling 11 files (.ex)
+Generated pegasus app
+==> zig_parser
+Compiling 37 files (.ex)
+    warning: incompatible types given to Map.replace!/3:
+
+        Map.replace!(parse(args), :doc_comment, comment)
+
+    the map:
+
+        dynamic(%Zig.Parser.Test{block: %Zig.Parser.Block{}, location: nil})
+
+    does not have all required keys:
+
+        :doc_comment
+
+    therefore this function will always raise
+
+    where "args" was given the type:
+
+        # type: dynamic(non_empty_list(term()))
+        # from: lib/zig.parser/test.ex:16:10
+        parse(args)
+
+    where "comment" was given the type:
+
+        # type: dynamic()
+        # from: lib/zig.parser/test.ex
+        [{:TestDecl, [start, {:doc_comment, comment} | args]} | rest_args]
+
+    type warning found at:
+    │
+ 17 │       |> Map.replace!(:doc_comment, comment)
+    │              ~
+    │
+    └─ lib/zig.parser/test.ex:17:14: Zig.Parser.Test.post_traverse/5
+
+Generated zig_parser app
+==> makeup
+Compiling 15 files (.ex)
+Generated makeup app
+==> makeup_elixir
+Compiling 6 files (.ex)
+Compiling lib/makeup/lexers/elixir_lexer.ex (it's taking more than 10s)
+Generated makeup_elixir app
+==> makeup_erlang
+Compiling 4 files (.ex)
+Compiling lib/makeup/lexers/erlang_lexer.ex (it's taking more than 10s)
+Generated makeup_erlang app
+==> ex_doc
+Compiling 27 files (.ex)
+     warning: this clause of defp favicon_path/1 is never used (or it will always fail/warn when invoked)
+     │
+ 153 │   defp favicon_path(%{favicon: nil}), do: nil
+     │        ~
+     │
+     └─ lib/ex_doc/formatter/html/templates.ex:153:8: ExDoc.Formatter.HTML.Templates.favicon_path/1
+
+     warning: this clause of defp logo_path/1 is never used (or it will always fail/warn when invoked)
+     │
+ 156 │   defp logo_path(%{logo: nil}), do: nil
+     │        ~
+     │
+     └─ lib/ex_doc/formatter/html/templates.ex:156:8: ExDoc.Formatter.HTML.Templates.logo_path/1
+
+     warning: the following clause cannot match because the previous clauses already matched all possible values:
+
+         _ ->
+
+     it attempts to match on the result of:
+
+         result
+
+     which has the already matched type:
+
+         dynamic({:docs_v1, term(), term(), term(), term(), term(), term()} or {:error, term()})
+
+     type warning found at:
+     │
+ 124 │       _ ->
+     │         ~
+     │
+     └─ lib/ex_doc/retriever.ex:124:9: ExDoc.Retriever.docs_chunk/1
+
+     warning: the following clause is redundant:
+
+         defp to_var({:<<>>, _, _}, _)
+
+     it has type:
+
+         dynamic({:<<>>, term(), term()}), dynamic()
+
+     previous clauses have already matched on the following types:
+
+         {:%{}, term(), term()}, term()
+         {atom(), term(), term()}, term()
+
+     │
+ 569 │   defp to_var({:<<>>, _, _}, _), do: {:binary, [], nil}
+     │        ~
+     │
+     └─ lib/ex_doc/language/elixir.ex:569:8: ExDoc.Language.Elixir.to_var/2
+
+     warning: the following clause is redundant:
+
+         defp to_var({:{}, _, _}, _)
+
+     it has type:
+
+         dynamic({:{}, term(), term()}), dynamic()
+
+     previous clauses have already matched on the following types:
+
+         {:%{}, term(), term()}, term()
+         {atom(), term(), term()}, term()
+
+     │
+ 570 │   defp to_var({:{}, _, _}, _), do: {:tuple, [], nil}
+     │        ~
+     │
+     └─ lib/ex_doc/language/elixir.ex:570:8: ExDoc.Language.Elixir.to_var/2
+
+     warning: the following clause will never match:
+
+         nil ->
+
+     because it attempts to match on the result of:
+
+         ExDoc.Language.Source.fetch_type!(module_data, name, arity)
+
+     which has type:
+
+         dynamic(not false and not nil)
+
+     type warning found at:
+     │
+ 150 │         nil ->
+     │         ~~~~~~
+     │
+     └─ lib/ex_doc/language/erlang.ex:150: ExDoc.Language.Erlang.type_data/6
+
+     warning: the following clause is redundant:
+
+         defp to_var(float, _) when is_integer(float)
+
+     it has type:
+
+         integer(), dynamic()
+
+     previous clauses have already matched on the following types:
+
+         {:%{}, term(), term()}, term()
+         {atom(), term(), term()}, term()
+         {term(), term()}, term()
+         integer(), term()
+
+     │
+ 573 │   defp to_var(float, _) when is_integer(float), do: {:float, [], nil}
+     │        ~
+     │
+     └─ lib/ex_doc/language/elixir.ex:573:8: ExDoc.Language.Elixir.to_var/2
+
+Generated ex_doc app
+==> zig_doc
+Compiling 5 files (.ex)
+    warning: the following clause will never match:
+
+        {{:error, reason}, path} ->
+
+    it is expected to match on type:
+
+        dynamic(
+          :error or
+            ({term(), :read, binary() or empty_list() or non_empty_list(term(), term())} and
+               not {{:ok, term()}, :read, binary() or empty_list() or non_empty_list(term(), term())})
+        )
+
+    type warning found at:
+    │
+ 69 │       {{:error, reason}, path} ->
+    │       ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    │
+    └─ lib/zig.doc/generator.ex:69: Zig.Doc.Generator.modulenode_from_config/3
+
+Generated zig_doc app
+==> zigler
+Compiling 50 files (.ex)
+
+21:18:04.225 [warning] not cross-compiling windows-msvc
+     warning: clauses with the same name and arity (number of arguments) should be grouped together, "def render_elixir_spec/1" was previously defined (lib/zig/_nif.ex:373)
+     │
+ 386 │   def render_elixir_spec(nif) do
+     │       ~
+     │
+     └─ lib/zig/_nif.ex:386:7
+
+     warning: unused require EEx
+     │
+ 437 │   require EEx
+     │   ~
+     │
+     └─ lib/zig/_nif.ex:437:3
+
+
+21:18:05.832 [debug] creating staging directory /tmp/Elixir.Zig.Formatter
+
+21:18:05.841 [info] zig expected (via env variable) in /home/rickyraz/.local/share/mise/installs/zig/0.16.0/bin/zig
+
+21:18:05.841 [debug] running command: /home/rickyraz/.local/share/mise/installs/zig/0.16.0/bin/zig fmt /tmp/Elixir.Zig.Formatter/build.zig
+
+21:18:05.857 [debug] wrote build.zig to /tmp/Elixir.Zig.Formatter/build.zig
+
+21:18:06.304 [info] zig expected (via env variable) in /home/rickyraz/.local/share/mise/installs/zig/0.16.0/bin/zig
+
+21:18:06.305 [debug] running command: /home/rickyraz/.local/share/mise/installs/zig/0.16.0/bin/zig build -Dzigler-mode=sema -Derts_include=/home/rickyraz/.local/share/mise/installs/erlang/29.1.1/erts-17.1/include -Derl_nif_header=/home/rickyraz/.local/share/mise/installs/erlang/29.1.1/erts-17.1/include/erl_nif.h -Derl_nif_win_path=/home/rickyraz/projects/objective/zbeam/benchmarks/zigler/_build/test/lib/zigler/priv/erl_nif_win -Dzigler_priv=/home/rickyraz/projects/objective/zbeam/benchmarks/zigler/_build/test/lib/zigler/priv -Dmodule_root=/home/rickyraz/projects/objective/zbeam/benchmarks/zigler/deps/zigler/lib/zig
+Compiling lib/zig/formatter.ex (it's taking more than 10s)
+
+21:18:37.845 [info] zig expected (via env variable) in /home/rickyraz/.local/share/mise/installs/zig/0.16.0/bin/zig
+
+21:18:37.845 [debug] running command: /home/rickyraz/.local/share/mise/installs/zig/0.16.0/bin/zig fmt /tmp/Elixir.Zig.Formatter/module.zig
+
+21:18:37.855 [debug] wrote module code to /tmp/Elixir.Zig.Formatter/module.zig
+
+21:18:37.855 [info] zig expected (via env variable) in /home/rickyraz/.local/share/mise/installs/zig/0.16.0/bin/zig
+
+21:18:37.856 [debug] running command: /home/rickyraz/.local/share/mise/installs/zig/0.16.0/bin/zig build -Derts_include=/home/rickyraz/.local/share/mise/installs/erlang/29.1.1/erts-17.1/include -Derl_nif_header=/home/rickyraz/.local/share/mise/installs/erlang/29.1.1/erts-17.1/include/erl_nif.h -Derl_nif_win_path=/home/rickyraz/projects/objective/zbeam/benchmarks/zigler/_build/test/lib/zigler/priv/erl_nif_win -Dzigler_priv=/home/rickyraz/projects/objective/zbeam/benchmarks/zigler/_build/test/lib/zigler/priv -Dmodule_root=/home/rickyraz/projects/objective/zbeam/benchmarks/zigler/deps/zigler/lib/zig --prefix /home/rickyraz/projects/objective/zbeam/benchmarks/zigler/_build/test/lib/zigler/priv
+
+21:19:42.771 [debug] compiled lib at: /home/rickyraz/projects/objective/zbeam/benchmarks/zigler/_build/test/lib/zigler/priv
+
+21:19:42.780 [debug] moved library to /home/rickyraz/projects/objective/zbeam/benchmarks/zigler/_build/test/lib/zigler/priv/lib/Elixir.Zig.Formatter.so
+Generated zigler app
+==> zbeam_research
+Compiling 2 files (.ex)
+
+21:19:42.921 [debug] creating staging directory /tmp/Elixir.ZbeamResearch.Native
+    warning: variable "count" is unused (if the variable is not meant to be used, prefix it with an underscore)
+    │
+ 45 │   def start(label, job, count) when label in ["port_raw", "port_etf"] do
+    │                         ~~~~~
+    │
+    └─ lib/comparison.ex:45:25: ZbeamResearch.Comparison.start/3
+
+
+21:19:42.922 [info] zig expected (via env variable) in /home/rickyraz/.local/share/mise/installs/zig/0.16.0/bin/zig
+
+21:19:42.922 [debug] running command: /home/rickyraz/.local/share/mise/installs/zig/0.16.0/bin/zig fmt /tmp/Elixir.ZbeamResearch.Native/build.zig
+
+21:19:42.930 [debug] wrote build.zig to /tmp/Elixir.ZbeamResearch.Native/build.zig
+
+21:19:42.941 [info] zig expected (via env variable) in /home/rickyraz/.local/share/mise/installs/zig/0.16.0/bin/zig
+
+21:19:42.941 [debug] running command: /home/rickyraz/.local/share/mise/installs/zig/0.16.0/bin/zig build -Dzigler-mode=sema -Derts_include=/home/rickyraz/.local/share/mise/installs/erlang/29.1.1/erts-17.1/include -Derl_nif_header=/home/rickyraz/.local/share/mise/installs/erlang/29.1.1/erts-17.1/include/erl_nif.h -Derl_nif_win_path=/home/rickyraz/projects/objective/zbeam/benchmarks/zigler/_build/test/lib/zigler/priv/erl_nif_win -Dzigler_priv=/home/rickyraz/projects/objective/zbeam/benchmarks/zigler/_build/test/lib/zigler/priv -Dmodule_root=/home/rickyraz/projects/objective/zbeam/benchmarks/zigler/lib
+Compiling lib/native.ex (it's taking more than 10s)
+
+21:19:58.513 [info] zig expected (via env variable) in /home/rickyraz/.local/share/mise/installs/zig/0.16.0/bin/zig
+
+21:19:58.514 [debug] running command: /home/rickyraz/.local/share/mise/installs/zig/0.16.0/bin/zig fmt /tmp/Elixir.ZbeamResearch.Native/module.zig
+
+21:19:58.520 [debug] wrote module code to /tmp/Elixir.ZbeamResearch.Native/module.zig
+
+21:19:58.521 [info] zig expected (via env variable) in /home/rickyraz/.local/share/mise/installs/zig/0.16.0/bin/zig
+
+21:19:58.521 [debug] running command: /home/rickyraz/.local/share/mise/installs/zig/0.16.0/bin/zig build -Derts_include=/home/rickyraz/.local/share/mise/installs/erlang/29.1.1/erts-17.1/include -Derl_nif_header=/home/rickyraz/.local/share/mise/installs/erlang/29.1.1/erts-17.1/include/erl_nif.h -Derl_nif_win_path=/home/rickyraz/projects/objective/zbeam/benchmarks/zigler/_build/test/lib/zigler/priv/erl_nif_win -Dzigler_priv=/home/rickyraz/projects/objective/zbeam/benchmarks/zigler/_build/test/lib/zigler/priv -Dmodule_root=/home/rickyraz/projects/objective/zbeam/benchmarks/zigler/lib --prefix /home/rickyraz/projects/objective/zbeam/benchmarks/zigler/_build/test/lib/zbeam_research/priv
+
+21:20:13.122 [debug] compiled lib at: /home/rickyraz/projects/objective/zbeam/benchmarks/zigler/_build/test/lib/zbeam_research/priv
+
+21:20:13.126 [debug] moved library to /home/rickyraz/projects/objective/zbeam/benchmarks/zigler/_build/test/lib/zbeam_research/priv/lib/Elixir.ZbeamResearch.Native.so
+Generated zbeam_research app
+Running ExUnit with seed: 547309, max_cases: 4
+
+
+21:20:13.578 [debug] loaded module at Elixir.ZbeamResearch.Native
+..
+Finished in 0.07 seconds (0.00s async, 0.07s sync)
+
+Result: 2 passed

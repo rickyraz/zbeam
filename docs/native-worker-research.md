@@ -1,6 +1,6 @@
 # Native Worker Performance Research
 
-- **Status:** branch initialization and experiment plan only; no new benchmark or performance win is established.
+- **Status:** [baseline adapters and smoke implemented](evidence/phase-c/2026-10-02-native-comparison.md); experiment/promotion gates below remain explicit. No performance win is established.
 - **Date:** 2026-10-02.
 - **Code baseline:** `38caeb4730712ef5b5a73eec6ceda999282917c1` (`feat/worker-lifecycle`).
 - **Implementation inventory:** [implementation-status.md](implementation-status.md).

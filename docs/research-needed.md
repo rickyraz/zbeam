@@ -104,7 +104,7 @@ The current representation uses owned copies. Compare that baseline with ownersh
 
 ### Native worker performance versus NIF and ETF Port
 
-The [native-worker research plan](native-worker-research.md) initializes six experiment branches from the deadline/SHA-256 worker baseline. It defines direct Zigler NIF, raw Port, ETF-over-Port and distribution controls, plus profiling, BEAM backpressure, recovery, batching and two-worker admission tracks. These are planned experiments, not additional implemented behavior.
+The [native-worker research plan](native-worker-research.md) initializes six experiment branches from the deadline/SHA-256 worker baseline. It defines direct Zigler NIF, raw Port, ETF-over-Port and distribution controls, plus profiling, BEAM backpressure, recovery, batching and two-worker admission tracks. The [baseline adapter evidence](evidence/phase-c/2026-10-02-native-comparison.md) records optional NIF/ETF-Port tooling and smoke checks. The remaining research gates are not completed by those checks.
 
 **Risk:** Zigler's direct NIF term marshalling is not inherently ETF serialization; zbeam itself uses ETF. Unequal CPU budgets, unsuitable NIF scheduling, unmatched batching, hidden queue memory or disabled deadlines can manufacture a misleading advantage.
 
