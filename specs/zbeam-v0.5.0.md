@@ -44,6 +44,10 @@
 
 ---
 
+## Experimental external supervision — 2026-10-13
+
+The caller-side example `examples/native_worker_owner.ex` owns one active bounded request and uses non-suspending submission. Failure reports an explicit uncertain-request error, never replays, and restarts under an external supervisor. Timeout destroys the old connection so uncorrelated late replies cannot match later work. Callers must bound their own BEAM queues. This is neither a runtime supervision implementation nor an isolation advantage over Ports; see `docs/evidence/phase-c/2026-10-13-recovery.md`.
+
 ## 1. Abstract
 
 zbeam is a native Zig library implementing the full Erlang Distribution Protocol (EDP v5/v6), enabling a Zig process to appear as a first-class BEAM node in an Erlang/OTP cluster — as a separate OS process speaking the wire protocol, never as a NIF, port driver, or in-process linkage of any kind.

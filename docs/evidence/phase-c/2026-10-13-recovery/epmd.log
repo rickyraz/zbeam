@@ -1,0 +1,21 @@
+DROP_PRIVATE_EPMD
+RESULT {"mode":"epmd","trial":1,"launches":2,"request_outcome":"{:error, :worker_lost}","request_to_failure_us":5419,"request_to_first_good_reply_us":113907,"recovery_us":108488,"beam_bytes":57933912}
+DROP_PRIVATE_EPMD
+RESULT {"mode":"epmd","trial":2,"launches":2,"request_outcome":"{:error, :worker_lost}","request_to_failure_us":2411,"request_to_first_good_reply_us":110342,"recovery_us":107931,"beam_bytes":58089720}
+DROP_PRIVATE_EPMD
+RESULT {"mode":"epmd","trial":3,"launches":2,"request_outcome":"{:error, :worker_lost}","request_to_failure_us":1862,"request_to_first_good_reply_us":108737,"recovery_us":106875,"beam_bytes":58087656}
+DROP_PRIVATE_EPMD
+RESULT {"mode":"epmd","trial":4,"launches":2,"request_outcome":"{:error, :worker_lost}","request_to_failure_us":2714,"request_to_first_good_reply_us":110770,"recovery_us":108056,"beam_bytes":58163496}
+DROP_PRIVATE_EPMD
+RESULT {"mode":"epmd","trial":5,"launches":2,"request_outcome":"{:error, :worker_lost}","request_to_failure_us":2715,"request_to_first_good_reply_us":110480,"recovery_us":107765,"beam_bytes":58191136}
+DROP_PRIVATE_EPMD
+RESULT {"mode":"epmd","trial":6,"launches":2,"request_outcome":"{:error, :worker_lost}","request_to_failure_us":2567,"request_to_first_good_reply_us":110204,"recovery_us":107638,"beam_bytes":58201536}
+DROP_PRIVATE_EPMD
+RESULT {"mode":"epmd","trial":7,"launches":2,"request_outcome":"{:error, :worker_lost}","request_to_failure_us":1888,"request_to_first_good_reply_us":108979,"recovery_us":107091,"beam_bytes":58177688}
+DROP_PRIVATE_EPMD
+RESULT {"mode":"epmd","trial":8,"launches":2,"request_outcome":"{:error, :worker_lost}","request_to_failure_us":1716,"request_to_first_good_reply_us":109399,"recovery_us":107683,"beam_bytes":58227784}
+DROP_PRIVATE_EPMD
+RESULT {"mode":"epmd","trial":9,"launches":2,"request_outcome":"{:error, :worker_lost}","request_to_failure_us":3077,"request_to_first_good_reply_us":110818,"recovery_us":107741,"beam_bytes":58201024}
+DROP_PRIVATE_EPMD
+RESULT {"mode":"epmd","trial":10,"launches":2,"request_outcome":"{:error, :worker_lost}","request_to_failure_us":2969,"request_to_first_good_reply_us":111938,"recovery_us":108969,"beam_bytes":58226520}
+PASS explicit failure, supervised restart, unchanged VM and unrelated process

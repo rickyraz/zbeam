@@ -1,0 +1,13 @@
+** (EXIT from #PID<0.101.0>) shutdown: failed to start child: NativeWorkerOwner
+    ** (EXIT) an exception was raised:
+        ** (ErlangError) Erlang error: :enoent:
+
+  * 1st argument: invalid port name
+
+            :erlang.open_port({:spawn_executable, ~c"/home/rickyraz/projects/objective/zbeam-research/worker-recovery/zig-out/bin/zbeam-port-echo"}, [:binary, {:packet, 4}, :exit_status, {:args, ["sha256"]}])
+            benchmarks/worker_recovery.exs:21: anonymous fn/5 in :elixir_compiler_0.__FILE__/1
+            examples/native_worker_owner.ex:10: NativeWorkerOwner.init/1
+            (stdlib 8.1) gen_server.erl:2276: :gen_server.init_it/2
+            (stdlib 8.1) gen_server.erl:2236: :gen_server.init_it/6
+            (stdlib 8.1) proc_lib.erl:333: :proc_lib.init_p_do_apply/3
+

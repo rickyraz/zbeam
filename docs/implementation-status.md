@@ -34,11 +34,15 @@ This branch adds optional direct Zigler NIF and ETF-over-Port benchmark adapters
 
 On `explore/beam-backpressure`, an optional test-only pause/fault peer and finite-burst OTP pressure scenarios cover sender suspension, resume and heartbeat disconnect/reconnect. [Evidence](evidence/phase-c/2026-10-13-pressure.md) records nine OTP 29 launches and three test-owned native faults. This adds neither a production scheduler nor new runtime APIs.
 
+## External-supervision research — 2026-10-13
+
+`explore/worker-recovery` adds a caller-side single-flight GenServer example with non-suspending submission, explicit failure, timeout teardown and externally supervised restart. [Evidence](evidence/phase-c/2026-10-13-recovery.md) covers sixty owned-process restart trials and a raw Port isolation control. No automatic replay or native runtime supervision API is added.
+
 ## Not implemented or not established
 
 - Complete ETF coverage, old handshakes, simultaneous-connection arbitration or general Erlang-node compatibility.
 - Cached distribution headers, fragmentation, proactive heartbeat scheduling or control operations beyond the documented send subset.
-- Distributed registry semantics, RPC, OTP behaviours, process links/monitors, automatic external supervision or a general actor task scheduler. `sha256` is one fixed registered worker, not a general job system.
+- Distributed registry semantics, RPC, OTP behaviours, process links/monitors, production automatic external supervision or a general actor task scheduler. `sha256` is one fixed registered worker, not a general job system.
 - Concurrent peer servicing, stalled-handler recovery, outbound reconnect/backoff or EPMD re-registration. The executable instead fails closed on EPMD loss; no CPU-bound handler preemption or proactive heartbeat exists.
 - Arena-backed buffers, `BufferHandle`, typestate/linear ownership, io_uring or zero-copy transfer.
 - snmalloc integration or allocator-comparison results; the [evaluation plan](snmalloc-evaluation.md) and source audit are research only.

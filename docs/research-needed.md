@@ -1,5 +1,9 @@
 # Research and Risk Backlog
 
+## External owner limits — 2026-10-13
+
+The [recovery experiment](evidence/phase-c/2026-10-13-recovery.md) verifies single-flight timeout teardown and sixty test-owned restart trials, not production queue or process-tree supervision. Caller flood admission and cleanup after fatal controlling-VM failure require independent ownership policy. The example has no automatic replay, global-memory-exhaustion guarantee or persistent work ledger.
+
 **Reviewed:** 2026-09-26. The [single-actor MVP](mvp.md) is implemented; the full v0.5 design is not. [Implementation status](implementation-status.md) distinguishes executed evidence from proposals.
 
 The [development plan](development-plan.md) defines execution order and final release gates. The [snmalloc evaluation](snmalloc-evaluation.md) specifies the allocator experiment without changing the default build.

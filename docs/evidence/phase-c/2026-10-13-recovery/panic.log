@@ -1,0 +1,11 @@
+RESULT {"mode":"panic","trial":1,"launches":2,"request_outcome":"{:error, :worker_lost}","request_to_failure_us":221194,"request_to_first_good_reply_us":327494,"recovery_us":106301,"beam_bytes":57934272}
+RESULT {"mode":"panic","trial":2,"launches":2,"request_outcome":"{:error, :worker_lost}","request_to_failure_us":220541,"request_to_first_good_reply_us":325576,"recovery_us":105035,"beam_bytes":58061520}
+RESULT {"mode":"panic","trial":3,"launches":2,"request_outcome":"{:error, :worker_lost}","request_to_failure_us":219650,"request_to_first_good_reply_us":324693,"recovery_us":105043,"beam_bytes":58058392}
+RESULT {"mode":"panic","trial":4,"launches":2,"request_outcome":"{:error, :worker_lost}","request_to_failure_us":218706,"request_to_first_good_reply_us":325519,"recovery_us":106813,"beam_bytes":58103920}
+RESULT {"mode":"panic","trial":5,"launches":2,"request_outcome":"{:error, :worker_lost}","request_to_failure_us":218553,"request_to_first_good_reply_us":325652,"recovery_us":107099,"beam_bytes":58094312}
+RESULT {"mode":"panic","trial":6,"launches":2,"request_outcome":"{:error, :worker_lost}","request_to_failure_us":219493,"request_to_first_good_reply_us":327441,"recovery_us":107948,"beam_bytes":58095504}
+RESULT {"mode":"panic","trial":7,"launches":2,"request_outcome":"{:error, :worker_lost}","request_to_failure_us":219524,"request_to_first_good_reply_us":327019,"recovery_us":107495,"beam_bytes":58118928}
+RESULT {"mode":"panic","trial":8,"launches":2,"request_outcome":"{:error, :worker_lost}","request_to_failure_us":218577,"request_to_first_good_reply_us":326558,"recovery_us":107981,"beam_bytes":58135768}
+RESULT {"mode":"panic","trial":9,"launches":2,"request_outcome":"{:error, :worker_lost}","request_to_failure_us":218604,"request_to_first_good_reply_us":326506,"recovery_us":107903,"beam_bytes":58120032}
+RESULT {"mode":"panic","trial":10,"launches":2,"request_outcome":"{:error, :worker_lost}","request_to_failure_us":218559,"request_to_first_good_reply_us":325603,"recovery_us":107044,"beam_bytes":58147112}
+PASS explicit failure, supervised restart, unchanged VM and unrelated process

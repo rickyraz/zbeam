@@ -1,0 +1,11 @@
+RESULT {"mode":"spin","trial":1,"launches":2,"request_outcome":"{:error, :timeout}","request_to_failure_us":1001555,"request_to_first_good_reply_us":1111617,"recovery_us":110062,"beam_bytes":57905584}
+RESULT {"mode":"spin","trial":2,"launches":2,"request_outcome":"{:error, :timeout}","request_to_failure_us":1000500,"request_to_first_good_reply_us":1107857,"recovery_us":107357,"beam_bytes":58040424}
+RESULT {"mode":"spin","trial":3,"launches":2,"request_outcome":"{:error, :timeout}","request_to_failure_us":1000550,"request_to_first_good_reply_us":1108831,"recovery_us":108282,"beam_bytes":58062328}
+RESULT {"mode":"spin","trial":4,"launches":2,"request_outcome":"{:error, :timeout}","request_to_failure_us":1000447,"request_to_first_good_reply_us":1108860,"recovery_us":108414,"beam_bytes":58073208}
+RESULT {"mode":"spin","trial":5,"launches":2,"request_outcome":"{:error, :timeout}","request_to_failure_us":1000311,"request_to_first_good_reply_us":1108618,"recovery_us":108307,"beam_bytes":58167872}
+RESULT {"mode":"spin","trial":6,"launches":2,"request_outcome":"{:error, :timeout}","request_to_failure_us":1000318,"request_to_first_good_reply_us":1107688,"recovery_us":107370,"beam_bytes":58169344}
+RESULT {"mode":"spin","trial":7,"launches":2,"request_outcome":"{:error, :timeout}","request_to_failure_us":1000285,"request_to_first_good_reply_us":1107316,"recovery_us":107031,"beam_bytes":58188224}
+RESULT {"mode":"spin","trial":8,"launches":2,"request_outcome":"{:error, :timeout}","request_to_failure_us":1000425,"request_to_first_good_reply_us":1108058,"recovery_us":107633,"beam_bytes":58195496}
+RESULT {"mode":"spin","trial":9,"launches":2,"request_outcome":"{:error, :timeout}","request_to_failure_us":1000610,"request_to_first_good_reply_us":1107795,"recovery_us":107185,"beam_bytes":58215848}
+RESULT {"mode":"spin","trial":10,"launches":2,"request_outcome":"{:error, :timeout}","request_to_failure_us":1001061,"request_to_first_good_reply_us":1108267,"recovery_us":107206,"beam_bytes":58195256}
+PASS explicit failure, supervised restart, unchanged VM and unrelated process
