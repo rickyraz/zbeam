@@ -1,5 +1,9 @@
 # Research and Risk Backlog
 
+## Shared-wire admission gate — 2026-10-13
+
+The [two-worker experiment](evidence/phase-c/2026-10-13-admission.md) verifies fixed-owned-message local progress and joined storage lifetime. It does not implement shared-connection actor routing or dynamic-byte accounting. Minimum destination credit, not summed capacity, is the conservative admission contract until a bounded routing design is separately verified; head-of-line blocking remains explicit.
+
 **Reviewed:** 2026-09-26. The [single-actor MVP](mvp.md) is implemented; the full v0.5 design is not. [Implementation status](implementation-status.md) distinguishes executed evidence from proposals.
 
 The [development plan](development-plan.md) defines execution order and final release gates. The [snmalloc evaluation](snmalloc-evaluation.md) specifies the allocator experiment without changing the default build.

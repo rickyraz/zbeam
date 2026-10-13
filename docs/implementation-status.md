@@ -34,6 +34,10 @@ This branch adds optional direct Zigler NIF and ETF-over-Port benchmark adapters
 
 On `explore/beam-backpressure`, an optional test-only pause/fault peer and finite-burst OTP pressure scenarios cover sender suspension, resume and heartbeat disconnect/reconnect. [Evidence](evidence/phase-c/2026-10-13-pressure.md) records nine OTP 29 launches and three test-owned native faults. This adds neither a production scheduler nor new runtime APIs.
 
+## Two-worker admission research — 2026-10-13
+
+`explore/actor-admission` adds fixed-owned-message two-mailbox stress coverage, explicit task joins and a separate two-process progress control. [Evidence](evidence/phase-c/2026-10-13-admission.md) records 56-test Debug/ReleaseSafe suites, twenty stress repetitions and ten process trials. Minimum destination credit remains a research admission contract, not an implemented shared-wire dispatcher.
+
 ## Not implemented or not established
 
 - Complete ETF coverage, old handshakes, simultaneous-connection arbitration or general Erlang-node compatibility.

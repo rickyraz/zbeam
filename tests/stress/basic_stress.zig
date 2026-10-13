@@ -5,6 +5,7 @@ const runtime = @import("zbeam-runtime");
 comptime {
     _ = @import("mailbox_stress.zig");
     _ = @import("backpressure_stress.zig");
+    _ = @import("two_worker_admission.zig");
 }
 
 test "stress suite wiring: actor batteries are importable" {

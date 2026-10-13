@@ -1,0 +1,10 @@
+RESULT {"trial":1,"fast_100_requests_us":18507,"slow_pause_ms":1500,"note":"two connections and two OS processes; progress control, not actor throughput equivalence"}
+RESULT {"trial":2,"fast_100_requests_us":15971,"slow_pause_ms":1500,"note":"two connections and two OS processes; progress control, not actor throughput equivalence"}
+RESULT {"trial":3,"fast_100_requests_us":24099,"slow_pause_ms":1500,"note":"two connections and two OS processes; progress control, not actor throughput equivalence"}
+RESULT {"trial":4,"fast_100_requests_us":32534,"slow_pause_ms":1500,"note":"two connections and two OS processes; progress control, not actor throughput equivalence"}
+RESULT {"trial":5,"fast_100_requests_us":21721,"slow_pause_ms":1500,"note":"two connections and two OS processes; progress control, not actor throughput equivalence"}
+RESULT {"trial":6,"fast_100_requests_us":27121,"slow_pause_ms":1500,"note":"two connections and two OS processes; progress control, not actor throughput equivalence"}
+RESULT {"trial":7,"fast_100_requests_us":22918,"slow_pause_ms":1500,"note":"two connections and two OS processes; progress control, not actor throughput equivalence"}
+RESULT {"trial":8,"fast_100_requests_us":22504,"slow_pause_ms":1500,"note":"two connections and two OS processes; progress control, not actor throughput equivalence"}
+RESULT {"trial":9,"fast_100_requests_us":23627,"slow_pause_ms":1500,"note":"two connections and two OS processes; progress control, not actor throughput equivalence"}
+RESULT {"trial":10,"fast_100_requests_us":23339,"slow_pause_ms":1500,"note":"two connections and two OS processes; progress control, not actor throughput equivalence"}

@@ -44,6 +44,10 @@
 
 ---
 
+## Experimental two-worker lifecycle — 2026-10-13
+
+The research contract in `docs/adr/0002-bounded-two-worker-research.md` uses existing mailboxes/registry and joined `std.Io` tasks. Inline-owned messages remain bounded by fixed slots; active-handler storage is separate. Termination closes/removes identity but does not transfer lifetime ownership. All tasks join before destroying contexts. Unknown-destination admission uses minimum free capacity, permitting head-of-line blocking. No production shared-connection multi-actor scheduler is established.
+
 ## 1. Abstract
 
 zbeam is a native Zig library implementing the full Erlang Distribution Protocol (EDP v5/v6), enabling a Zig process to appear as a first-class BEAM node in an Erlang/OTP cluster — as a separate OS process speaking the wire protocol, never as a NIF, port driver, or in-process linkage of any kind.
