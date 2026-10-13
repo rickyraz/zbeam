@@ -173,7 +173,10 @@ pub fn build(b: *std.Build) void {
         "02_demand_liveness_lab",
         "03_backpressure_oracle_lab",
         "04_reconnect_semantics_lab",
+        "07_local_message_ir_lab",
         "08_transport_io_lab",
+        "10_identity_namespace_lab",
+        "11_bufferhandle_typestate_lab",
     }) |directory| {
         const id = directory[0..2];
         const lab_step = b.step(b.fmt("lab-{s}", .{id}), b.fmt("Run research lab {s}", .{id}));
@@ -195,6 +198,18 @@ pub fn build(b: *std.Build) void {
         const run_lab = b.addRunArtifact(lab_tests);
         run_lab.has_side_effects = true;
         lab_step.dependOn(&run_lab.step);
+        if (std.mem.eql(u8, id, "11")) {
+            const rejected = b.addTest(.{
+                .name = b.fmt("lab-{s}-compile-fail", .{id}),
+                .root_module = b.createModule(.{
+                    .root_source_file = b.path(b.fmt("labs/{s}/compile_fail.zig", .{directory})),
+                    .target = target,
+                    .optimize = optimize,
+                }),
+            });
+            rejected.expect_errors = .{ .contains = "error: no field or member function named 'access' in 'experiment.ForwardOnly'" };
+            lab_step.dependOn(&rejected.step);
+        }
         test_labs_step.dependOn(lab_step);
     }
 

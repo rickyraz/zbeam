@@ -44,6 +44,25 @@ These are counted-reader experiments against production framing, not measured
 TCP windows, automatic reconnect, io_uring or performance results. Existing core
 socket tests remain the network regression boundary.
 
+## Representation, identity and handle limits
+
+`timeout 240 zig build lab-07 lab-10 lab-11 -j2 --summary all` exited 0:
+[6/6 tests plus the expected compile failure passed](2026-10-13-lab-contracts/07-10-11-debug.log).
+
+- Lab 07: one boundary decode, no local re-encode, five payload bytes copied
+  into a 48-byte inline envelope on this target. The source allocations are
+  released before mailbox use; shape/range/capacity checks pass.
+- Lab 10: 48 identities and 1,128 distinct pairs reject stale comparisons;
+  255 increments exhaust an eight-bit generation without wrap. Composite
+  identity occupies 16 bytes versus a four-byte slot on this target.
+- Lab 11: direct access is rejected at compile time with the specific diagnostic,
+  but field access and prior aliases remain legal. A sequential flag rejects a
+  second call on one value; copying that value duplicates its state.
+
+The conclusion is narrower than a zero-copy or linear ownership claim. Tuple
+identity assumes non-reused connection incarnations and does not retain memory.
+Typestate method removal does not close Zig's field/alias escape paths.
+
 ## Limits and rollback
 
 Lab 01 is sampled concurrency evidence, not a schedule proof or sanitizer run.
