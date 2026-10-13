@@ -4,7 +4,22 @@ Labs are isolated experiments for claims that are not ready for production modul
 
 ## Status
 
-All labs are currently **planned**. A directory containing only documentation does not indicate completed research.
+Labs 01–02 have executable contract experiments. Other directories remain
+plans or experiment contracts, not completed research. A passing subset does not
+close a lab's broader promotion gate.
+
+## Run
+
+Use Zig 0.16.0 from the repository root:
+
+```sh
+timeout 240 zig build test-labs -j2 --summary all
+zig build lab-01 -j2 --summary all
+```
+
+`test-labs` is opt-in and separate from `test-all`; `lab-NN` runs one available
+experiment. No production battery imports lab code. Results and scope limits
+are in the [verification record](../docs/evidence/phase-c/2026-10-13-lab-contracts.md).
 
 ## Execution order
 

@@ -166,6 +166,33 @@ pub fn build(b: *std.Build) void {
     benchmark_cmd.step.dependOn(b.getInstallStep());
     benchmark_step.dependOn(&benchmark_cmd.step);
 
+    const test_labs_step = b.step("test-labs", "Run isolated research contracts (not production acceptance)");
+    for ([_][]const u8{
+        "01_mailbox_correctness_lab",
+        "02_demand_liveness_lab",
+    }) |directory| {
+        const id = directory[0..2];
+        const lab_step = b.step(b.fmt("lab-{s}", .{id}), b.fmt("Run research lab {s}", .{id}));
+        const lab_tests = b.addTest(.{
+            .name = b.fmt("lab-{s}", .{id}),
+            .root_module = b.createModule(.{
+                .root_source_file = b.path(b.fmt("labs/{s}/experiment.zig", .{directory})),
+                .target = target,
+                .optimize = optimize,
+                .imports = &.{
+                    .{ .name = "zbeam-actor", .module = actor_mod },
+                    .{ .name = "zbeam-etf", .module = etf_mod },
+                    .{ .name = "zbeam-protocol", .module = protocol_mod },
+                    .{ .name = "zbeam-transport", .module = transport_mod },
+                },
+            }),
+        });
+        const run_lab = b.addRunArtifact(lab_tests);
+        run_lab.has_side_effects = true;
+        lab_step.dependOn(&run_lab.step);
+        test_labs_step.dependOn(lab_step);
+    }
+
     const test_all_step = b.step("test-all", "Run deterministic test suites (excludes external OTP matrix)");
     test_all_step.dependOn(test_unit_step);
     test_all_step.dependOn(test_integration_step);
