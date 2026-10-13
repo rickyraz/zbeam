@@ -166,10 +166,14 @@ pub fn build(b: *std.Build) void {
     benchmark_cmd.step.dependOn(b.getInstallStep());
     benchmark_step.dependOn(&benchmark_cmd.step);
 
+    const lab_reader_mod = b.createModule(.{ .root_source_file = b.path("labs/reader.zig") });
     const test_labs_step = b.step("test-labs", "Run isolated research contracts (not production acceptance)");
     for ([_][]const u8{
         "01_mailbox_correctness_lab",
         "02_demand_liveness_lab",
+        "03_backpressure_oracle_lab",
+        "04_reconnect_semantics_lab",
+        "08_transport_io_lab",
     }) |directory| {
         const id = directory[0..2];
         const lab_step = b.step(b.fmt("lab-{s}", .{id}), b.fmt("Run research lab {s}", .{id}));
@@ -180,6 +184,7 @@ pub fn build(b: *std.Build) void {
                 .target = target,
                 .optimize = optimize,
                 .imports = &.{
+                    .{ .name = "lab-reader", .module = lab_reader_mod },
                     .{ .name = "zbeam-actor", .module = actor_mod },
                     .{ .name = "zbeam-etf", .module = etf_mod },
                     .{ .name = "zbeam-protocol", .module = protocol_mod },

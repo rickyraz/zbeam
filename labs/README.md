@@ -4,7 +4,7 @@ Labs are isolated experiments for claims that are not ready for production modul
 
 ## Status
 
-Labs 01–02 have executable contract experiments. Other directories remain
+Labs 01–04 and 08 have executable contract experiments. Other directories remain
 plans or experiment contracts, not completed research. A passing subset does not
 close a lab's broader promotion gate.
 

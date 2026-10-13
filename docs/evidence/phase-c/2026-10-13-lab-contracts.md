@@ -28,6 +28,22 @@ Zig 0.16's build runner labels test stderr with `failed command` even when the
 process succeeds. Lab traces use stderr; the command exit status and final test
 summary determine success, not that diagnostic label.
 
+## Framing, backpressure and connection cleanup
+
+`timeout 240 zig build lab-03 lab-04 lab-08 -j2 --summary all` exited 0:
+[5/5 tests passed](2026-10-13-lab-contracts/03-04-08-debug.log).
+
+- Lab 03: 100 paused attempts produce zero reads/allocation attempts; a single
+  grant consumes five bytes and leaves the next four-byte tick untouched.
+- Lab 04: seven incomplete frame prefixes consume old credit and leave no
+  outstanding packet bytes; each explicitly fresh state reads the complete frame.
+- Lab 08: eleven short-read cases allocate/free seven bytes exactly once;
+  oversized frames fail before allocation and OOM leaves the payload unread.
+
+These are counted-reader experiments against production framing, not measured
+TCP windows, automatic reconnect, io_uring or performance results. Existing core
+socket tests remain the network regression boundary.
+
 ## Limits and rollback
 
 Lab 01 is sampled concurrency evidence, not a schedule proof or sanitizer run.
