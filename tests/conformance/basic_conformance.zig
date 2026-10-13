@@ -7,6 +7,21 @@ comptime {
     _ = @import("fixture_manifest.zig");
 }
 
+test "batch envelope has exact standalone ETF bytes" {
+    // Structural vector: term_to_binary({<<"0123456789abcdef">>,0,[<<"abc">>,<<>>]}).
+    const bytes = [_]u8{ 131, 104, 3, 109, 0, 0, 0, 16, '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 97, 0, 108, 0, 0, 0, 2, 109, 0, 0, 0, 3, 'a', 'b', 'c', 109, 0, 0, 0, 0, 106 };
+    const a = std.testing.allocator;
+    var value = try etf.decode(a, &bytes, .{});
+    defer value.deinit(a);
+    try std.testing.expectEqualStrings("0123456789abcdef", value.tuple[0].binary);
+    try std.testing.expectEqual(@as(i64, 0), value.tuple[1].integer);
+    try std.testing.expectEqualStrings("abc", value.tuple[2].list[0].binary);
+    try std.testing.expectEqual(@as(usize, 0), value.tuple[2].list[1].binary.len);
+    const encoded = try etf.encode(a, &value);
+    defer a.free(encoded);
+    try std.testing.expectEqualSlices(u8, &bytes, encoded);
+}
+
 test "public pure wire batteries remain importable" {
     std.testing.refAllDecls(etf);
     std.testing.refAllDecls(protocol);

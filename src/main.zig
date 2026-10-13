@@ -6,8 +6,9 @@ pub fn main(init: std.process.Init) !void {
     defer args.deinit();
     _ = args.next();
     const command = args.next() orelse return printStatus(init);
-    const hashing = std.mem.eql(u8, command, "sha256") or std.mem.eql(u8, command, "serve-sha256");
-    const serving = std.mem.eql(u8, command, "serve") or std.mem.eql(u8, command, "serve-sha256");
+    const batching = std.mem.eql(u8, command, "batch") or std.mem.eql(u8, command, "serve-batch");
+    const hashing = batching or std.mem.eql(u8, command, "sha256") or std.mem.eql(u8, command, "serve-sha256");
+    const serving = std.mem.eql(u8, command, "serve") or std.mem.eql(u8, command, "serve-sha256") or std.mem.eql(u8, command, "serve-batch");
     const probing = std.mem.eql(u8, command, "probe");
     if (!serving and !probing and !hashing and !std.mem.eql(u8, command, "echo")) return error.UnknownCommand;
     const short_name = args.next() orelse return error.MissingNodeName;
@@ -20,7 +21,7 @@ pub fn main(init: std.process.Init) !void {
         break :blk if (args.next()) |value| try std.fmt.parseInt(usize, value, 10) else if (serving) @as(usize, 0) else @as(usize, 1);
     } else 1;
     if (args.next() != null) return error.UnexpectedArgument;
-    try run(init, short_name, cookie, max_messages, serving, peer_name, hashing);
+    try run(init, short_name, cookie, max_messages, serving, peer_name, hashing, batching);
 }
 
 fn validateName(name: []const u8) !void {
@@ -39,6 +40,8 @@ fn printStatus(init: std.process.Init) !void {
         \\       zbeam serve <short-name> <cookie> [messages-per-peer]
         \\       zbeam sha256 <short-name> <cookie> [message-count]
         \\       zbeam serve-sha256 <short-name> <cookie> [messages-per-peer]
+        \\       zbeam batch <short-name> <cookie> [message-count]
+        \\       zbeam serve-batch <short-name> <cookie> [messages-per-peer]
         \\       zbeam probe <short-name> <cookie> <peer-short-name>
         \\Loopback only; start epmd -daemon first.
         \\echo: one peer, one message by default; zero messages means until disconnect.
@@ -50,7 +53,7 @@ fn printStatus(init: std.process.Init) !void {
     try writer.interface.flush();
 }
 
-fn run(init: std.process.Init, short_name: []const u8, cookie: []const u8, max_messages: usize, serving: bool, peer_name: ?[]const u8, hashing: bool) !void {
+fn run(init: std.process.Init, short_name: []const u8, cookie: []const u8, max_messages: usize, serving: bool, peer_name: ?[]const u8, hashing: bool, batching: bool) !void {
     const allocator = init.gpa;
     const io = init.io;
     const full_name = try std.fmt.allocPrint(allocator, "{s}@127.0.0.1", .{short_name});
@@ -67,8 +70,8 @@ fn run(init: std.process.Init, short_name: []const u8, cookie: []const u8, max_m
         .creation = registration.creation,
         .max_messages = max_messages,
         .max_connections = if (serving) 0 else 1,
-        .registered_name = if (hashing) "sha256" else "echo",
-        .service = if (hashing) .sha256 else .echo,
+        .registered_name = if (batching) "sha256_batch" else if (hashing) "sha256" else "echo",
+        .service = if (batching) .batch_sha256 else if (hashing) .sha256 else .echo,
     };
     var buffer: [1024]u8 = undefined;
     var writer: std.Io.File.Writer = .initStreaming(.stdout(), io, &buffer);

@@ -44,6 +44,10 @@
 
 ---
 
+## Experimental batch request contract — 2026-10-13
+
+On `explore/batched-requests`, `sha256_batch` accepts `{Session, ID, Jobs}` with a 16-byte binary session, sequential nonnegative i32 ID starting at zero and 1–32 independent binary jobs totaling at most 1 MiB. Reply: `{Session, ID, concatenated_32_byte_digests}`. The connection admits one frame at a time under the existing demand/deadline contract and a 2 MiB frame cap. Invalid/stale requests close the peer; reconnect resets state and requires clients to choose a fresh session and correlate both fields. No replay, global session registry or OTP call/link/monitor behavior is implied. The OTP compatibility target is 25–27; see `docs/evidence/phase-c/2026-10-13-batches.md` for executed checks and performance limits.
+
 ## 1. Abstract
 
 zbeam is a native Zig library implementing the full Erlang Distribution Protocol (EDP v5/v6), enabling a Zig process to appear as a first-class BEAM node in an Erlang/OTP cluster — as a separate OS process speaking the wire protocol, never as a NIF, port driver, or in-process linkage of any kind.

@@ -1,0 +1,53 @@
+PASS CLI streaming stdout and argument validation
+test-all
++- test-integration
+   +- run test w
+[default] (warn): peer disconnected: InvalidDigest
+[default] (warn): peer disconnected: PacketTooLarge
+[default] (warn): peer disconnected: Timeout
+failed command: ./.zig-cache/o/77c219f9fbb523828a72366732c50cdb/test --cache-dir=./.zig-cache --seed=0xc64bb88a --listen=-
+
+Build Summary: 41/41 steps succeeded; 59/59 tests passed
+test-all success
++- test-unit success
+|  +- run test 1 pass (1 total) 8ms MaxRSS:6M
+|  |  +- compile test Debug native success 522ms MaxRSS:139M
+|  +- run test 12 pass (12 total) 11ms MaxRSS:6M
+|  |  +- compile test Debug native cached 9ms MaxRSS:40M
+|  +- run test 6 pass (6 total) 10ms MaxRSS:5M
+|  |  +- compile test Debug native cached 9ms MaxRSS:40M
+|  +- run test 4 pass (4 total) 29ms MaxRSS:5M
+|  |  +- compile test Debug native cached 5ms MaxRSS:40M
+|  +- run test 4 pass (4 total) 12ms MaxRSS:6M
+|  |  +- compile test Debug native cached 7ms MaxRSS:40M
+|  +- run test 6 pass (6 total) 11ms MaxRSS:6M
+|  |  +- compile test Debug native success 628ms MaxRSS:144M
+|  +- run test 2 pass (2 total) 8ms MaxRSS:5M
+|     +- compile test Debug native success 863ms MaxRSS:141M
++- test-integration success
+|  +- run test 9 pass (9 total) 967ms MaxRSS:6M
+|  |  +- compile test Debug native success 895ms MaxRSS:146M
+|  +- run sh success 244ms
+|     +- compile exe zbeam Debug native success 1s MaxRSS:141M
++- test-conformance success
+|  +- run test 8 pass (8 total) 9ms MaxRSS:5M
+|     +- compile test Debug native cached 13ms MaxRSS:40M
++- test-stress success
+   +- run test 5 pass (5 total) 800ms MaxRSS:22M
+      +- compile test Debug native success 576ms MaxRSS:141M
+test-research success
++- run test 1 pass (1 total) 10ms MaxRSS:5M
+|  +- compile test Debug native cached 9ms MaxRSS:40M
++- run test 1 pass (1 total) 8ms MaxRSS:4M
+   +- compile test Debug native success 932ms MaxRSS:140M
+build-research success
++- install zbeam-port-etf success
+|  +- compile exe zbeam-port-etf Debug native cached 11ms MaxRSS:40M
++- install success
+|  +- install zbeam success
+|  |  +- compile exe zbeam Debug native (reused)
+|  +- install zbeam-port-echo success
+|     +- compile exe zbeam-port-echo Debug native cached 9ms MaxRSS:40M
++- install zbeam-batch-port success
+   +- compile exe zbeam-batch-port Debug native success 1s MaxRSS:138M
+

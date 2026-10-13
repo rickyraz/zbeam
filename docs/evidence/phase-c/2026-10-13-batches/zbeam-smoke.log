@@ -1,0 +1,3 @@
+
+12:30:08.951 [debug] loaded module at Elixir.ZbeamResearch.BatchNative
+RESULT {"label":"zbeam","iterations":10,"cpu_ticks":3,"jobs_per_batch":32,"bytes_per_job":32768,"batch_p50_ns":3288925,"batch_p99_ns":4573716,"jobs_s":9183.370763700304,"samples_ns":[2732878,3337285,4573716,3371447,3270433,3254536,3324358,3131055,4551210,3288925],"beam_bytes":61114384,"rss_work_kib":110212,"rss_idle_100ms_kib":109548,"rss_idle_1s_kib":109072,"note":"preformed independent jobs; batch completion latency, no application batch fill wait; one outstanding batch"}

@@ -1,5 +1,9 @@
 # Research and Risk Backlog
 
+## Batching promotion gates — 2026-10-13
+
+Bounded correlated batches and matched optional controls are implemented on `explore/batched-requests`; [evidence](evidence/phase-c/2026-10-13-batches.md) separates correctness from performance. Application batch fill-wait, loaded-BEAM fairness, native-host replication and full memory/tail regression budgets remain required. Fresh session uniqueness across reconnect is the caller's responsibility; no global deduplication or replay ledger is provided.
+
 **Reviewed:** 2026-09-26. The [single-actor MVP](mvp.md) is implemented; the full v0.5 design is not. [Implementation status](implementation-status.md) distinguishes executed evidence from proposals.
 
 The [development plan](development-plan.md) defines execution order and final release gates. The [snmalloc evaluation](snmalloc-evaluation.md) specifies the allocator experiment without changing the default build.

@@ -11,6 +11,7 @@ peer_pid=
 otp_pid=
 client_pid=
 hash_pid=
+batch_pid=
 cleanup() {
     status=$?
     if [ "$status" -ne 0 ]; then
@@ -20,6 +21,7 @@ cleanup() {
     [ -z "$otp_pid" ] || { kill "$otp_pid" 2>/dev/null || true; wait "$otp_pid" 2>/dev/null || true; }
     [ -z "$client_pid" ] || { kill "$client_pid" 2>/dev/null || true; wait "$client_pid" 2>/dev/null || true; }
     [ -z "$hash_pid" ] || { kill "$hash_pid" 2>/dev/null || true; wait "$hash_pid" 2>/dev/null || true; }
+    [ -z "$batch_pid" ] || { kill "$batch_pid" 2>/dev/null || true; wait "$batch_pid" 2>/dev/null || true; }
     rm -rf "$logs"
 }
 trap cleanup EXIT
@@ -82,6 +84,29 @@ tries=0
 while epmd -names | grep -q "name $short_name "; do
     tries=$((tries + 1)); [ "$tries" -lt 50 ] || exit 1; sleep 0.1
 done
+
+batch_name="batch_$short_name"
+"$zbeam_bin" serve-batch "$batch_name" zbeam_test_cookie >"$logs/batch.log" 2>&1 &
+batch_pid=$!
+wait_registered "$batch_name"
+timeout 30 "$erl_bin" +S 2:2 -noshell -name "batch_$client_name" -setcookie zbeam_test_cookie -eval \
+    "N=list_to_atom(\"$batch_name@127.0.0.1\"),
+     Connect=fun() -> true=net_kernel:connect_node(N),true=monitor_node(N,true) end,
+     Down=fun() -> receive {nodedown,N} -> ok after 3000 -> error(no_batch_disconnect) end end,
+     Session=crypto:strong_rand_bytes(16),
+     Request=fun(S,I,Jobs) ->
+       D=iolist_to_binary([crypto:hash(sha256,J)||J<-Jobs]),
+       {sha256_batch,N}!{S,I,Jobs},
+       receive {S,I,D} -> ok after 3000 -> error(bad_batch_reply) end end,
+     Connect(),Request(Session,0,[<<97,98,99>>,<<>>]),
+     Request(Session,1,lists:duplicate(32,binary:copy(<<90>>,32768))),
+     {sha256_batch,N}!{Session,1,[<<>>]},Down(),
+     Connect(),Fresh=crypto:strong_rand_bytes(16),Request(Fresh,0,[<<1>>,<<2>>]),
+     {sha256_batch,N}!{Session,1,[<<>>]},Down(),
+     lists:foreach(fun(Jobs) -> Connect(),{sha256_batch,N}!{Session,0,Jobs},Down() end,
+       [[],lists:duplicate(33,<<>>),[42],[binary:copy(<<90>>,1048576),<<1>>]]),
+     Connect(),Request(crypto:strong_rand_bytes(16),0,[<<>>]),
+     io:format(\"PASS independent batch digests limits stale-id stale-session reconnect~n\"),halt()."
 
 # Reverse direction: real OTP accepts, zbeam discovers it through EPMD and
 # initiates, sends a registered message, then validates its SEND reply.

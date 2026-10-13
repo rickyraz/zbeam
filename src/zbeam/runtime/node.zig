@@ -5,6 +5,7 @@ const protocol = @import("zbeam-protocol");
 const transport = @import("zbeam-transport");
 const Echo = @import("echo.zig").Echo;
 const Sha256 = @import("sha256.zig").Sha256;
+const BatchSha256 = @import("batch.zig").BatchSha256;
 
 pub const Config = struct {
     node_name: []const u8,
@@ -13,7 +14,7 @@ pub const Config = struct {
     /// Deterministic override for tests only. Otherwise fresh per connection.
     challenge: ?u32 = null,
     registered_name: []const u8 = "echo",
-    service: enum { echo, sha256 } = .echo,
+    service: enum { echo, sha256, batch_sha256 } = .echo,
     flags: u64 = protocol.flags.m1,
     limits: protocol.distribution.Limits = .{},
     max_messages: usize = 1,
@@ -119,10 +120,16 @@ pub fn serveConnection(io: std.Io, allocator: std.mem.Allocator, stream: std.Io.
         .timeout = config.handshake_timeout,
     });
     defer peer.deinit(allocator);
-    if (config.service == .sha256)
-        try dispatch(io, allocator, stream, config, Sha256{ .limits = config.limits })
-    else
-        try dispatch(io, allocator, stream, config, Echo{ .registered_name = config.registered_name, .limits = config.limits });
+    switch (config.service) {
+        .batch_sha256 => {
+            var handler: BatchSha256 = .{};
+            var bounded = config;
+            bounded.limits.max_packet_bytes = @min(config.limits.max_packet_bytes, 2 * 1024 * 1024);
+            try dispatch(io, allocator, stream, bounded, &handler);
+        },
+        .sha256 => try dispatch(io, allocator, stream, config, Sha256{ .limits = config.limits }),
+        .echo => try dispatch(io, allocator, stream, config, Echo{ .registered_name = config.registered_name, .limits = config.limits }),
+    }
 }
 
 fn actualIoError(err: anyerror, cause: ?anyerror) anyerror {

@@ -89,6 +89,18 @@ pub fn build(b: *std.Build) void {
     const research_tests = b.step("test-research", "Test native comparison workers");
     research_tests.dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = port_etf.root_module })).step);
 
+    const batch_port = b.addExecutable(.{
+        .name = "zbeam-batch-port",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("benchmarks/batch_port.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{.{ .name = "zbeam", .module = lib_mod }},
+        }),
+    });
+    research_step.dependOn(&b.addInstallArtifact(batch_port, .{}).step);
+    research_tests.dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = batch_port.root_module })).step);
+
     const run_step = b.step("run", "Run the zbeam executable");
     const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(b.getInstallStep());
