@@ -85,9 +85,16 @@ pub fn decode(allocator: std.mem.Allocator, bytes: []const u8, limits: Limits) (
 pub fn encode(allocator: std.mem.Allocator, term: *const Term) (EncodeError || std.mem.Allocator.Error)![]u8 {
     var output: std.ArrayList(u8) = .empty;
     errdefer output.deinit(allocator);
-    try output.append(allocator, version);
-    try encodeValue(allocator, &output, term);
+    try encodeInto(allocator, &output, term);
     return output.toOwnedSlice(allocator);
+}
+
+/// Appends a standalone ETF term; errors restore length, retaining capacity.
+pub fn encodeInto(allocator: std.mem.Allocator, output: *std.ArrayList(u8), term: *const Term) (EncodeError || std.mem.Allocator.Error)!void {
+    const start = output.items.len;
+    errdefer output.shrinkRetainingCapacity(start);
+    try output.append(allocator, version);
+    try encodeValue(allocator, output, term);
 }
 
 /// Dispatches on the one-byte ETF tag. `depth` increases only when entering a
@@ -333,6 +340,28 @@ const Cursor = struct {
         return @bitCast(try self.readU32());
     }
 };
+
+test "ETF append preserves prefix and rolls back each allocation failure" {
+    try std.testing.checkAllAllocationFailures(std.testing.allocator, appendCase, .{});
+}
+
+fn appendCase(a: std.mem.Allocator) !void {
+    var output: std.ArrayList(u8) = .empty;
+    defer output.deinit(a);
+    try output.append(a, 42);
+    var invalid = Term{ .integer = std.math.maxInt(i64) };
+    try std.testing.expectError(error.IntegerOutOfRange, encodeInto(a, &output, &invalid));
+    try std.testing.expectEqualSlices(u8, &.{42}, output.items);
+    var data: [512]u8 = @splat(90);
+    var value = Term{ .binary = &data };
+    encodeInto(a, &output, &value) catch |err| {
+        try std.testing.expectEqualSlices(u8, &.{42}, output.items);
+        return err;
+    };
+    const standalone = try encode(a, &value);
+    defer a.free(standalone);
+    try std.testing.expectEqualSlices(u8, standalone, output.items[1..]);
+}
 
 test "ETF round-trips the supported structural subset" {
     const allocator = std.testing.allocator;

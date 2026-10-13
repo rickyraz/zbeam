@@ -11,6 +11,7 @@ pub const decode = codec.decode;
 pub const decodePrefix = codec.decodePrefix;
 pub const Decoded = codec.Decoded;
 pub const encode = codec.encode;
+pub const encodeInto = codec.encodeInto;
 pub const version = codec.version;
 
 test {

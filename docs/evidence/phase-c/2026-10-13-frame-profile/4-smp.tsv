@@ -1,0 +1,8 @@
+allocator	stage	bytes	p50_ns	p99_ns	allocations	allocated_bytes
+smp	append	32	150	151	2	181
+smp	legacy	32	231	241	5	345
+smp	append	4096	1643	1673	2	6428
+smp	legacy	4096	2875	5571	5	10652
+smp	append	65536	83889	164783	2	98588
+smp	legacy	65536	144655	268871	5	164252
+smp	deadline_noop	0	98990	219879	NA	NA

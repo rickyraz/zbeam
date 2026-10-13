@@ -30,6 +30,10 @@ The [handshake deadline record](evidence/phase-b/2026-09-28-handshake-deadline.m
 
 This branch adds optional direct Zigler NIF and ETF-over-Port benchmark adapters, not a runtime dependency or production behavior change. Exact-result and allocation-bound tests, a fresh-VM smoke and core/OTP regression checks are recorded in [native comparison evidence](evidence/phase-c/2026-10-02-native-comparison.md). Benchmark OTP 29 is distinct from the supported regression targets. No performance-win or native-host replication claim follows from adapter availability.
 
+## Encoder research candidate — 2026-10-13
+
+On `explore/io-overhead`, ETF exposes a rollback-safe caller-owned `encodeInto` append API and distribution framing avoids two intermediate encoded buffers. [Verified measurements](evidence/phase-c/2026-10-13-frame-profile.md) show fewer allocation calls and a promising 64 KiB echo signal, but SHA-256/tail and native-host promotion gates remain unmet. Owned decoding, demand and finite deadlines remain unchanged.
+
 ## Not implemented or not established
 
 - Complete ETF coverage, old handshakes, simultaneous-connection arbitration or general Erlang-node compatibility.

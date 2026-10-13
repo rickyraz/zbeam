@@ -44,6 +44,10 @@
 
 ---
 
+## Experimental encoder extension — 2026-10-13
+
+On `explore/io-overhead`, `etf.encodeInto` appends a standalone term to a caller-owned `ArrayList(u8)`. Errors restore its prior length; capacity remains owned by the caller. Distribution framing appends control/payload to the same output instead of copying intermediate encoded slices. Wire format, owned decoding, finite deadlines and demand-gated reads are unchanged. This is copy reduction, not zero-copy or a change to the historical handle design below. Verification is recorded in `docs/evidence/phase-c/2026-10-13-frame-profile.md` on that branch.
+
 ## 1. Abstract
 
 zbeam is a native Zig library implementing the full Erlang Distribution Protocol (EDP v5/v6), enabling a Zig process to appear as a first-class BEAM node in an Erlang/OTP cluster — as a separate OS process speaking the wire protocol, never as a NIF, port driver, or in-process linkage of any kind.

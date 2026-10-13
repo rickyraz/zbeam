@@ -1,0 +1,17 @@
+{
+  "source": "f463f73becfd986a6ad1d63654ea21a1ddb166d6",
+  "binaries": {
+    "original": "2e99e3ea5ec84341d109d7222145597df775dabae70851e4114507630d762a3f",
+    "append": "d390640fee0d934d68b61e1b1dc0baeda3ca4c98b98fefa3c167a90ff668d01f"
+  },
+  "cpu_affinity": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "seed": 1013,
+  "repeats": 10,
+  "iterations": 1000,
+  "limitation": "WSL2; same process allocator and deadlines; no native-host replication"
+}

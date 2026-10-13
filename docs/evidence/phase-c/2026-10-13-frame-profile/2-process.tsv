@@ -1,0 +1,8 @@
+allocator	stage	bytes	p50_ns	p99_ns	allocations	allocated_bytes
+process	append	32	11492	22473	2	181
+process	legacy	32	40367	103898	5	345
+process	append	4096	32401	105480	2	6428
+process	legacy	4096	52420	102176	5	10652
+process	append	65536	100070	181392	2	98588
+process	legacy	65536	177567	326590	5	164252
+process	deadline_noop	0	120228	219164	NA	NA

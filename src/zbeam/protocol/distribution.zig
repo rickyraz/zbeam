@@ -77,19 +77,14 @@ pub fn decodePacket(allocator: std.mem.Allocator, packet: []const u8, limits: Li
 /// Control and payload each retain their own ETF version marker because the
 /// pass-through format carries standalone external terms.
 pub fn encodePacket(allocator: std.mem.Allocator, control: *const etf.Term, payload: ?*const etf.Term) ![]u8 {
-    const control_bytes = try etf.encode(allocator, control);
-    defer allocator.free(control_bytes);
-    const payload_bytes = if (payload) |value| try etf.encode(allocator, value) else null;
-    defer if (payload_bytes) |bytes| allocator.free(bytes);
-
-    const data_len = 1 + control_bytes.len + if (payload_bytes) |bytes| bytes.len else 0;
-    const length = std.math.cast(u32, data_len) orelse return error.PacketTooLarge;
-    const packet = try allocator.alloc(u8, data_len + 4);
-    putU32(packet[0..4], length);
-    packet[4] = pass_through;
-    @memcpy(packet[5..][0..control_bytes.len], control_bytes);
-    if (payload_bytes) |bytes| @memcpy(packet[5 + control_bytes.len ..], bytes);
-    return packet;
+    var packet: std.ArrayList(u8) = .empty;
+    errdefer packet.deinit(allocator);
+    try packet.appendSlice(allocator, &.{ 0, 0, 0, 0, pass_through });
+    try etf.encodeInto(allocator, &packet, control);
+    if (payload) |value| try etf.encodeInto(allocator, &packet, value);
+    const length = std.math.cast(u32, packet.items.len - 4) orelse return error.PacketTooLarge;
+    putU32(packet.items[0..4], length);
+    return packet.toOwnedSlice(allocator);
 }
 
 /// A distribution tick is exactly a zero `u32` frame length and has no body.
@@ -115,6 +110,18 @@ fn readU32(bytes: *const [4]u8) u32 {
 
 fn putU32(out: *[4]u8, value: u32) void {
     out.* = .{ @intCast(value >> 24), @truncate(value >> 16), @truncate(value >> 8), @truncate(value) };
+}
+
+test "distribution encoding has exact bytes and unwinds every allocation failure" {
+    try std.testing.checkAllAllocationFailures(std.testing.allocator, encodeCase, .{});
+}
+
+fn encodeCase(a: std.mem.Allocator) !void {
+    var control = etf.Term{ .integer = send };
+    var payload = etf.Term{ .binary = "payload" };
+    const bytes = try encodePacket(a, &control, &payload);
+    defer a.free(bytes);
+    try std.testing.expectEqualSlices(u8, &.{ 0, 0, 0, 17, pass_through, 131, 97, 2, 131, 109, 0, 0, 0, 7, 'p', 'a', 'y', 'l', 'o', 'a', 'd' }, bytes);
 }
 
 test "distribution packet separates control and payload ETF terms" {
