@@ -89,6 +89,17 @@ pub fn build(b: *std.Build) void {
     const research_tests = b.step("test-research", "Test native comparison workers");
     research_tests.dependOn(&b.addRunArtifact(b.addTest(.{ .root_module = port_etf.root_module })).step);
 
+    const research_peer = b.addExecutable(.{
+        .name = "zbeam-research-peer",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tools/research_peer.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{.{ .name = "zbeam", .module = lib_mod }},
+        }),
+    });
+    b.step("build-research-peer", "Build test-only pause/fault peer").dependOn(&b.addInstallArtifact(research_peer, .{}).step);
+
     const run_step = b.step("run", "Run the zbeam executable");
     const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(b.getInstallStep());

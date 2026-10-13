@@ -1,0 +1,3 @@
+PASS test-owned fault oom; controlling BEAM alive
+PASS test-owned fault panic; controlling BEAM alive
+PASS test-owned fault spin; controlling BEAM alive

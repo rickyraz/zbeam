@@ -30,6 +30,10 @@ The [handshake deadline record](evidence/phase-b/2026-09-28-handshake-deadline.m
 
 This branch adds optional direct Zigler NIF and ETF-over-Port benchmark adapters, not a runtime dependency or production behavior change. Exact-result and allocation-bound tests, a fresh-VM smoke and core/OTP regression checks are recorded in [native comparison evidence](evidence/phase-c/2026-10-02-native-comparison.md). Benchmark OTP 29 is distinct from the supported regression targets. No performance-win or native-host replication claim follows from adapter availability.
 
+## OTP sender research — 2026-10-13
+
+On `explore/beam-backpressure`, an optional test-only pause/fault peer and finite-burst OTP pressure scenarios cover sender suspension, resume and heartbeat disconnect/reconnect. [Evidence](evidence/phase-c/2026-10-13-pressure.md) records nine OTP 29 launches and three test-owned native faults. This adds neither a production scheduler nor new runtime APIs.
+
 ## Not implemented or not established
 
 - Complete ETF coverage, old handshakes, simultaneous-connection arbitration or general Erlang-node compatibility.
@@ -38,8 +42,8 @@ This branch adds optional direct Zigler NIF and ETF-over-Port benchmark adapters
 - Concurrent peer servicing, stalled-handler recovery, outbound reconnect/backoff or EPMD re-registration. The executable instead fails closed on EPMD loss; no CPU-bound handler preemption or proactive heartbeat exists.
 - Arena-backed buffers, `BufferHandle`, typestate/linear ownership, io_uring or zero-copy transfer.
 - snmalloc integration or allocator-comparison results; the [evaluation plan](snmalloc-evaluation.md) and source audit are research only.
-- BEAM distribution-sender throttling measurements, multi-workload performance conclusions or isolation between actors inside the native process.
-- Panic/corruption crash-injection coverage, sanitizers/TSAN or a production security audit.
+- Long-running BEAM producer/queue plateau guarantees, multi-workload performance conclusions or isolation between actors inside the native process.
+- Corruption crash-injection coverage, sanitizers/TSAN or a production security audit. Test-owned panic/OOM/spin probes are narrower than these guarantees.
 
 The service deliberately uses synchronous owned-copy processing. The reusable mailbox/registry is not an implicit asynchronous scheduler. Logical tokens are copyable; they do not prove an OS-thread or task identity. Caller-managed lifetimes remain required.
 
