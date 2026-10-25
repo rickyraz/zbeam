@@ -5,6 +5,7 @@
 - **Integration baseline:** local `master` at `11c3319`; restricted MVP introduced by `090bb60`.
 - **Immediate milestone:** M1, one PID-addressable, monitorable native worker with external recovery.
 - **Allocator track:** [snmalloc evaluation](snmalloc-evaluation.md).
+- **Compiler track:** [all-branch Zig 0.17 migration](zig-0.17-migration.md), planned separately from M1 behavior.
 
 ## Direction
 
@@ -59,13 +60,21 @@ complete ETF capabilities and a task-owning actor scheduler are not complete.
 W4 required a source-backed correction: OTP sends process monitors only when
 both PID and named-monitor flags are present. Both target forms are implemented;
 named discovery monitoring survives worker stop. The accepted lifecycle ADR
-records that extension rather than redefining flag semantics.
+records that extension rather than redefining flag semantics (superseding
+[ADR 0003](adr/0003-pid-and-named-monitor-capabilities.md)).
+
+The final live-remote audit found master at `497d346`, merging lab-contracts PR #1;
+local master remains `11c3319`. This branch has not silently merged that upstream
+change. The compiler rollout must start from refreshed remote master and verify
+its labs together with M1 when integrating the compiler commit.
 
 ## Research inputs, not completed prerequisites
 
-This is a local branch snapshot, not integration approval. None of these branch
-tips has been merged into `master`. Audit the shared ancestry before selecting
-changes; merging an entire research branch can also import unrelated benchmarks.
+This table preserves the original local branch snapshot, not integration approval.
+The later remote audit confirms lab-contracts is now merged into remote master;
+the other inspected research tips are not promoted by this plan. Audit shared
+ancestry before selecting changes; wholesale research merges can import unrelated
+benchmarks.
 
 | Branch / inspected tip | Reuse for this plan | Treatment |
 |---|---|---|

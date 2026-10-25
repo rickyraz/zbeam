@@ -20,6 +20,10 @@ These records supersede earlier pending-matrix/demand status for the restricted 
 These records cover the bounded development profile, not a general actor
 scheduler or production release.
 
+## Compiler migration readiness
+
+- [2026-10-25 Zig 0.17 probe and all-branch inventory](phase-a/2026-10-25-zig-0.17.md) — migration remains planned; no 0.17 acceptance claim.
+
 ## Allocator research
 
 - [2026-09-26 allocator source and binary audit](phase-a/2026-09-26-allocator-source-audit.md) — baseline selection/linkage and pinned snmalloc source findings, not snmalloc integration or performance evidence.

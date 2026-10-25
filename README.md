@@ -35,7 +35,7 @@ The current benchmark includes negative results. It does not establish a perform
 
 ## Build and verify
 
-Requirements: Zig 0.16.0 and Git. Interoperability checks additionally require Erlang/EPMD; the pinned-container runner requires Linux and Docker.
+Requirements: Zig 0.16.0 and Git. Zig 0.17 migration is [planned separately](docs/zig-0.17-migration.md), not applied. Interoperability checks additionally require Erlang/EPMD; the pinned-container runner requires Linux and Docker.
 
 ```sh
 zig build

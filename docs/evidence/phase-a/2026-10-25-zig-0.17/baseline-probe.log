@@ -1,0 +1,12 @@
+build.zig:80:11: error: no field named 'args' in struct 'Build'
+    if (b.args) |args| run_cmd.addArgs(args);
+          ^~~~
+/home/rickyraz/.local/share/mise/installs/zig/0.17.0/lib/std/Build.zig:1:1: note: struct declared here
+const Build = @This();
+^~~~~
+referenced by:
+    runPackageScript [inlined]: /home/rickyraz/.local/share/mise/installs/zig/0.17.0/lib/std/Build.zig:2144:50
+    main: /home/rickyraz/.local/share/mise/installs/zig/0.17.0/lib/compiler/configurer.zig:138:29
+    4 reference(s) hidden; use '-freference-trace=6' to see all references
+
+Probe exit status: 1 (failure expected; migration not applied)
