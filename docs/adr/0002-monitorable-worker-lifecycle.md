@@ -1,6 +1,6 @@
 # ADR 0002 — Bounded monitorable worker lifecycle
 
-**Status:** accepted for the M1 development profile.
+**Status:** superseded by [ADR 0003](0003-pid-and-named-monitor-capabilities.md).
 **Date:** 2026-10-25.
 
 ## Decision and scope
@@ -59,15 +59,8 @@ Any later task-owning runtime must separately specify close/drain/join ordering.
 
 ## Monitors and failure boundary
 
-PID and named process monitoring are advertised together. OTP's
-`erts_dsig_send_monitor` requires both bits even for PID monitoring; the original
-PID-only proposal was corrected after real OTP tests exposed connection-only
-fallback. The `zbeam_worker` name identifies the discovery endpoint, which remains
-live after worker stop; unknown names produce `noproc`. Only the endpoint's
-canonical static name may be retained. Normal worker stop notifies PID monitors,
-not discovery-name monitors. Both share the fixed 64-slot connection table.
-Atom caches, exit-payload controls, links and SEND_SENDER remain disabled.
-Wire controls use MONITOR_P (19),
+Only PID monitoring is advertised; named monitoring, atom caches, exit-payload
+controls, links and SEND_SENDER remain disabled. Wire controls use MONITOR_P (19),
 DEMONITOR_P (20) and MONITOR_P_EXIT (21) from the OTP distribution source matrix.
 References use bounded NEWER_REFERENCE_EXT; legacy NEW_REFERENCE_EXT is accepted
 within its documented bit/length constraints. No outbound monitor API exists;
@@ -76,7 +69,7 @@ a validated unsolicited MONITOR_P_EXIT has no local subscription to complete.
 For a live target, duplicate identical monitor operations are idempotent. A
 conflicting reuse of a live reference is a protocol error. Unknown/stopped PIDs
 produce `noproc`; normal worker stop produces one `normal` notification per
-established worker-PID monitor. Demonitor removes only a matching subscription. Notification
+established monitor. Demonitor removes only a matching subscription. Notification
 writes are bounded; failure closes the connection rather than claiming delivery.
 Table exhaustion closes the connection, allowing OTP's connection-loss semantics
 instead of silently ignoring a monitor. Disconnect clears every subscription;

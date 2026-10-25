@@ -98,7 +98,8 @@ before sending MONITOR_P. A shared fixed 64-slot table is connection-scoped.
 worker stop; unknown names and stopped/stale PIDs report `noproc`. Worker stop
 notifies established PID monitors with `normal`. Demonitor removes the exact
 subscription; overflow/write failure closes the peer, with no replay on reconnect.
-The [lifecycle ADR](adr/0002-monitorable-worker-lifecycle.md) defines ownership.
+The [current lifecycle/monitor ADR](adr/0003-pid-and-named-monitor-capabilities.md)
+defines the capability extension and retains ADR 0002's ownership rules.
 
 ## Wire contract
 

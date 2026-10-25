@@ -5,9 +5,9 @@
 
 > **A bounded, single-actor Erlang Distribution peer in Zig.**
 
-zbeam implements a development MVP: a separate Zig process registers through EPMD, authenticates with OTP, exposes one registered echo or SHA-256 binary worker, and supports repeated messages and sequential reconnects. Both handshake directions are verified against real OTP 25, 26 and 27.
+zbeam implements a development MVP: a separate Zig process registers through EPMD, authenticates with OTP, exposes one registered echo or SHA-256 binary worker, and supports repeated messages and sequential reconnects. An explicit `serve-worker` profile adds PID-addressable SHA-256, process monitoring and normal worker stop without node exit. Both handshake directions and the monitor profile are verified against real OTP 25, 26 and 27.
 
-**Not a production Erlang node.** Compatibility is limited to the [MVP wire subset](docs/mvp.md). Arbitrary ETF terms, RPC, process links/monitors, distributed registry semantics and the full v0.5 runtime are not implemented.
+**Not a production Erlang node.** Compatibility is limited to the [MVP wire subset](docs/mvp.md). Arbitrary ETF terms, RPC, process links, outbound process monitors, distributed registry semantics and the full v0.5 runtime are not implemented.
 
 ## Purpose
 
@@ -23,7 +23,9 @@ The current benchmark includes negative results. It does not establish a perform
 | ETF | Bounded owned subset, including aggregate allocation limits |
 | EPMD and handshake | Registration/lookup; both handshake roles verified on OTP 25–27 |
 | Distribution | Pass-through framing, tick echo, REG_SEND/SEND subset |
-| Service lifecycle | One synchronous echo or SHA-256 worker; repeated messages; sequential peer recovery; bounded socket waits |
+| Service lifecycle | One synchronous worker; repeated messages; sequential peer recovery; bounded socket waits; optional PID discovery/hash/normal-stop profile |
+| Process monitors | Worker PID and discovery-name monitoring; fixed 64-slot connection table; OTP 25/26/27 evidence |
+| External recovery example | One-slot Elixir owner, no uncertain replay, bounded restarts and guarded Linux child cleanup; separately tested on Elixir 1.20.4/OTP 29 |
 | Backpressure | Demand-gated unbuffered reads; TCP saturation/resume evidence |
 | Local actor primitives | Bounded mailbox, logical receive ownership, registry and termination |
 | Process-loss isolation | SIGKILL/nodedown tests with surviving OTP VM and local process |
@@ -63,6 +65,15 @@ erl +S 2:2 -noshell -name client@127.0.0.1 -setcookie development_cookie -eval '
 ```
 
 The service binds IPv4 loopback and handles one active peer at a time. `echo` provides a bounded one-shot variant; `probe` initiates a request to a real OTP echo actor. `serve-sha256` and `sha256` serve bounded binary-hashing requests; see the [runnable Elixir client](examples/sha256_worker.exs). See [MVP usage and contracts](docs/mvp.md).
+
+### Monitor and recover one native worker
+
+`serve-worker` exposes the separate `zbeam_worker` discovery endpoint and one
+PID-addressable worker. It is not a multi-actor scheduler. The runnable
+[Elixir owner example](docs/worker-recovery.md) discovers/monitors that PID,
+rejects concurrent submissions and recovers without replaying uncertain work.
+It requires Linux, Python 3 and Elixir; `zig build test-worker-recovery` runs its
+opt-in failure campaign. The native executable itself does not require Python.
 
 Cookies in arguments are visible in process listings. Handshake, frame and write waits have bounded defaults, but CPU-bound handlers are not preempted. There is no TLS integration; do not expose this development service to untrusted peers.
 

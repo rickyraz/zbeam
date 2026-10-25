@@ -550,7 +550,8 @@ fn myTerminalActor(io: std.Io, ctx: ActorContext) !void {
 service-owned native PID, correlated discovery/hash requests and normal worker
 stop without node exit. It preserves the previous service contracts and does
 not turn the local registry into a scheduler. Ownership and incarnation limits
-are defined in [ADR 0002](../docs/adr/0002-monitorable-worker-lifecycle.md);
+are defined in [ADR 0002](../docs/adr/0002-monitorable-worker-lifecycle.md), with
+the monitor-capability correction in [ADR 0003](../docs/adr/0003-pid-and-named-monitor-capabilities.md);
 [verification](../docs/evidence/phase-c/2026-10-25-m1.md) is separate from the
 broader API proposal below. The [external Linux owner example](../docs/worker-recovery.md)
 adds PID discovery/monitoring, one-slot admission, explicit failure without replay,

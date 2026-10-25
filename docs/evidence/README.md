@@ -12,6 +12,14 @@ Evidence records support implementation and compatibility claims. Passing tests 
 
 These records supersede earlier pending-matrix/demand status for the restricted MVP. Historical files remain unchanged; the full v0.5 design is still unimplemented.
 
+## Monitorable native worker — M1
+
+- [2026-10-25 references and monitor wire evidence](phase-b/2026-10-25-m1.md)
+- [2026-10-25 worker lifecycle, OTP matrix and external recovery](phase-c/2026-10-25-m1.md)
+
+These records cover the bounded development profile, not a general actor
+scheduler or production release.
+
 ## Allocator research
 
 - [2026-09-26 allocator source and binary audit](phase-a/2026-09-26-allocator-source-audit.md) — baseline selection/linkage and pinned snmalloc source findings, not snmalloc integration or performance evidence.
