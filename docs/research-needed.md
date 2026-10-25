@@ -36,6 +36,11 @@ Completion is deliberately limited to the MVP scope. It does not close the broad
 
 ### Mandatory ETF capability coverage
 
+**Additive boundary (2026-10-25):** bounded newer/legacy references and pure
+PID-monitor controls have tests and OTP 25/26/27 reference vectors. Optional
+monitor flags remain disabled at this codec-only stage. Other mandatory tag
+coverage remains unresolved; reference support is not general ETF conformance.
+
 **Risk:** modern OTP requires baseline handshake flags for encodings beyond the MVP decoder. The profile rejects unsupported matching payloads and is not a general-compatible node.
 
 **Required evidence:** add tags and their bounds incrementally, with real OTP vectors, malformed-input tests and allocation-failure cleanup. Negotiate optional capabilities only when implemented. Full atom character/byte semantics must be distinguished from the current 255-byte policy.

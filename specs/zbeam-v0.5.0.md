@@ -115,6 +115,13 @@ The transport/protocol prior-art analysis is unchanged from v0.4.0. The atomic-C
 
 ### 5.3 ETF — External Term Format
 
+**Additive implementation boundary (2026-10-25):** owned NEWER_REFERENCE_EXT
+(1–5 opaque words) and validated legacy NEW_REFERENCE_EXT (1–3 words) are
+implemented and canonicalize to the newer encoding. Pure PID-monitor control
+parsing does not enable a runtime monitor capability. The
+[wire evidence](../docs/evidence/phase-b/2026-10-25-m1.md) records OTP vectors;
+other missing ETF tags remain outside the restricted profile.
+
 #### 5.3.1 BufferHandle — Atomic Consumed State (rewritten)
 
 **Unimplemented design caveat (2026-09-26):** an atomic consumed flag does not protect a slice already returned by `access()` from concurrent transfer or recycling. Copying this struct also copies state instead of enforcing a single ownership identity. The historical claims below therefore do not establish race-free access. The MVP copies decoded bytes and enforces a 32 MiB aggregate storage budget per ETF term; handle lifecycle remains open research.

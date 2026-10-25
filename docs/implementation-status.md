@@ -13,7 +13,7 @@ This file is authoritative when code and historical specifications differ.
 | Area | Current contract | Verification |
 |---|---|---|
 | Packaging | Zig 0.16.0; five independent batteries and a behavior-free umbrella; ADR 0001 dependency DAG | Independent unit builds and integration imports |
-| ETF | Owned integer/UTF-8 atom/tuple/binary/proper list/nil/NEW_PID subset; depth, size and aggregate allocation limits | Unit, golden-vector and conformance tests |
+| ETF | Owned integer/UTF-8 atom/tuple/binary/proper list/nil/NEW_PID/reference subset; depth, size and aggregate allocation limits | Unit, golden-vector and conformance tests |
 | EPMD | Registration-socket ownership; node lookup; fail-stop executable when registration socket closes | Deterministic socket-loss test and real OTP discovery/removal |
 | Handshake | Initiating and accepting OTP 23+ format; mutual cookie digest; no read-ahead loss at distribution handoff | Coalesced-frame regression, partial NAME/REPLY and silent-initiator deadline tests; actual OTP 25/26/27 |
 | Distribution | Bounded pass-through framing, ticks, REG_SEND and SEND subset | Conformance and socket integration |
@@ -25,6 +25,14 @@ This file is authoritative when code and historical specifications differ.
 | Benchmark | Original 32-byte echo baseline retained; new 32 B/64 KiB SHA-256 versus Port comparison with exact digest checks | Reproducible scripts and raw Phase C records |
 
 The [handshake deadline record](evidence/phase-b/2026-09-28-handshake-deadline.md), [connection-liveness record](evidence/phase-c/2026-09-28-connection-liveness.md), and [SHA-256 worker record](evidence/phase-c/2026-09-28-sha256-worker.md) cover the extensions. Details and commands for the original MVP are in [mvp.md](mvp.md). Verification records are [Phase B](evidence/phase-b/2026-09-26-mvp.md) and [Phase C](evidence/phase-c/2026-09-26-mvp-runtime.md).
+
+## M1 wire foundations — 2026-10-25
+
+Bounded NEWER_REFERENCE_EXT (1–5 words), legacy NEW_REFERENCE_EXT (1–3 words,
+legacy significant-bit checks), value-based PID/reference equality and pure
+PID-monitor control parsing are additive. Reference vectors match actual OTP
+25/26/27. Optional monitor negotiation remains disabled until runtime/OTP
+integration passes. See [wire evidence](evidence/phase-b/2026-10-25-m1.md).
 
 ## Not implemented or not established
 

@@ -3,6 +3,7 @@ const types = @import("term.zig");
 
 pub const Term = types.Term;
 pub const Pid = types.Pid;
+pub const Reference = types.Reference;
 
 /// Every standalone External Term Format value starts with decimal 131
 /// (`0x83`). It is one octet (`u8`) because ETF defines tags and the version
@@ -30,6 +31,7 @@ pub const DecodeError = error{
     LimitExceeded,
     InvalidAtom,
     InvalidListTail,
+    InvalidReference,
 };
 
 pub const EncodeError = error{
@@ -37,6 +39,7 @@ pub const EncodeError = error{
     AtomTooLong,
     InvalidAtom,
     CollectionTooLarge,
+    InvalidReference,
 };
 
 // ETF tags are one-octet protocol constants. Their numeric values come from
@@ -52,6 +55,8 @@ const binary_ext = 109;
 const atom_utf8_ext = 118;
 const small_atom_utf8_ext = 119;
 const new_pid_ext = 88;
+const new_reference_ext = 114;
+const newer_reference_ext = 90;
 
 pub const Decoded = struct {
     term: Term,
@@ -107,6 +112,7 @@ fn decodeValue(allocator: std.mem.Allocator, cursor: *Cursor, limits: Limits, de
         list_ext => decodeList(allocator, cursor, limits, depth),
         binary_ext => decodeBinary(allocator, cursor, limits),
         new_pid_ext => decodePid(allocator, cursor, limits, depth),
+        new_reference_ext, newer_reference_ext => decodeReference(allocator, cursor, limits, depth, tag),
         else => error.UnknownTag,
     };
 }
@@ -197,6 +203,21 @@ fn decodePid(allocator: std.mem.Allocator, cursor: *Cursor, limits: Limits, dept
     } };
 }
 
+fn decodeReference(allocator: std.mem.Allocator, cursor: *Cursor, limits: Limits, depth: u16, tag: u8) (DecodeError || std.mem.Allocator.Error)!Term {
+    const length = try cursor.readU16();
+    const legacy = tag == new_reference_ext;
+    if (length == 0 or length > (if (legacy) @as(u16, 3) else @as(u16, 5))) return error.InvalidReference;
+    var node = try decodeValue(allocator, cursor, limits, depth + 1);
+    errdefer node.deinit(allocator);
+    if (node != .atom) return error.InvalidAtom;
+    const creation = if (legacy) try cursor.readByte() else try cursor.readU32();
+    if (legacy and creation > 3) return error.InvalidReference;
+    var reference = Reference{ .node = node.atom, .creation = creation, .len = @intCast(length) };
+    for (reference.ids[0..length]) |*id| id.* = try cursor.readU32();
+    if (legacy and reference.ids[0] > 0x3ffff) return error.InvalidReference;
+    return .{ .reference = reference };
+}
+
 /// Chooses the smallest standard ETF representation that preserves the value:
 /// one payload byte for 0..255, four bytes for signed i32, and compact tuple,
 /// atom, or byte-list tags when their one-byte/two-byte length fields permit.
@@ -250,6 +271,14 @@ fn encodeValue(allocator: std.mem.Allocator, output: *std.ArrayList(u8), term: *
             try appendU32(allocator, output, pid.id);
             try appendU32(allocator, output, pid.serial);
             try appendU32(allocator, output, pid.creation);
+        },
+        .reference => |reference| {
+            if (reference.len == 0 or reference.len > reference.ids.len) return error.InvalidReference;
+            try output.append(allocator, newer_reference_ext);
+            try appendU16(allocator, output, reference.len);
+            try encodeAtom(allocator, output, reference.node);
+            try appendU32(allocator, output, reference.creation);
+            for (reference.ids[0..reference.len]) |id| try appendU32(allocator, output, id);
         },
         .nil => try output.append(allocator, nil_ext),
     }

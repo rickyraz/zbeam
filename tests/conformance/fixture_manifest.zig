@@ -36,5 +36,5 @@ test "ETF fixture manifest has bounded versioned vectors" {
         vectors += 1;
     }
 
-    try std.testing.expectEqual(@as(usize, 7), vectors);
+    try std.testing.expectEqual(@as(usize, 10), vectors);
 }
