@@ -1,0 +1,596 @@
+[
+  {
+    "control": "nif_dirty",
+    "count": 1,
+    "bytes": 32,
+    "metric": "jobs_s",
+    "zbeam_ratio": 0.004125729629835123,
+    "ci95": [
+      0.0038164630443662593,
+      0.015620541791360043
+    ]
+  },
+  {
+    "control": "nif_dirty",
+    "count": 1,
+    "bytes": 32,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 115.38939123294494,
+    "ci95": [
+      22.79464168454231,
+      151.36574671137478
+    ]
+  },
+  {
+    "control": "nif_dirty",
+    "count": 1,
+    "bytes": 4096,
+    "metric": "jobs_s",
+    "zbeam_ratio": 0.011665797328986663,
+    "ci95": [
+      0.010041756860094772,
+      0.05800184536691557
+    ]
+  },
+  {
+    "control": "nif_dirty",
+    "count": 1,
+    "bytes": 4096,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 51.02111795852515,
+    "ci95": [
+      12.368126319654824,
+      60.95734284956144
+    ]
+  },
+  {
+    "control": "nif_dirty",
+    "count": 1,
+    "bytes": 32768,
+    "metric": "jobs_s",
+    "zbeam_ratio": 0.05036628922324254,
+    "ci95": [
+      0.04678358982361812,
+      0.09048709715369312
+    ]
+  },
+  {
+    "control": "nif_dirty",
+    "count": 1,
+    "bytes": 32768,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 17.286710857189316,
+    "ci95": [
+      9.933323251864277,
+      22.05867316609202
+    ]
+  },
+  {
+    "control": "nif_dirty",
+    "count": 8,
+    "bytes": 32,
+    "metric": "jobs_s",
+    "zbeam_ratio": 0.0055123658544077945,
+    "ci95": [
+      0.005179305646954834,
+      0.019364224416150235
+    ]
+  },
+  {
+    "control": "nif_dirty",
+    "count": 8,
+    "bytes": 32,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 34.46147379863932,
+    "ci95": [
+      19.664688718876064,
+      46.7337794825757
+    ]
+  },
+  {
+    "control": "nif_dirty",
+    "count": 8,
+    "bytes": 4096,
+    "metric": "jobs_s",
+    "zbeam_ratio": 0.06286695487425724,
+    "ci95": [
+      0.043676613317047,
+      0.09062033809295436
+    ]
+  },
+  {
+    "control": "nif_dirty",
+    "count": 8,
+    "bytes": 4096,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 14.206915957910518,
+    "ci95": [
+      9.67065768884937,
+      20.194182734053044
+    ]
+  },
+  {
+    "control": "nif_dirty",
+    "count": 8,
+    "bytes": 32768,
+    "metric": "jobs_s",
+    "zbeam_ratio": 0.1456457925186238,
+    "ci95": [
+      0.14057833387044127,
+      0.16733749238167092
+    ]
+  },
+  {
+    "control": "nif_dirty",
+    "count": 8,
+    "bytes": 32768,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 6.859327589699724,
+    "ci95": [
+      5.188453241105366,
+      7.600646963919516
+    ]
+  },
+  {
+    "control": "nif_dirty",
+    "count": 32,
+    "bytes": 32,
+    "metric": "jobs_s",
+    "zbeam_ratio": 0.008946279068719885,
+    "ci95": [
+      0.008591037163363758,
+      0.023430740658323783
+    ]
+  },
+  {
+    "control": "nif_dirty",
+    "count": 32,
+    "bytes": 32,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 36.01049661702773,
+    "ci95": [
+      23.813335163829397,
+      48.4273377936829
+    ]
+  },
+  {
+    "control": "nif_dirty",
+    "count": 32,
+    "bytes": 4096,
+    "metric": "jobs_s",
+    "zbeam_ratio": 0.10868751747067631,
+    "ci95": [
+      0.10518259827628366,
+      0.14246123095950555
+    ]
+  },
+  {
+    "control": "nif_dirty",
+    "count": 32,
+    "bytes": 4096,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 9.051512842456173,
+    "ci95": [
+      6.683687632905074,
+      9.904033513326544
+    ]
+  },
+  {
+    "control": "nif_dirty",
+    "count": 32,
+    "bytes": 32768,
+    "metric": "jobs_s",
+    "zbeam_ratio": 0.2062400408902436,
+    "ci95": [
+      0.20285590029763537,
+      0.20987213305038063
+    ]
+  },
+  {
+    "control": "nif_dirty",
+    "count": 32,
+    "bytes": 32768,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 4.996957691933808,
+    "ci95": [
+      4.740581065779572,
+      5.801048211205227
+    ]
+  },
+  {
+    "control": "port_raw",
+    "count": 1,
+    "bytes": 32,
+    "metric": "jobs_s",
+    "zbeam_ratio": 0.12743880281971626,
+    "ci95": [
+      0.11592606008233668,
+      0.12973814778013798
+    ]
+  },
+  {
+    "control": "port_raw",
+    "count": 1,
+    "bytes": 32,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 6.034062237498768,
+    "ci95": [
+      5.287193894160628,
+      7.333261368358922
+    ]
+  },
+  {
+    "control": "port_raw",
+    "count": 1,
+    "bytes": 4096,
+    "metric": "jobs_s",
+    "zbeam_ratio": 0.1402492940569618,
+    "ci95": [
+      0.12339510357591986,
+      0.14602251179430892
+    ]
+  },
+  {
+    "control": "port_raw",
+    "count": 1,
+    "bytes": 4096,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 6.099425610713139,
+    "ci95": [
+      4.996926744747997,
+      8.47442440018858
+    ]
+  },
+  {
+    "control": "port_raw",
+    "count": 1,
+    "bytes": 32768,
+    "metric": "jobs_s",
+    "zbeam_ratio": 0.1944884318076569,
+    "ci95": [
+      0.18216611843422223,
+      0.2141266898810908
+    ]
+  },
+  {
+    "control": "port_raw",
+    "count": 1,
+    "bytes": 32768,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 4.101972289123487,
+    "ci95": [
+      3.1155044972838186,
+      5.9084375531366025
+    ]
+  },
+  {
+    "control": "port_raw",
+    "count": 8,
+    "bytes": 32,
+    "metric": "jobs_s",
+    "zbeam_ratio": 0.11097012690580724,
+    "ci95": [
+      0.1050429241018402,
+      0.12325677882630764
+    ]
+  },
+  {
+    "control": "port_raw",
+    "count": 8,
+    "bytes": 32,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 7.665679817963447,
+    "ci95": [
+      6.335772656684445,
+      9.335646021437556
+    ]
+  },
+  {
+    "control": "port_raw",
+    "count": 8,
+    "bytes": 4096,
+    "metric": "jobs_s",
+    "zbeam_ratio": 0.17047322188487596,
+    "ci95": [
+      0.16706453205892563,
+      0.1792050547457643
+    ]
+  },
+  {
+    "control": "port_raw",
+    "count": 8,
+    "bytes": 4096,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 5.335459206716958,
+    "ci95": [
+      4.661889142710177,
+      5.575251330656421
+    ]
+  },
+  {
+    "control": "port_raw",
+    "count": 8,
+    "bytes": 32768,
+    "metric": "jobs_s",
+    "zbeam_ratio": 0.5879646181879934,
+    "ci95": [
+      0.5390067712928671,
+      0.5999829874997238
+    ]
+  },
+  {
+    "control": "port_raw",
+    "count": 8,
+    "bytes": 32768,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 1.5823022736663517,
+    "ci95": [
+      1.3786931896136863,
+      1.7335586201425324
+    ]
+  },
+  {
+    "control": "port_raw",
+    "count": 32,
+    "bytes": 32,
+    "metric": "jobs_s",
+    "zbeam_ratio": 0.11972078363447425,
+    "ci95": [
+      0.10993023998149493,
+      0.12780626482271057
+    ]
+  },
+  {
+    "control": "port_raw",
+    "count": 32,
+    "bytes": 32,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 6.739538920070878,
+    "ci95": [
+      5.981338836759523,
+      8.340474077855113
+    ]
+  },
+  {
+    "control": "port_raw",
+    "count": 32,
+    "bytes": 4096,
+    "metric": "jobs_s",
+    "zbeam_ratio": 0.438965520798833,
+    "ci95": [
+      0.42167994740150405,
+      0.4657500070756411
+    ]
+  },
+  {
+    "control": "port_raw",
+    "count": 32,
+    "bytes": 4096,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 2.0299036740972243,
+    "ci95": [
+      1.9044860227853284,
+      2.351303753846353
+    ]
+  },
+  {
+    "control": "port_raw",
+    "count": 32,
+    "bytes": 32768,
+    "metric": "jobs_s",
+    "zbeam_ratio": 0.7488027886763482,
+    "ci95": [
+      0.7408125497564089,
+      0.7753797794323861
+    ]
+  },
+  {
+    "control": "port_raw",
+    "count": 32,
+    "bytes": 32768,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 1.318559400450235,
+    "ci95": [
+      1.0757480081223179,
+      1.4407825715888276
+    ]
+  },
+  {
+    "control": "port_etf",
+    "count": 1,
+    "bytes": 32,
+    "metric": "jobs_s",
+    "zbeam_ratio": 0.22049701302178343,
+    "ci95": [
+      0.21134226203694087,
+      0.226179270091998
+    ]
+  },
+  {
+    "control": "port_etf",
+    "count": 1,
+    "bytes": 32,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 3.5819931216089262,
+    "ci95": [
+      3.2814549195590477,
+      4.09727009864336
+    ]
+  },
+  {
+    "control": "port_etf",
+    "count": 1,
+    "bytes": 4096,
+    "metric": "jobs_s",
+    "zbeam_ratio": 0.26991700644280714,
+    "ci95": [
+      0.25786400460896003,
+      0.2861635324388456
+    ]
+  },
+  {
+    "control": "port_etf",
+    "count": 1,
+    "bytes": 4096,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 3.02043626602393,
+    "ci95": [
+      2.8002304553722834,
+      4.198306224913425
+    ]
+  },
+  {
+    "control": "port_etf",
+    "count": 1,
+    "bytes": 32768,
+    "metric": "jobs_s",
+    "zbeam_ratio": 0.37062979991509803,
+    "ci95": [
+      0.34596995391639895,
+      0.3969102686644311
+    ]
+  },
+  {
+    "control": "port_etf",
+    "count": 1,
+    "bytes": 32768,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 2.786065088879868,
+    "ci95": [
+      2.03269900245528,
+      3.114771443168334
+    ]
+  },
+  {
+    "control": "port_etf",
+    "count": 8,
+    "bytes": 32,
+    "metric": "jobs_s",
+    "zbeam_ratio": 0.31356137214852303,
+    "ci95": [
+      0.3036398152539697,
+      0.3244065559854439
+    ]
+  },
+  {
+    "control": "port_etf",
+    "count": 8,
+    "bytes": 32,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 2.624300587557384,
+    "ci95": [
+      2.1352316198390566,
+      3.095884683456142
+    ]
+  },
+  {
+    "control": "port_etf",
+    "count": 8,
+    "bytes": 4096,
+    "metric": "jobs_s",
+    "zbeam_ratio": 0.3888829560937032,
+    "ci95": [
+      0.37563386863662906,
+      0.4028145830381481
+    ]
+  },
+  {
+    "control": "port_etf",
+    "count": 8,
+    "bytes": 4096,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 2.4843212920607316,
+    "ci95": [
+      2.167105354859772,
+      2.5492437268502424
+    ]
+  },
+  {
+    "control": "port_etf",
+    "count": 8,
+    "bytes": 32768,
+    "metric": "jobs_s",
+    "zbeam_ratio": 0.8768753557278479,
+    "ci95": [
+      0.8463971834745241,
+      0.9104025259933819
+    ]
+  },
+  {
+    "control": "port_etf",
+    "count": 8,
+    "bytes": 32768,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 1.116087053544867,
+    "ci95": [
+      0.9651927746112652,
+      1.258036720256821
+    ]
+  },
+  {
+    "control": "port_etf",
+    "count": 32,
+    "bytes": 32,
+    "metric": "jobs_s",
+    "zbeam_ratio": 0.3277288842111852,
+    "ci95": [
+      0.3020969036034262,
+      0.33818352750747377
+    ]
+  },
+  {
+    "control": "port_etf",
+    "count": 32,
+    "bytes": 32,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 2.406567740351465,
+    "ci95": [
+      2.2806801213344112,
+      3.264296254873196
+    ]
+  },
+  {
+    "control": "port_etf",
+    "count": 32,
+    "bytes": 4096,
+    "metric": "jobs_s",
+    "zbeam_ratio": 0.7473794186174262,
+    "ci95": [
+      0.7204320652223073,
+      0.7666456707402385
+    ]
+  },
+  {
+    "control": "port_etf",
+    "count": 32,
+    "bytes": 4096,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 1.250196331620265,
+    "ci95": [
+      1.1003952484274402,
+      1.3913321377374417
+    ]
+  },
+  {
+    "control": "port_etf",
+    "count": 32,
+    "bytes": 32768,
+    "metric": "jobs_s",
+    "zbeam_ratio": 1.1570295915103315,
+    "ci95": [
+      1.1229854615610775,
+      1.1967335401880161
+    ]
+  },
+  {
+    "control": "port_etf",
+    "count": 32,
+    "bytes": 32768,
+    "metric": "batch_p99_ns",
+    "zbeam_ratio": 0.8754585449046782,
+    "ci95": [
+      0.7472988281499299,
+      0.9373478738583386
+    ]
+  }
+]

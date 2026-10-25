@@ -1,0 +1,11 @@
+Running ExUnit with seed: 205616, max_cases: 4
+Excluding tags: [threaded_unverified: true]
+
+
+09:17:42.305 [debug] loaded module at Elixir.ZbeamResearch.Native
+..
+09:17:42.381 [debug] loaded module at Elixir.ZbeamResearch.BatchNative
+..
+Finished in 0.1 seconds (0.00s async, 0.1s sync)
+
+Result: 4 passed, 1 excluded

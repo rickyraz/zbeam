@@ -2,7 +2,7 @@
 
 ## Batching promotion gates — 2026-10-13
 
-Bounded correlated batches and matched optional controls are implemented on `explore/batched-requests`; [evidence](evidence/phase-c/2026-10-13-batches.md) separates correctness from performance. Application batch fill-wait, loaded-BEAM fairness, native-host replication and full memory/tail regression budgets remain required. Fresh session uniqueness across reconnect is the caller's responsibility; no global deduplication or replay ledger is provided.
+Bounded correlated batches and matched optional controls are implemented on `explore/batched-requests`; [evidence](evidence/phase-c/2026-10-13-batches.md) separates correctness from performance. The completed 360-launch matrix shows a scoped ETF-Port crossover at 32 × 32 KiB, not an advantage over dirty NIF or raw Port. Application batch fill-wait, loaded-BEAM fairness, native-host replication and full memory/tail regression budgets remain required. The original manifest missed the NIF shared-library artifact; future scoring must capture its measurement-time hash before promotion. Fresh session uniqueness across reconnect is the caller's responsibility; no global deduplication or replay ledger is provided.
 
 **Reviewed:** 2026-09-26. The [single-actor MVP](mvp.md) is implemented; the full v0.5 design is not. [Implementation status](implementation-status.md) distinguishes executed evidence from proposals.
 

@@ -1,0 +1,23 @@
+{
+  "source": "244aca60338e0942ae0a122c3c083d37f184d7c9",
+  "seed": 1013,
+  "repeats": 10,
+  "iterations": 1000,
+  "cpu_affinity": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "hashes": {
+    "zig-out/bin/zbeam": "0d3f4770da42a1c31eb1499e57acd48f3735e03fe5bac36563cb7aeed4dfe5b7",
+    "zig-out/bin/zbeam-batch-port": "189c8dd96dc4bd133acbd829ca87e3864e1eac3b78d829e148ee63fcb6fb1742",
+    "benchmarks/zigler/mix.lock": "ca976f63260955c82883c7322b5a6ea2973f5e4a5dc7a6ff78f68f6c6bc52b0d"
+  },
+  "limitations": [
+    "WSL2, unloaded BEAM",
+    "preformed jobs; fill wait excluded",
+    "no threaded NIF scoring",
+    "NIF uses prepacked equal-size jobs; raw Port packing and ETF serialization remain timed"
+  ]
+}

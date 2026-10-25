@@ -1,0 +1,8 @@
+Verified at: 2026-10-25T02:17:14.277822+00:00
+PASS: source revision and all 3 recorded binary/dependency hashes match
+LIMIT: manifest did not record a Zigler shared-library hash; original lookup missed its build output
+PASS: seeded order, 36 cases x 10 launches, unique case/repeat coverage
+PASS: 360000 positive raw latencies; every p50 and p99 independently reproduced
+PASS: 4920000 independent measured jobs; aggregate-input bounds hold
+PASS: all 36 median summaries and 54 paired ratios/95% bootstrap intervals reproduced
+PASS: COMPLETE marker, progress count and all resource fields consistent

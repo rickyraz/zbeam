@@ -32,7 +32,7 @@ This branch adds optional direct Zigler NIF and ETF-over-Port benchmark adapters
 
 ## Bounded batch research — 2026-10-13
 
-`explore/batched-requests` adds one synchronous `sha256_batch` registered worker (`batch`/`serve-batch`), per-connection session/sequential-ID checks, 1–32 independent hashes, a 1 MiB aggregate-input limit and 2 MiB frame cap. [Verification](evidence/phase-c/2026-10-13-batches.md) covers 59-test Debug/ReleaseSafe suites, OTP 25/26/27, conformance and matched optional batch adapters. This is not a concurrent job system, `gen_server:call` compatibility or an established performance win.
+`explore/batched-requests` adds one synchronous `sha256_batch` registered worker (`batch`/`serve-batch`), per-connection session/sequential-ID checks, 1–32 independent hashes, a 1 MiB aggregate-input limit and 2 MiB frame cap. [Verification](evidence/phase-c/2026-10-13-batches.md) covers 59-test Debug/ReleaseSafe suites, OTP 25/26/27, conformance and a completed 360-launch/360,000-batch comparison. The largest preformed batch favors zbeam over ETF Port, but dirty NIF and raw Port are faster at every measured cell. Native-host, peak-memory and measurement-time NIF-binary provenance gates remain unmet. This is not a concurrent job system, `gen_server:call` compatibility or a promoted performance win.
 
 ## Not implemented or not established
 
