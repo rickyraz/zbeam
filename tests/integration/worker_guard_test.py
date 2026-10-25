@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 def live(pid):
     try:
         return ") Z " not in Path(f"/proc/{pid}/stat").read_text()
-    except FileNotFoundError:
+    except (FileNotFoundError, ProcessLookupError):
         return False
 
 
@@ -49,7 +49,10 @@ class WorkerGuardTest(unittest.TestCase):
                         guard.kill()
                     guard.wait(timeout=3)
                     if native and live(native):
-                        os.kill(native, signal.SIGKILL)
+                        try:
+                            os.kill(native, signal.SIGKILL)
+                        except ProcessLookupError:
+                            pass
                     guard.stdout.close()
                     guard.stdin.close()
 
