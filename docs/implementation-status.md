@@ -34,6 +34,15 @@ PID-monitor control parsing are additive. Reference vectors match actual OTP
 25/26/27. Optional monitor negotiation remains disabled until runtime/OTP
 integration passes. See [wire evidence](evidence/phase-b/2026-10-25-m1.md).
 
+## M1 worker identity — 2026-10-25
+
+The explicit `serve-worker` profile supports correlated discovery, PID-directed
+bounded SHA-256, normal stop and stale-PID rejection across sequential peers.
+Controlled worker stop preserves the node. There is no task scheduler or automatic
+in-process replacement. Debug/ReleaseSafe and OTP 25/26/27 tests cover the new
+profile; monitor negotiation remains disabled at this stage.
+[Runtime evidence](evidence/phase-c/2026-10-25-m1.md).
+
 ## Not implemented or not established
 
 - Complete ETF coverage, old handshakes, simultaneous-connection arbitration or general Erlang-node compatibility.

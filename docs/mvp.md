@@ -77,6 +77,24 @@ erl +S 2:2 -noshell -name otp_echo@127.0.0.1 -setcookie development_cookie -eval
 
 Cookies in CLI arguments are visible in process listings. These commands are development interfaces, not secret-management or TLS interfaces.
 
+## Additive worker identity profile
+
+`zbeam serve-worker NAME COOKIE [FRAMES_PER_PEER]` starts one service-owned
+SHA-256 worker across sequential connections (default unlimited frames). Its
+separate discovery endpoint is `zbeam_worker`; existing echo/SHA-256 replies do
+not change. Requests are `{FromPid, Ref, discover}` to that endpoint, or
+`{FromPid, Ref, {hash, Binary}}` / `{FromPid, Ref, stop}` to the discovered PID.
+Replies are `{Ref, {ok, Pid}}`, `{Ref, {ok, Digest}}`, `{Ref, ok}` or
+`{Ref, {error, ReasonAtom}}`. Stop is normal lifecycle control, not fault injection.
+
+The profile caps frames at 2 MiB and binary input at 1 MiB; it has no message
+queue. A controlled stop leaves the node/discovery endpoint alive, reporting
+`noproc`; replacement requires an external process restart. Stale PID sends are
+dropped. TCP reconnect preserves the running worker PID. PID randomization plus
+EPMD creation is not persistent uniqueness across all EPMD-state-loss scenarios.
+Process-monitor negotiation is not enabled by this identity-only increment.
+The [lifecycle ADR](adr/0002-monitorable-worker-lifecycle.md) defines ownership.
+
 ## Wire contract
 
 - EPMD: ALIVE2 registration and PORT_PLEASE2 lookup, including the two-byte error response. The registration socket remains open for the node lifetime.

@@ -63,6 +63,12 @@ A real TCP sender is stopped during a paused handler and completes after progres
 
 ### Reconnect and incarnation expansion
 
+**Worker identity risk (2026-10-25):** `serve-worker` retains one PID across TCP
+reconnect and never reuses it within that service. Across process replacement,
+EPMD creation and a randomized 64-bit ID/serial provide practical separation,
+not persistent absolute uniqueness if EPMD state is lost/reused. No persistent
+identity allocator or general in-process actor replacement is implemented.
+
 Current behavior discards all per-connection packets/demand and generates a fresh challenge on sequential reconnect. The running node retains its EPMD creation; restarted nodes register anew. There is no outbound backoff or replay.
 
 **Required evidence:** restart/creation changes, stale PID handling, simultaneous connections, interrupted outbound requests, and fragment/cache cleanup if those features are introduced. Never carry old demand or partially decoded state into a new connection.
