@@ -1,6 +1,6 @@
 # Development Plan: MVP to a Supported Native Worker Peer
 
-- **Status:** proposed execution plan, not implemented functionality.
+- **Status:** W0–W5 implemented and verified on `feat/monitorable-worker`; broader D0–D5/M2 gates remain proposals.
 - **Reviewed:** 2026-10-25.
 - **Integration baseline:** local `master` at `11c3319`; restricted MVP introduced by `090bb60`.
 - **Immediate milestone:** M1, one PID-addressable, monitorable native worker with external recovery.
@@ -46,6 +46,20 @@ Links, native supervision trees, arbitrary actor spawning, preemptive scheduling
 concurrent peers and a general OTP compatibility claim are outside M1. The full
 mandatory-capability/ETF gap must still be inventoried and any residual limits
 published; adding monitors alone does not establish general node compatibility.
+
+## M1 execution record — 2026-10-25
+
+The W0–W5 development profile is implemented on the integration branch, not yet
+merged into `master`. [Implementation status](implementation-status.md) and
+[M1 evidence](evidence/phase-c/2026-10-25-m1.md) define the verified subset.
+Debug/ReleaseSafe core tests and pinned OTP 25/26/27 pass; the Linux external
+owner has separate Elixir 1.20.4/OTP 29 recovery evidence. Production release,
+complete ETF capabilities and a task-owning actor scheduler are not complete.
+
+W4 required a source-backed correction: OTP sends process monitors only when
+both PID and named-monitor flags are present. Both target forms are implemented;
+named discovery monitoring survives worker stop. The accepted lifecycle ADR
+records that extension rather than redefining flag semantics.
 
 ## Research inputs, not completed prerequisites
 
@@ -214,7 +228,9 @@ PID tests pass. No packet pointer escapes or early-free send/stop race is accept
 
 - Support a BEAM process monitoring a native worker PID; define monitor,
   demonitor and worker-exit controls according to the target OTP versions.
-  Native-to-BEAM and registered-name monitoring remain separate follow-ups.
+  Native-to-BEAM monitoring remains a follow-up. Registered-name monitoring is
+  included because target OTP implementations require both capability flags;
+  discovery-name lifetime remains separate from worker-PID lifetime.
 - Bound monitor count and metadata bytes; define/test table-exhaustion behavior.
   Test unknown/dead PIDs, duplicate operations, demonitor/exit races, watcher
   disconnect and cleanup. Never drop a required notification silently.

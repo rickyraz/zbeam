@@ -69,6 +69,15 @@ EPMD creation and a randomized 64-bit ID/serial provide practical separation,
 not persistent absolute uniqueness if EPMD state is lost/reused. No persistent
 identity allocator or general in-process actor replacement is implemented.
 
+**External deployment boundary (2026-10-25):** the Linux monitored-owner example
+verifies Port/owner/VM cleanup and bounded work admission, not arbitrary forking
+process trees, TLS or secret delivery. Its finite run uses fresh node names;
+indefinite deployments require bounded atom/name allocation or a stable-name
+cleanup barrier. Owner checks currently use Elixir 1.20.4/OTP 29 separately from
+wire checks on OTP 25/26/27. Production Elixir/OTP pairings remain to be verified.
+OS OOM and memory corruption are not covered by deterministic allocator-failure
+and panic fixtures; noncooperative CPU work still requires external termination.
+
 Current behavior discards all per-connection packets/demand and generates a fresh challenge on sequential reconnect. The running node retains its EPMD creation; restarted nodes register anew. There is no outbound backoff or replay.
 
 **Required evidence:** restart/creation changes, stale PID handling, simultaneous connections, interrupted outbound requests, and fragment/cache cleanup if those features are introduced. Never carry old demand or partially decoded state into a new connection.

@@ -1,0 +1,59 @@
+.
+----------------------------------------------------------------------
+Ran 1 test in 0.215s
+
+OK
+Running ExUnit with seed: 400393, max_cases: 1
+Excluding tags: [:epmd]
+
+
+WorkerRecoveryTest [tests/interop/worker_recovery_test.exs]
+  * test private EPMD loss fails in-flight work and permits a fresh worker [L#358]  * test private EPMD loss fails in-flight work and permits a fresh worker (excluded) [L#358]
+  * test controlling VM SIGKILL leaves no live guardian or native child [L#321]  * test controlling VM SIGKILL leaves no live guardian or native child (657.7ms) [L#321]
+  * test caller death between admission and delivery cannot wedge the slot [L#306]  * test caller death between admission and delivery cannot wedge the slot (398.4ms) [L#306]
+  * test normal process DOWN restarts the external process [L#186]  * test normal process DOWN restarts the external process (332.4ms) [L#186]
+  * test correlated native work, caller admission, SIGKILL and stale replies [L#153]  * test correlated native work, caller admission, SIGKILL and stale replies (349.8ms) [L#153]
+  * test owner kill bypasses terminate but guardian still cleans up [L#222]  * test owner kill bypasses terminate but guardian still cleans up (309.8ms) [L#222]
+  * test failed readiness closes the launcher even without a terminate callback [L#240]  * test failed readiness closes the launcher even without a terminate callback (2042.9ms) [L#240]
+  * test guardian SIGKILL also terminates its native child [L#231]  * test guardian SIGKILL also terminates its native child (290.7ms) [L#231]
+  * test restart intensity stops a permanently unhealthy child [L#286]  * test restart intensity stops a permanently unhealthy child (655.9ms) [L#286]
+  * test test-only oom fails uncertain work without replay [L#197]  * test test-only oom fails uncertain work without replay (576.8ms) [L#197]
+  * test connection loss tears down a suspended native process [L#210]  * test connection loss tears down a suspended native process (322.7ms) [L#210]
+  * test test-only panic fails uncertain work without replay [L#197]  * test test-only panic fails uncertain work without replay (612.8ms) [L#197]
+  * test test-only spin fails uncertain work without replay [L#197]  * test test-only spin fails uncertain work without replay (1572.9ms) [L#197]
+
+Finished in 8.3 seconds (0.2s on load, 0.00s async, 8.1s sync)
+
+Result: 12 passed, 1 excluded
+verified SHA-256: hello
+verified SHA-256: native worker
+verified SHA-256: owned copies
+PASS monitored native worker example
+Running ExUnit with seed: 842084, max_cases: 1
+Excluding tags: [:ordinary]
+
+
+WorkerRecoveryTest [tests/interop/worker_recovery_test.exs]
+  * test owner kill bypasses terminate but guardian still cleans up [L#222]  * test owner kill bypasses terminate but guardian still cleans up (excluded) [L#222]
+  * test test-only panic fails uncertain work without replay [L#197]  * test test-only panic fails uncertain work without replay (excluded) [L#197]
+  * test connection loss tears down a suspended native process [L#210]  * test connection loss tears down a suspended native process (excluded) [L#210]
+  * test correlated native work, caller admission, SIGKILL and stale replies [L#153]  * test correlated native work, caller admission, SIGKILL and stale replies (excluded) [L#153]
+  * test test-only spin fails uncertain work without replay [L#197]  * test test-only spin fails uncertain work without replay (excluded) [L#197]
+  * test restart intensity stops a permanently unhealthy child [L#286]  * test restart intensity stops a permanently unhealthy child (excluded) [L#286]
+  * test guardian SIGKILL also terminates its native child [L#231]  * test guardian SIGKILL also terminates its native child (excluded) [L#231]
+  * test caller death between admission and delivery cannot wedge the slot [L#306]  * test caller death between admission and delivery cannot wedge the slot (excluded) [L#306]
+  * test controlling VM SIGKILL leaves no live guardian or native child [L#321]  * test controlling VM SIGKILL leaves no live guardian or native child (excluded) [L#321]
+  * test failed readiness closes the launcher even without a terminate callback [L#240]  * test failed readiness closes the launcher even without a terminate callback (excluded) [L#240]
+  * test test-only oom fails uncertain work without replay [L#197]  * test test-only oom fails uncertain work without replay (excluded) [L#197]
+  * test normal process DOWN restarts the external process [L#186]  * test normal process DOWN restarts the external process (excluded) [L#186]
+  * test private EPMD loss fails in-flight work and permits a fresh worker [L#358]  * test private EPMD loss fails in-flight work and permits a fresh worker (316.2ms) [L#358]
+
+Finished in 0.5 seconds (0.1s on load, 0.00s async, 0.3s sync)
+
+Result: 1 passed, 12 excluded
+PASS bounded owner recovery and private EPMD loss
+Build Summary: 4/4 steps succeeded
+test-worker-recovery success
++- run sh success 10s
+   +- compile exe zbeam ReleaseSafe native cached 9ms MaxRSS:39M
+   +- compile exe zbeam-test-fault-worker ReleaseSafe native cached 9ms MaxRSS:39M

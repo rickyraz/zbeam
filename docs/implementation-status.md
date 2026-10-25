@@ -2,7 +2,7 @@
 
 - **MVP baseline:** 2026-09-26; reliability and SHA-256 worker extensions verified 2026-09-28
 - **Package version:** 0.0.1 pre-alpha (no release tag created)
-- **Implemented milestone:** [restricted single-actor MVP](mvp.md)
+- **Implemented milestone:** restricted MVP plus the bounded monitorable-worker M1 development profile
 - **Broader design target:** v0.5.0 draft, not a release description
 - **Proposed next phases:** [development plan](development-plan.md); planning does not change this implementation inventory
 
@@ -48,16 +48,28 @@ cleanup have regressions. Actual OTP tests distinguish process `DOWN` from
 connection `noconnection` and check reference/PID/reason and duplicate absence.
 [Runtime evidence](evidence/phase-c/2026-10-25-m1.md).
 
+## M1 external recovery example — 2026-10-25
+
+The [Linux owner example](worker-recovery.md) discovers/monitors the worker,
+bounds public hash admission, fails uncertain work without replay and restarts
+under an external Elixir supervisor. A guarded child process has independent
+owner/VM-crash cleanup. The opt-in `test-worker-recovery` target covers startup
+failure, normal stop, native/guardian/owner/VM loss, caller admission/death,
+timeout, stale references, restart intensity and private EPMD loss. Panic,
+allocation failure and spin are test-only fixtures, never production endpoints.
+Owner tests use Elixir 1.20.4 / OTP 29; wire interoperability remains independently
+verified on OTP 25/26/27. This is not a production deployment certification.
+
 ## Not implemented or not established
 
 - Complete ETF coverage, old handshakes, simultaneous-connection arbitration or general Erlang-node compatibility.
 - Cached distribution headers, fragmentation, proactive heartbeat scheduling or control operations beyond the documented send/monitor subset.
-- Distributed registry semantics, RPC, OTP behaviours, process links, outbound process monitors, automatic external supervision or a general actor task scheduler. `sha256` is one fixed registered worker, not a general job system.
+- Distributed registry semantics, RPC, OTP behaviours, process links, outbound process monitors, built-in native supervision or a general actor task scheduler. `sha256` is one fixed registered worker, not a general job system.
 - Concurrent peer servicing, stalled-handler recovery, outbound reconnect/backoff or EPMD re-registration. The executable instead fails closed on EPMD loss; no CPU-bound handler preemption or proactive heartbeat exists.
 - Arena-backed buffers, `BufferHandle`, typestate/linear ownership, io_uring or zero-copy transfer.
 - snmalloc integration or allocator-comparison results; the [evaluation plan](snmalloc-evaluation.md) and source audit are research only.
 - BEAM distribution-sender throttling measurements, multi-workload performance conclusions or isolation between actors inside the native process.
-- Panic/corruption crash-injection coverage, sanitizers/TSAN or a production security audit.
+- Memory-corruption/OS-OOM injection, sanitizers/TSAN or a production security audit. Test-only panic and deterministic allocation-failure recovery are covered.
 
 The service deliberately uses synchronous owned-copy processing. The reusable mailbox/registry is not an implicit asynchronous scheduler. Logical tokens are copyable; they do not prove an OS-thread or task identity. Caller-managed lifetimes remain required.
 
