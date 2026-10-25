@@ -177,6 +177,9 @@ pub fn build(b: *std.Build) void {
         "08_transport_io_lab",
         "10_identity_namespace_lab",
         "11_bufferhandle_typestate_lab",
+        "12_protocol_typestate_lab",
+        "14_demand_fanout_lab",
+        "15_buffer_sizing_lab",
     }) |directory| {
         const id = directory[0..2];
         const lab_step = b.step(b.fmt("lab-{s}", .{id}), b.fmt("Run research lab {s}", .{id}));
@@ -198,16 +201,20 @@ pub fn build(b: *std.Build) void {
         const run_lab = b.addRunArtifact(lab_tests);
         run_lab.has_side_effects = true;
         lab_step.dependOn(&run_lab.step);
-        if (std.mem.eql(u8, id, "11")) {
+        if (std.mem.eql(u8, id, "11") or std.mem.eql(u8, id, "12")) {
             const rejected = b.addTest(.{
                 .name = b.fmt("lab-{s}-compile-fail", .{id}),
                 .root_module = b.createModule(.{
                     .root_source_file = b.path(b.fmt("labs/{s}/compile_fail.zig", .{directory})),
                     .target = target,
                     .optimize = optimize,
+                    .imports = &.{.{ .name = "zbeam-protocol", .module = protocol_mod }},
                 }),
             });
-            rejected.expect_errors = .{ .contains = "error: no field or member function named 'access' in 'experiment.ForwardOnly'" };
+            rejected.expect_errors = .{ .contains = if (std.mem.eql(u8, id, "11"))
+                "error: no field or member function named 'access' in 'experiment.ForwardOnly'"
+            else
+                "error: invalid typed handshake transition" };
             lab_step.dependOn(&rejected.step);
         }
         test_labs_step.dependOn(lab_step);

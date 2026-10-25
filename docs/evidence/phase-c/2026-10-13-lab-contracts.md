@@ -14,8 +14,12 @@ Commands from the worktree root:
 
 ```sh
 timeout 240 zig build test-labs -j2 --summary all
+timeout 240 zig build test-labs -j2 -Doptimize=ReleaseSafe --summary all
 timeout 240 zig build test-all -j2 --summary all
 ```
+
+All commands use Zig 0.16.0 from an explicit compiler path; shell-default Zig
+0.17.0 is not compatible with the current `Build.args` in `build.zig`.
 
 - [Lab 01–02 raw output](2026-10-13-lab-contracts/01-02-debug.log): exit 0,
   4/4 lab tests passed. Lab 01 checks 11,904 deliveries over 15 producer/capacity
@@ -62,6 +66,31 @@ socket tests remain the network regression boundary.
 The conclusion is narrower than a zero-copy or linear ownership claim. Tuple
 identity assumes non-reused connection incarnations and does not retain memory.
 Typestate method removal does not close Zig's field/alias escape paths.
+
+## Protocol policy, fan-out and sizing
+
+`timeout 240 zig build lab-12 lab-14 lab-15 -j2 --summary all` exited 0:
+[7/7 tests plus the expected compile failure passed](2026-10-13-lab-contracts/12-14-15-debug.log).
+
+- Lab 12: both legal handshake role sequences type-check; invalid idle ACK is
+  rejected at compile time; malformed tag/digest/shape tests do not advance the
+  existing runtime FSM; the valid authenticated ACK completes it.
+- Lab 14: broadcast waits for minimum credit and spends none on a failed
+  reservation; finite round-robin partitions `[4,4,4]` and `[4,1,0]` exactly.
+  This does not implement an atomic multi-mailbox dispatch.
+- Lab 15: 9 pool combinations account for reserved bytes, fit counts, fallback
+  payload bytes and cumulative padding. Synthetic results are not sizing advice.
+
+## Aggregate verification
+
+| Command | Result | Raw record |
+|---|---|---|
+| `zig build test-labs -j2 --summary all` | 36/36 steps; 22/22 tests passed | [Debug labs](2026-10-13-lab-contracts/all-labs-debug.log) |
+| `zig build test-labs -j2 -Doptimize=ReleaseSafe --summary all` | 36/36 steps; 22/22 tests passed | [ReleaseSafe labs](2026-10-13-lab-contracts/all-labs-release-safe.log) |
+| `zig build test-all -j2 --summary all` | 27/27 steps; 47/47 tests passed | [Core regression](2026-10-13-lab-contracts/core-debug-final.log) |
+
+Four labs remain plans (05, 06, 09, 13): current code has no arena lifecycle,
+local transfer path, alternate transport backend or general scheduler to measure.
 
 ## Limits and rollback
 
