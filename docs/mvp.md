@@ -92,7 +92,12 @@ queue. A controlled stop leaves the node/discovery endpoint alive, reporting
 `noproc`; replacement requires an external process restart. Stale PID sends are
 dropped. TCP reconnect preserves the running worker PID. PID randomization plus
 EPMD creation is not persistent uniqueness across all EPMD-state-loss scenarios.
-Process-monitor negotiation is not enabled by this identity-only increment.
+The profile enables both PID/named monitor flags because OTP requires both
+before sending MONITOR_P. A shared fixed 64-slot table is connection-scoped.
+`zbeam_worker` named monitoring observes the discovery endpoint, which survives
+worker stop; unknown names and stopped/stale PIDs report `noproc`. Worker stop
+notifies established PID monitors with `normal`. Demonitor removes the exact
+subscription; overflow/write failure closes the peer, with no replay on reconnect.
 The [lifecycle ADR](adr/0002-monitorable-worker-lifecycle.md) defines ownership.
 
 ## Wire contract

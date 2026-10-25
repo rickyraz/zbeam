@@ -12,10 +12,57 @@ pub const limits = dist.Limits{ .max_packet_bytes = 2 * 1024 * 1024, .etf = .{
     .max_allocated_bytes = 4 * 1024 * 1024,
 } };
 pub const State = enum { starting, running, stopping, stopped };
+const Target = protocol.monitor.Target;
+pub const monitor_flags = protocol.flags.dist_monitor | protocol.flags.dist_monitor_name;
+const Subscription = struct { watcher: etf.Pid, reference: etf.Reference, target: Target };
 
 pub const Worker = struct {
     pid: etf.Pid,
     state: State = .starting,
+    subscriptions: [64]?Subscription = @splat(null),
+
+    /// Canonical node slices belong to the authenticated connection, not frames.
+    pub fn clearMonitors(self: *Worker) void {
+        self.subscriptions = @splat(null);
+    }
+
+    fn monitor(self: *Worker, allocator: std.mem.Allocator, message: *const dist.Message, peer: *const transport.handshake_io.Peer, writer: *std.Io.Writer) !void {
+        if (peer.flags & monitor_flags != monitor_flags) return error.UnnegotiatedMonitor;
+        if (message.payload_etf != null) return error.InvalidControl;
+        const signal = try protocol.monitor.parse(&message.control);
+        // No outbound subscription API exists; a validated exit is stale.
+        if (signal.kind == .exited) {
+            if (!std.mem.eql(u8, signal.watcher.node, self.pid.node)) return error.UnexpectedPeer;
+            if (signal.target == .pid and !peerPid(signal.target.pid, peer)) return error.UnexpectedPeer;
+            return;
+        }
+        if (!peerPid(signal.watcher, peer)) return error.UnexpectedPeer;
+        if (signal.target == .pid and !std.mem.eql(u8, signal.target.pid.node, self.pid.node)) return error.UnexpectedPeer;
+        if (!std.mem.eql(u8, signal.reference.node, peer.node_name) or signal.reference.creation != peer.creation) return error.UnexpectedPeer;
+        for (&self.subscriptions) |*slot| {
+            if (slot.*) |subscription| {
+                if (!subscription.reference.eql(signal.reference)) continue;
+                if (!subscription.watcher.eql(signal.watcher) or !subscription.target.eql(signal.target)) return error.InvalidControl;
+                if (signal.kind == .demonitor) slot.* = null;
+                return;
+            }
+        }
+        if (signal.kind == .demonitor) return;
+        const live = switch (signal.target) {
+            .pid => |pid| self.state == .running and self.pid.eql(pid),
+            .name => |name| std.mem.eql(u8, name, "zbeam_worker"),
+        };
+        if (!live) return exited(allocator, writer, signal.target, signal.watcher, signal.reference, "noproc");
+        for (&self.subscriptions) |*slot| {
+            if (slot.* != null) continue;
+            var subscription = Subscription{ .watcher = signal.watcher, .reference = signal.reference, .target = if (signal.target == .pid) .{ .pid = self.pid } else .{ .name = "zbeam_worker" } };
+            subscription.watcher.node = peer.node_name;
+            subscription.reference.node = peer.node_name;
+            slot.* = subscription;
+            return;
+        }
+        return error.MonitorLimit;
+    }
 
     pub fn start(self: *Worker) error{InvalidTransition}!void {
         if (self.state != .starting) return error.InvalidTransition;
@@ -29,8 +76,11 @@ pub const Worker = struct {
         const message = &packet.message;
         const control = &message.control;
         if (control.* != .tuple or control.tuple.len == 0 or control.tuple[0] != .integer) return error.InvalidControl;
+        const opcode = control.tuple[0].integer;
+        if (opcode == protocol.monitor.monitor_p or opcode == protocol.monitor.demonitor_p or opcode == protocol.monitor.monitor_p_exit)
+            return self.monitor(allocator, message, peer, writer);
         var from: ?etf.Pid = null;
-        const discovery = switch (control.tuple[0].integer) {
+        const discovery = switch (opcode) {
             dist.reg_send => blk: {
                 const route = try dist.regSendDestination(control);
                 if (!std.mem.eql(u8, route.name, "zbeam_worker")) return;
@@ -64,7 +114,14 @@ pub const Worker = struct {
         if (atom(command, "stop")) {
             self.state = .stopping;
             defer self.state = .stopped;
-            return reply(allocator, writer, reply_to, reference, &.{ .atom = "ok" });
+            errdefer self.clearMonitors();
+            try reply(allocator, writer, reply_to, reference, &.{ .atom = "ok" });
+            for (&self.subscriptions) |*slot| if (slot.*) |subscription| {
+                if (subscription.target != .pid) continue;
+                slot.* = null;
+                try exited(allocator, writer, subscription.target, subscription.watcher, subscription.reference, "normal");
+            };
+            return;
         }
         if (command.* == .tuple and command.tuple.len == 2 and atom(&command.tuple[0], "hash") and command.tuple[1] == .binary) {
             var digest: [32]u8 = undefined;
@@ -96,6 +153,11 @@ fn reply(allocator: std.mem.Allocator, writer: *std.Io.Writer, to: etf.Pid, refe
     return emit(allocator, writer, &.{ .tuple = &control }, &.{ .tuple = &fields });
 }
 
+fn exited(allocator: std.mem.Allocator, writer: *std.Io.Writer, target: Target, to: etf.Pid, reference: etf.Reference, reason: []const u8) !void {
+    var fields = [_]etf.Term{ .{ .integer = protocol.monitor.monitor_p_exit }, target.term(), .{ .pid = to }, .{ .reference = reference }, .{ .atom = reason } };
+    return emit(allocator, writer, &.{ .tuple = &fields }, null);
+}
+
 fn replyError(allocator: std.mem.Allocator, writer: *std.Io.Writer, to: etf.Pid, reference: etf.Reference, reason: []const u8) !void {
     var result = [_]etf.Term{ .{ .atom = "error" }, .{ .atom = reason } };
     return reply(allocator, writer, to, reference, &.{ .tuple = &result });
@@ -103,4 +165,5 @@ fn replyError(allocator: std.mem.Allocator, writer: *std.Io.Writer, to: etf.Pid,
 
 test {
     _ = @import("worker_test.zig");
+    _ = @import("monitor_test.zig");
 }

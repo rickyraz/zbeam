@@ -134,7 +134,7 @@ fn acceptPeer(io: std.Io, allocator: std.mem.Allocator, stream: std.Io.net.Strea
     return transport.handshake_io.accept(stream, io, allocator, .{
         .node_name = config.node_name,
         .cookie = config.cookie,
-        .flags = config.flags,
+        .flags = config.flags | (if (config.service == .worker) worker_service.monitor_flags else @as(u64, 0)),
         .creation = config.creation,
         .challenge = config.challenge orelse @bitCast(challenge_bytes),
         .timeout = config.handshake_timeout,
@@ -144,6 +144,7 @@ fn acceptPeer(io: std.Io, allocator: std.mem.Allocator, stream: std.Io.net.Strea
 fn serveWorkerConnection(io: std.Io, allocator: std.mem.Allocator, stream: std.Io.net.Stream, config: Config, worker: *worker_service.Worker) !void {
     var peer = try acceptPeer(io, allocator, stream, config);
     defer peer.deinit(allocator);
+    defer worker.clearMonitors();
     var reader = stream.reader(io, &.{});
     var writer = stream.writer(io, &.{});
     var demand = actor.Demand.init(1);

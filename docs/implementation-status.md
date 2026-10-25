@@ -30,9 +30,9 @@ The [handshake deadline record](evidence/phase-b/2026-09-28-handshake-deadline.m
 
 Bounded NEWER_REFERENCE_EXT (1–5 words), legacy NEW_REFERENCE_EXT (1–3 words,
 legacy significant-bit checks), value-based PID/reference equality and pure
-PID-monitor control parsing are additive. Reference vectors match actual OTP
-25/26/27. Optional monitor negotiation remains disabled until runtime/OTP
-integration passes. See [wire evidence](evidence/phase-b/2026-10-25-m1.md).
+PID/named monitor control parsing are additive. Reference vectors match actual OTP
+25/26/27. Monitor negotiation is enabled only for the separately tested worker
+profile. See [wire evidence](evidence/phase-b/2026-10-25-m1.md).
 
 ## M1 worker identity — 2026-10-25
 
@@ -40,14 +40,19 @@ The explicit `serve-worker` profile supports correlated discovery, PID-directed
 bounded SHA-256, normal stop and stale-PID rejection across sequential peers.
 Controlled worker stop preserves the node. There is no task scheduler or automatic
 in-process replacement. Debug/ReleaseSafe and OTP 25/26/27 tests cover the new
-profile; monitor negotiation remains disabled at this stage.
+profile. PID and named discovery-endpoint monitoring use a shared fixed table
+of 64 subscriptions per connection; unknown/stopped targets report `noproc`.
+Normal stop emits `normal` only for worker-PID monitors; discovery-name monitors
+survive it. Demonitor, idempotence, table exhaustion, failed writes and allocation
+cleanup have regressions. Actual OTP tests distinguish process `DOWN` from
+connection `noconnection` and check reference/PID/reason and duplicate absence.
 [Runtime evidence](evidence/phase-c/2026-10-25-m1.md).
 
 ## Not implemented or not established
 
 - Complete ETF coverage, old handshakes, simultaneous-connection arbitration or general Erlang-node compatibility.
-- Cached distribution headers, fragmentation, proactive heartbeat scheduling or control operations beyond the documented send subset.
-- Distributed registry semantics, RPC, OTP behaviours, process links/monitors, automatic external supervision or a general actor task scheduler. `sha256` is one fixed registered worker, not a general job system.
+- Cached distribution headers, fragmentation, proactive heartbeat scheduling or control operations beyond the documented send/monitor subset.
+- Distributed registry semantics, RPC, OTP behaviours, process links, outbound process monitors, automatic external supervision or a general actor task scheduler. `sha256` is one fixed registered worker, not a general job system.
 - Concurrent peer servicing, stalled-handler recovery, outbound reconnect/backoff or EPMD re-registration. The executable instead fails closed on EPMD loss; no CPU-bound handler preemption or proactive heartbeat exists.
 - Arena-backed buffers, `BufferHandle`, typestate/linear ownership, io_uring or zero-copy transfer.
 - snmalloc integration or allocator-comparison results; the [evaluation plan](snmalloc-evaluation.md) and source audit are research only.

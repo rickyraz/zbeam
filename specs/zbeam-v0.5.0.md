@@ -118,7 +118,10 @@ The transport/protocol prior-art analysis is unchanged from v0.4.0. The atomic-C
 **Additive implementation boundary (2026-10-25):** owned NEWER_REFERENCE_EXT
 (1–5 opaque words) and validated legacy NEW_REFERENCE_EXT (1–3 words) are
 implemented and canonicalize to the newer encoding. Pure PID-monitor control
-parsing does not enable a runtime monitor capability. The
+parsing alone does not enable a runtime monitor capability. The additive
+`serve-worker` profile now implements PID and named monitor controls together;
+OTP requires both flags before sending process-monitor signals. Named discovery
+monitoring outlives worker stop; the shared table is bounded at 64 per connection. The
 [wire evidence](../docs/evidence/phase-b/2026-10-25-m1.md) records OTP vectors;
 other missing ETF tags remain outside the restricted profile.
 
