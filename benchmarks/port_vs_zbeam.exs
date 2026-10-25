@@ -2,7 +2,14 @@
 iterations = String.to_integer(iterations_arg)
 if iterations < 1, do: raise("iterations must be positive")
 warmup = min(100, max(1, div(iterations, 10)))
-payload = :binary.copy(<<0x5A>>, 32)
+payload_bytes = String.to_integer(System.get_env("ZBEAM_BENCH_PAYLOAD_BYTES", "32"))
+if payload_bytes < 1 or payload_bytes > 1_048_576, do: raise("payload must be between 1 and 1048576 bytes")
+payload = :binary.copy(<<0x5A>>, payload_bytes)
+job = System.get_env("ZBEAM_BENCH_JOB", "echo")
+if job not in ["echo", "sha256"], do: raise("job must be echo or sha256")
+expected = if job == "sha256", do: :crypto.hash(:sha256, payload), else: payload
+registered = if job == "sha256", do: :sha256, else: :echo
+command = if job == "sha256", do: "sha256", else: "echo"
 now = fn -> System.monotonic_time(:nanosecond) end
 :erlang.system_flag(:scheduler_wall_time, true)
 
@@ -10,27 +17,27 @@ round_trip = fn
   {port, nil} ->
     true = Port.command(port, payload)
     receive do
-      {^port, {:data, ^payload}} -> :ok
+      {^port, {:data, ^expected}} -> :ok
     after
       3_000 -> raise("Port echo timeout")
     end
   {_port, peer} ->
-    send({:echo, peer}, payload)
+    send({registered, peer}, payload)
     receive do
-      ^payload -> :ok
+      ^expected -> :ok
     after
       3_000 -> raise("zbeam echo timeout")
     end
 end
 
 start_port = fn _count ->
-  {Port.open({:spawn_executable, String.to_charlist(port_echo_bin)}, [:binary, {:packet, 4}, :exit_status]), nil}
+  {Port.open({:spawn_executable, String.to_charlist(port_echo_bin)}, [:binary, {:packet, 4}, :exit_status, args: [job]]), nil}
 end
 start_zbeam = fn count ->
   name = "zbeam_bench_#{System.pid()}_#{System.unique_integer([:positive])}"
   port = Port.open({:spawn_executable, String.to_charlist(zbeam_bin)}, [
     :binary, :exit_status, :stderr_to_stdout,
-    args: ["echo", name, "zbeam_bench_cookie", Integer.to_string(count)]
+    args: [command, name, "zbeam_bench_cookie", Integer.to_string(count)]
   ])
   peer = String.to_atom("#{name}@127.0.0.1")
   connected = Enum.any?(1..600, fn _ ->
@@ -105,7 +112,7 @@ raw = for {label, start} <- [{"erlang_port", start_port}, {"zbeam_distribution",
   {row, samples}
 end
 
-IO.puts("# OTP #{:erlang.system_info(:otp_release)}; Elixir #{System.version()}; schedulers_online=#{:erlang.system_info(:schedulers_online)}")
+IO.puts("# job=#{job}; OTP #{:erlang.system_info(:otp_release)}; Elixir #{System.version()}; schedulers_online=#{:erlang.system_info(:schedulers_online)}")
 IO.puts("implementation\titerations\tpayload_bytes\tp50_ns\tp95_ns\tp99_ns\troundtrips_per_second\tchild_rss_kib\tchild_hwm_kib\tbeam_total_bytes\trestart_ns\tscheduler_busy_pct")
 Enum.each(raw, fn {row, _} -> IO.puts(Enum.join(row, "\t")) end)
 if path = System.get_env("ZBEAM_BENCH_SAMPLES") do

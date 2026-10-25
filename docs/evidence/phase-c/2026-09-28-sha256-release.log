@@ -1,0 +1,37 @@
+PASS CLI streaming stdout and argument validation
+test-all
++- test-integration
+   +- run test w
+[default] (warn): peer disconnected: InvalidDigest
+[default] (warn): peer disconnected: PacketTooLarge
+[default] (warn): peer disconnected: Timeout
+failed command: ./.zig-cache/o/6687e9cf04788efe2a7d6dbdade856de/test --cache-dir=./.zig-cache --seed=0x7819a40 --listen=-
+
+Build Summary: 27/27 steps succeeded; 54/54 tests passed
+test-all success
++- test-unit success
+|  +- run test 1 pass (1 total) 8ms MaxRSS:5M
+|  |  +- compile test ReleaseSafe native success 36s MaxRSS:388M
+|  +- run test 12 pass (12 total) 9ms MaxRSS:5M
+|  |  +- compile test ReleaseSafe native cached 25ms MaxRSS:40M
+|  +- run test 6 pass (6 total) 11ms MaxRSS:5M
+|  |  +- compile test ReleaseSafe native cached 26ms MaxRSS:40M
+|  +- run test 4 pass (4 total) 24ms MaxRSS:5M
+|  |  +- compile test ReleaseSafe native cached 25ms MaxRSS:40M
+|  +- run test 4 pass (4 total) 12ms MaxRSS:5M
+|  |  +- compile test ReleaseSafe native cached 26ms MaxRSS:39M
+|  +- run test 4 pass (4 total) 11ms MaxRSS:5M
+|  |  +- compile test ReleaseSafe native success 37s MaxRSS:432M
+|  +- run test 2 pass (2 total) 20ms MaxRSS:5M
+|     +- compile test ReleaseSafe native success 37s MaxRSS:416M
++- test-integration success
+|  +- run test 9 pass (9 total) 1s MaxRSS:5M
+|  |  +- compile test ReleaseSafe native success 44s MaxRSS:420M
+|  +- run sh success 54ms
+|     +- compile exe zbeam ReleaseSafe native cached 23ms MaxRSS:40M
++- test-conformance success
+|  +- run test 7 pass (7 total) 8ms MaxRSS:4M
+|     +- compile test ReleaseSafe native cached 18ms MaxRSS:40M
++- test-stress success
+   +- run test 5 pass (5 total) 1s MaxRSS:20M
+      +- compile test ReleaseSafe native success 39s MaxRSS:404M

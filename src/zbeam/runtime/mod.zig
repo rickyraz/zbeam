@@ -5,6 +5,7 @@
 
 pub const core = @import("core.zig");
 pub const Echo = @import("echo.zig").Echo;
+pub const Sha256 = @import("sha256.zig").Sha256;
 pub const node = @import("node.zig");
 pub const Runtime = @import("actors.zig").Runtime;
 

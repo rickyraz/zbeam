@@ -5,6 +5,7 @@
 pub const epmd_client = @import("epmd_client.zig");
 pub const handshake_io = @import("handshake_io.zig");
 pub const distribution_io = @import("distribution_io.zig");
+pub const deadline = @import("deadline.zig");
 
 test {
     @import("std").testing.refAllDecls(@This());

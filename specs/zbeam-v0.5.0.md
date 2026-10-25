@@ -536,7 +536,7 @@ fn myTerminalActor(io: std.Io, ctx: ActorContext) !void {
 
 ## 6. NodeConfig & Public API
 
-The current API is `runtime.node.Config` (`src/zbeam/runtime/node.zig`), not the proposed struct below. Its frame/ETF limits, message bound and sequential-connection bound are documented in [`docs/mvp.md`](../docs/mvp.md). The current `Runtime(T).spawn` registers caller-owned mailbox storage and does not schedule tasks. Tokens enforce logical ownership and reject overlapping receives, not unforgeable task identity.
+The current API is `runtime.node.Config` (`src/zbeam/runtime/node.zig`), not the proposed struct below. It selects either the original fixed echo worker or a fixed `sha256` service accepting only a bounded ETF binary and returning its 32-byte digest; this is not a general actor scheduler, monitor/link implementation or arbitrary RPC. [Executed OTP and performance evidence](../docs/evidence/phase-c/2026-09-28-sha256-worker.md). Its frame/ETF limits, message bound and sequential-connection bound are documented in [`docs/mvp.md`](../docs/mvp.md). The current `Runtime(T).spawn` registers caller-owned mailbox storage and does not schedule tasks. Tokens enforce logical ownership and reject overlapping receives, not unforgeable task identity.
 
 ```zig
 pub const NodeConfig = struct {
@@ -579,7 +579,7 @@ pub const NodeConfig = struct {
 
 ## 7. Node Lifecycle
 
-The MVP listener retains its EPMD registration across sequential peer connections. Each connection gets fresh handshake challenge, demand and packet ownership; none of that state is retained after disconnect. Invalid peer input closes the connection; cancellation/allocation failure propagates. There is no outbound retry/backoff, EPMD-loss recovery or read deadline. CLI `echo` accepts one peer, `serve` accepts sequential peers, and `probe` validates an initiating request/reply.
+The MVP listener retains its EPMD registration across sequential peer connections. Each connection gets fresh handshake challenge, demand and packet ownership; none of that state is retained after disconnect. Invalid peer input closes the connection; cancellation/allocation failure propagates. There is no outbound retry/backoff or EPMD re-registration. The runtime's initiating/accepting handshake has a five-second total budget; a frame read has a 90-second budget and a reply write five seconds. Direct transport callers may set an optional handshake budget. Timed I/O is canceled and joined before packet or stream teardown; no read occurs without a credit, and timeouts cannot interrupt arbitrary CPU-bound handlers. The executable fail-stops if the EPMD registration socket closes. The 90-second read budget combines idle and partial-frame time; heartbeat during zero-demand pauses remains unresolved. [Handshake evidence](../docs/evidence/phase-b/2026-09-28-handshake-deadline.md) and [liveness evidence](../docs/evidence/phase-c/2026-09-28-connection-liveness.md). CLI `echo` accepts one peer, `serve` accepts sequential peers, and `probe` validates an initiating request/reply.
 
 *(§7.1 startup sequence unchanged from v0.4.0, with one addition at step 5: `TransportArena.init()` now initializes every slot via `SlotRefCount.initFree()` rather than `SlotRefCount.init()` — the arena starts with zero owned slots, not `count` owned slots, correcting an implicit assumption in v0.3.0/v0.4.0 that was harmless only because nothing ever read an uninitialized slot's refcount before its first `acquireSlot()`.)*
 

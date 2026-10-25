@@ -6,6 +6,9 @@ Evidence records support implementation and compatibility claims. Passing tests 
 
 - [2026-09-26 protocol and OTP matrix](phase-b/2026-09-26-mvp.md)
 - [2026-09-26 runtime, backpressure and Port baseline](phase-c/2026-09-26-mvp-runtime.md)
+- [2026-09-28 handshake deadline](phase-b/2026-09-28-handshake-deadline.md)
+- [2026-09-28 frame/EPMD liveness](phase-c/2026-09-28-connection-liveness.md)
+- [2026-09-28 SHA-256 native worker](phase-c/2026-09-28-sha256-worker.md)
 
 These records supersede earlier pending-matrix/demand status for the restricted MVP. Historical files remain unchanged; the full v0.5 design is still unimplemented.
 

@@ -70,6 +70,55 @@ const Sender = struct {
     }
 };
 
+const BlockedWriter = struct {
+    server: *std.Io.net.Server,
+    failure: ?anyerror = null,
+    done: std.Io.Event = .unset,
+
+    pub fn handle(_: *@This(), allocator: std.mem.Allocator, _: []const u8) !?[]u8 {
+        const response = try allocator.alloc(u8, 16 * 1024 * 1024 + 4);
+        @memset(response, 0);
+        std.mem.writeInt(u32, response[0..4], 16 * 1024 * 1024, .big);
+        return response;
+    }
+
+    fn run(self: *@This()) void {
+        const io = std.testing.io;
+        defer self.done.set(io);
+        const stream = self.server.accept(io) catch |err| {
+            self.failure = err;
+            return;
+        };
+        defer stream.close(io);
+        runtime.node.dispatch(io, std.testing.allocator, stream, .{
+            .node_name = "blocked@host",
+            .cookie = "cookie",
+            .creation = 1,
+            .write_timeout = .fromMilliseconds(150),
+        }, self) catch |err| {
+            self.failure = err;
+        };
+    }
+};
+
+test "blocked reply writer times out and releases its owned response" {
+    const io = std.testing.io;
+    const address: std.Io.net.IpAddress = .{ .ip4 = .loopback(0) };
+    var server = try address.listen(io, .{ .reuse_address = true });
+    defer server.deinit(io);
+    var actor = BlockedWriter{ .server = &server };
+    var group: std.Io.Group = .init;
+    defer group.cancel(io);
+    try group.concurrent(io, BlockedWriter.run, .{&actor});
+    const stream = try server.socket.address.connect(io, .{ .mode = .stream });
+    defer stream.close(io);
+    var writer = stream.writer(io, &.{});
+    try writer.interface.writeAll(&.{ 0, 0, 0, 1, 112 });
+    try actor.done.waitTimeout(io, .{ .duration = .{ .raw = .fromSeconds(3), .clock = .awake } });
+    try group.await(io);
+    try std.testing.expectEqual(error.Timeout, actor.failure.?);
+}
+
 test "paused actor stops TCP consumption and sender resumes after grant" {
     try exercise(false);
 }

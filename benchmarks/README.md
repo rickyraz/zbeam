@@ -6,6 +6,17 @@ Benchmarks are evidence tooling, not product claims. Results record environment,
 
 The [snmalloc evaluation plan](../docs/snmalloc-evaluation.md) defines a future isolated experiment; no snmalloc build target or result exists yet. The [source audit](../docs/evidence/phase-a/2026-09-26-allocator-source-audit.md) identifies `DebugAllocator` in the recorded no-libc ReleaseSafe executable. The Port payload path uses fixed storage, so the Port comparison alone cannot identify an allocator bottleneck. Compare an explicit `smp_allocator` configuration before adding an external backend, and preserve the existing results rather than relabeling them.
 
+## Fixed SHA-256 worker comparison
+
+`ZBEAM_BENCH_JOB=sha256` selects the registered `sha256` worker and a Port child doing the same digest. `ZBEAM_BENCH_PAYLOAD_BYTES` selects 1–1048576 bytes (default 32). Digests are verified exactly on both paths; the expected BEAM digest is computed before timing. The original echo/default output and raw 2026-09-26 baseline remain untouched.
+
+```sh
+ZBEAM_BENCH_JOB=sha256 ZBEAM_BENCH_PAYLOAD_BYTES=65536 ERL_FLAGS='+S 2:2' \
+  zig build bench-port-vs-zbeam -Doptimize=ReleaseSafe -- 500
+```
+
+[Repeated 32 B/64 KiB evidence](../docs/evidence/phase-c/2026-09-28-sha256-worker.md) reports the Port advantage; SHA-256 is not evidence of a general native speedup. A 32-byte reply versus a full-length echo changes output size, so these jobs must not be conflated.
+
 ## Port versus distribution
 
 ```sh

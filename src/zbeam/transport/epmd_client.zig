@@ -72,6 +72,15 @@ pub const Registration = struct {
     stream: std.Io.net.Stream,
     creation: u32,
 
+    /// A registration socket has no further response payload after ALIVE2.
+    /// EOF means the name is no longer known; unexpected traffic is fatal too.
+    pub fn waitLost(self: *Registration, io: std.Io) !void {
+        var reader = self.stream.reader(io, &.{});
+        var byte: [1]u8 = undefined;
+        const n = reader.interface.readSliceShort(&byte) catch |err| return reader.err orelse err;
+        if (n != 0) return error.UnexpectedRegistrationTraffic;
+    }
+
     /// Closing is semantically "unregister", because EPMD ties liveness to the
     /// connection instead of exposing a separate deregistration request.
     pub fn close(self: *Registration, io: std.Io) void {
