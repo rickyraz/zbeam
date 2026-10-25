@@ -1,6 +1,6 @@
 # Native Worker Performance Research
 
-- **Status:** [baseline measured; resume checkpoint and results](research-progress.md). Experiment/promotion gates below remain explicit. No performance win is established.
+- **Status:** [baseline and batch matrix measured; experiment results](research-progress.md). A scoped preformed-batch result favors zbeam over ETF Port, not over direct NIF or raw Port. No candidate meets all promotion gates.
 - **Date:** 2026-10-02.
 - **Code baseline:** `38caeb4730712ef5b5a73eec6ceda999282917c1` (`feat/worker-lifecycle`).
 - **Implementation inventory:** [implementation-status.md](implementation-status.md).

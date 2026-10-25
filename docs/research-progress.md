@@ -1,6 +1,6 @@
 # Native-worker research progress
 
-**Decision:** no evidence currently supports promoting zbeam as faster than direct Zigler NIFs or Ports. Research branches remain separate from `master`.
+**Decision:** retain the experiments; no result supports promotion over direct Zigler NIFs or raw Ports. The completed batch matrix shows a scoped advantage over ETF Port, not a general NIF/Port win. Research branches remain separate from `master`.
 
 ## Repeated baseline
 
@@ -33,9 +33,15 @@ Each branch contains its corresponding `docs/evidence/phase-c/2026-10-13-*.md` r
 | `explore/beam-backpressure` | Optional bounded pause/fault peer, 54-test Debug/ReleaseSafe suites, nine pause trials and three owned-process fault checks | 500/3500 ms pause/resume passed; 8000 ms pauses disconnected under four-second ticks and subsequently reconnected. No indefinite-pause heartbeat guarantee. |
 | `explore/worker-recovery` | External single-flight owner, non-suspending submission, timeout teardown, owner contract checks, 54-test Debug/ReleaseSafe suites; sixty restart trials across six fault modes | Explicit failed-request outcomes and fresh successful requests; no replay. Raw Port isolation also passed, so recovery is not a Port performance advantage. |
 | `explore/actor-admission` | Ownership/admission ADR, two-mailbox joined stress test, 56-test Debug/ReleaseSafe suites, twenty stress repetitions, ten two-process progress controls | Local and separate-process progress verified; shared-wire multi-actor dispatch and matched throughput remain unimplemented. |
-| `explore/batched-requests` | Correlated 1–32 independent-job batches, 1 MiB aggregate/2 MiB frame bounds; 59-test Debug/ReleaseSafe suites, OTP 25/26/27, four matched comparator smokes and dirty-NIF tests | Correctness established for the stated subset; preformed-batch measurements are separate from application fill wait and performance promotion. |
+| `explore/batched-requests` | Correlated 1–32 independent-job batches, 1 MiB aggregate/2 MiB frame bounds; 59-test Debug/ReleaseSafe suites, OTP 25/26/27, dirty-NIF tests; 360 VM launches / 360,000 measured batches | At 32 × 32 KiB, throughput versus ETF Port is 1.157 [1.123, 1.197] and batch p99 is 0.875 [0.747, 0.937]. Dirty NIF/raw Port remain faster at every measured cell. Not promoted. |
 
-These are six research tracks including the repeated baseline, not six production promotion approvals. `master` remains at `11c3319`; no push or merge was performed. The unrelated `explore/lab-contracts` worktree is outside this experiment lineage.
+These are six research tracks including the repeated baseline, not six production promotion approvals. `master` remains at `11c3319`; experiment implementations remain separate. This inventory does not assert remote publication state. The unrelated `explore/lab-contracts` worktree is outside this experiment lineage.
+
+## Batch evidence verification — 2026-10-25
+
+Evidence commit `8f161ea` on `explore/batched-requests` preserves the completed matrix: ten repetitions of 36 cases, totaling 4,920,000 measured independent hashes in preformed batches. Every p50/p99, 36 median summaries, 54 paired ratios/bootstrap intervals, seeded ordering and all three recorded hashes were independently rechecked. Zig 0.16.0 regression checks again passed 59/59 in Debug and ReleaseSafe; Zigler tests passed 4 with 1 quarantined exclusion. The detailed record and raw samples are in that branch's `docs/evidence/phase-c/2026-10-13-batches.md` and adjacent `repeated/` directory.
+
+The original batch manifest omitted the NIF shared-library hash; source/lock/build logs do not replace measurement-time binary provenance. RSS values are post-work/idle snapshots, not peaks. These limits, native-host replication and excluded application fill wait prevent promoting the ETF-Port-only signal.
 
 ## Remaining gates
 
