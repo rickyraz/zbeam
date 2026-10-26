@@ -45,3 +45,27 @@ jobs:
           export OTP_VERSIONS="${{ matrix.otp }}"
           export ZBEAM_REQUIRE_ALL_OTP=1
           zig build test-interop
+
+  native-comparison:
+    runs-on: ubuntu-latest
+    env:
+      MIX_ENV: test
+      ERL_FLAGS: "+S 2:2 +SDcpu 2 +SDio 1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.17.0
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "29"
+          elixir-version: "1.20.4"
+      - run: zig build build-research test-research -Doptimize=safe
+      - name: Verify normal and dirty NIFs with the same compiler
+        run: |
+          cd benchmarks/zigler
+          export ZIG_EXECUTABLE_PATH="$(command -v zig)"
+          export ZIGLER_STAGING_ROOT="$PWD/_build/zigler-017-stage"
+          mkdir -p "$ZIGLER_STAGING_ROOT"
+          mix deps.get
+          mix test

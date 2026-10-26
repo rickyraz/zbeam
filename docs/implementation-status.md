@@ -31,9 +31,13 @@ The [handshake deadline record](evidence/phase-b/2026-09-28-handshake-deadline.m
 
 This branch adds optional direct Zigler NIF and ETF-over-Port benchmark adapters, not a runtime dependency or production behavior change. Exact-result and allocation-bound tests, a fresh-VM smoke and core/OTP regression checks are recorded in [native comparison evidence](evidence/phase-c/2026-10-02-native-comparison.md). Benchmark OTP 29 is distinct from the supported regression targets. No performance-win or native-host replication claim follows from adapter availability.
 
-The compiler rollout currently verifies the native comparison workers on 0.17.
-The pinned Zigler 0.16 dependency fails on removed `Build.args`; the all-0.17 NIF
-and matched-compiler gate remains pending. No old measurement is relabeled.
+The compiler rollout verifies native comparison workers and normal/dirty NIFs on
+0.17, using exact upstream Zigler Git commit `feb80162d597ede227e9d4d5c9798a42beee9695`
+and locked C-translation dependencies. Zigler's Hex release remains 0.16.0;
+this is an unreleased-dependency research gate, not production certification.
+[Dependency verification](evidence/phase-a/2026-10-25-zig-0.17-zigler.md) preserves
+the old failure and passing fresh-VM checks. Threaded NIFs stay quarantined;
+no old measurement is relabeled or new performance winner inferred.
 
 ## Not implemented or not established
 
