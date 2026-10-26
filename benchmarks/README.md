@@ -16,7 +16,7 @@ The [snmalloc evaluation plan](../docs/snmalloc-evaluation.md) defines a future 
 
 ```sh
 ZBEAM_BENCH_JOB=sha256 ZBEAM_BENCH_PAYLOAD_BYTES=65536 ERL_FLAGS='+S 2:2' \
-  zig build bench-port-vs-zbeam -Doptimize=ReleaseSafe -- 500
+  zig build bench-port-vs-zbeam -Doptimize=safe -- 500
 ```
 
 [Repeated 32 B/64 KiB evidence](../docs/evidence/phase-c/2026-09-28-sha256-worker.md) reports the Port advantage; SHA-256 is not evidence of a general native speedup. A 32-byte reply versus a full-length echo changes output size, so these jobs must not be conflated.
@@ -24,7 +24,7 @@ ZBEAM_BENCH_JOB=sha256 ZBEAM_BENCH_PAYLOAD_BYTES=65536 ERL_FLAGS='+S 2:2' \
 ## Port versus distribution
 
 ```sh
-ERL_FLAGS='+S 2:2' zig build bench-port-vs-zbeam -Doptimize=ReleaseSafe -- 1000
+ERL_FLAGS='+S 2:2' zig build bench-port-vs-zbeam -Doptimize=safe -- 1000
 ```
 
 Both paths use one BEAM process and one Zig worker, with the same 32-byte payload and sequential request/reply workload. The Port uses four-byte packet framing; distribution adds ETF/control framing and routing. Both paths warm up before measurement. EPMD and handshakes are outside steady-state latency samples.
@@ -43,7 +43,7 @@ Restart is one sample, not a percentile or crash-recovery SLO. Scheduler busy ti
 Persist individual samples as well as summary output:
 
 ```sh
-zig build -Doptimize=ReleaseSafe
+zig build -Doptimize=safe
 ERL_FLAGS='+S 2:2' ZBEAM_BENCH_SAMPLES=/tmp/zbeam-samples.tsv \
   ./scripts/bench_port_vs_zbeam.sh 1000 > /tmp/zbeam-summary.tsv
 ```

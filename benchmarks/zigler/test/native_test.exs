@@ -10,6 +10,13 @@ defmodule ZbeamResearch.NativeTest do
     end
   end
 
+  test "normal and dirty adapters reject malformed scalar and bitstring inputs" do
+    for fun <- [:echo, :echo_dirty, :hash, :hash_dirty],
+        input <- [nil, 42, {}, %{}, <<1::size(1)>>] do
+      assert catch_error(apply(Native, fun, [input]))
+    end
+  end
+
   test "normal and dirty scheduling return exact bounded binary results" do
     for input <- [<<>>, "abc", :binary.copy(<<90>>, 65_536)] do
       for fun <- [:echo, :echo_dirty],

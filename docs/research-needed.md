@@ -8,6 +8,15 @@ The append encoder reduces fixture allocation calls but leaves unresolved 64 KiB
 
 The [development plan](development-plan.md) defines execution order and final release gates. The [snmalloc evaluation](snmalloc-evaluation.md) specifies the allocator experiment without changing the default build.
 
+## Compiler migration boundary — 2026-10-25
+
+The canonical MVP build is verified on Zig 0.17.0, including existing labs and
+OTP 25/26/27; this does not validate every research branch. Zigler 0.16.0 NIF
+sources, custom allocator vtables and arena lifetime tests require their own
+migration gates. Current `std.process.Init.gpa` in debug/safe selects
+`SafeAllocator`; historical 0.16 DebugAllocator measurements must not be reused
+as 0.17 allocator or performance evidence. [Verification](evidence/phase-a/2026-10-25-zig-0.17-master.md).
+
 ## Priority labels
 
 - **P0 — restricted MVP gate:** required for the documented single-actor development profile.

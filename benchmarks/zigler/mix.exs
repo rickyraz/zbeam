@@ -5,8 +5,13 @@ defmodule ZbeamResearch.MixProject do
     [
       app: :zbeam_research,
       version: "0.1.0",
-      elixir: ">= 1.16.0",
-      deps: [{:zigler, "== 0.16.0", runtime: false}]
+      elixir: ">= 1.18.0",
+      deps: [
+        {:zigler,
+         git: "https://github.com/E-xyza/zigler.git",
+         ref: "feb80162d597ede227e9d4d5c9798a42beee9695",
+         runtime: false}
+      ]
     ]
   end
 

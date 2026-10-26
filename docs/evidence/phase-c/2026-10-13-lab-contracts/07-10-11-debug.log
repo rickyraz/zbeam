@@ -1,0 +1,27 @@
+lab-11
++- run test lab-11 w
+lab11 direct_method=compile_rejected inner_access=allowed prior_alias=allowed
+failed command: ./.zig-cache/o/161aafad4a5fd2d1e123df773d03e95d/lab-11 --cache-dir=./.zig-cache --seed=0x8134f55b --listen=-
+
+lab-10
++- run test lab-10 w
+lab10 identities=48 distinct_pairs=1128 slot_bytes=4 composite_bytes=16
+failed command: ./.zig-cache/o/e2e1711326d879de5a9921a508dc23a8/lab-10 --cache-dir=./.zig-cache --seed=0x8134f55b --listen=-
+
+lab-07
++- run test lab-07 w
+lab07 boundary_decodes=1 local_reencodes=0 payload_copy_bytes=5 envelope_storage_bytes=48
+failed command: ./.zig-cache/o/e79a57f021fcf8403380f3c520b967a7/lab-07 --cache-dir=./.zig-cache --seed=0x8134f55b --listen=-
+
+Build Summary: 10/10 steps succeeded; 6/6 tests passed
+lab-07 success
++- run test lab-07 2 pass (2 total) 9ms MaxRSS:4M
+   +- compile test lab-07 Debug native success 788ms MaxRSS:141M
+lab-10 success
++- run test lab-10 2 pass (2 total) 25ms MaxRSS:4M
+   +- compile test lab-10 Debug native cached 10ms MaxRSS:40M
+lab-11 success
++- run test lab-11 2 pass (2 total) 9ms MaxRSS:4M
+|  +- compile test lab-11 Debug native cached 7ms MaxRSS:40M
++- compile test lab-11-compile-fail Debug native success 639ms MaxRSS:103M
+
