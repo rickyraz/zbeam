@@ -1,0 +1,164 @@
+test-labs
++- lab-11
+   +- run test lab-11 w
+lab11 direct_method=compile_rejected inner_access=allowed prior_alias=allowed
+failed command: ./.zig-cache/o/176c9ba204a5d69f5219f52756e95558/lab-11 --cache-dir=./.zig-cache --seed=0xb323ae1a --listen=-
+
+test-labs
++- lab-07
+   +- run test lab-07 w
+lab07 boundary_decodes=1 local_reencodes=0 payload_copy_bytes=5 envelope_storage_bytes=48
+failed command: ./.zig-cache/o/97bef7267ec7969b31e5d9b900f9466e/lab-07 --cache-dir=./.zig-cache --seed=0xb323ae1a --listen=-
+
+test-labs
++- lab-03
+   +- run test lab-03 w
+lab03 paused_attempts=100 paused_reads=0 allocation_attempts=0 admitted_bytes=5 unread_bytes=4
+failed command: ./.zig-cache/o/b3cb739ad2feaeee21576c22306ff10b/lab-03 --cache-dir=./.zig-cache --seed=0xb323ae1a --listen=-
+
+test-labs
++- lab-08
+   +- run test lab-08 w
+lab08 chunk=1 reader_calls=7 allocations=1 allocated_bytes=7 unread_bytes=4
+lab08 chunk=2 reader_calls=4 allocations=1 allocated_bytes=7 unread_bytes=4
+lab08 chunk=3 reader_calls=3 allocations=1 allocated_bytes=7 unread_bytes=4
+lab08 chunk=4 reader_calls=2 allocations=1 allocated_bytes=7 unread_bytes=4
+lab08 chunk=5 reader_calls=2 allocations=1 allocated_bytes=7 unread_bytes=4
+lab08 chunk=6 reader_calls=2 allocations=1 allocated_bytes=7 unread_bytes=4
+lab08 chunk=7 reader_calls=2 allocations=1 allocated_bytes=7 unread_bytes=4
+lab08 chunk=8 reader_calls=2 allocations=1 allocated_bytes=7 unread_bytes=4
+lab08 chunk=9 reader_calls=2 allocations=1 allocated_bytes=7 unread_bytes=4
+lab08 chunk=10 reader_calls=2 allocations=1 allocated_bytes=7 unread_bytes=4
+lab08 chunk=11 reader_calls=2 allocations=1 allocated_bytes=7 unread_bytes=4
+failed command: ./.zig-cache/o/3c990566f91b50d6285e475a7565bb98/lab-08 --cache-dir=./.zig-cache --seed=0xb323ae1a --listen=-
+
+test-labs
++- lab-15
+   +- run test lab-15 w
+lab15 slots=1 size=64 pool_bytes=64 fitting_frames=80/100 fallback_bytes=85760 cumulative_padding=2560
+lab15 slots=1 size=1024 pool_bytes=1024 fitting_frames=95/100 fallback_bytes=81920 cumulative_padding=90880
+lab15 slots=1 size=65536 pool_bytes=65536 fitting_frames=100/100 fallback_bytes=0 cumulative_padding=6465280
+lab15 slots=4 size=64 pool_bytes=256 fitting_frames=80/100 fallback_bytes=85760 cumulative_padding=2560
+lab15 slots=4 size=1024 pool_bytes=4096 fitting_frames=95/100 fallback_bytes=81920 cumulative_padding=90880
+lab15 slots=4 size=65536 pool_bytes=262144 fitting_frames=100/100 fallback_bytes=0 cumulative_padding=6465280
+lab15 slots=16 size=64 pool_bytes=1024 fitting_frames=80/100 fallback_bytes=85760 cumulative_padding=2560
+lab15 slots=16 size=1024 pool_bytes=16384 fitting_frames=95/100 fallback_bytes=81920 cumulative_padding=90880
+lab15 slots=16 size=65536 pool_bytes=1048576 fitting_frames=100/100 fallback_bytes=0 cumulative_padding=6465280
+failed command: ./.zig-cache/o/ebbe9086533393511db03fae153b559a/lab-15 --cache-dir=./.zig-cache --seed=0xb323ae1a --listen=-
+
+test-labs
++- lab-14
+   +- run test lab-14 w
+lab14 balanced_deliveries=4,4,4 skewed_deliveries=4,1,0 residual_credit=0
+failed command: ./.zig-cache/o/901543dc6cdef177f89e32db23f7eead/lab-14 --cache-dir=./.zig-cache --seed=0xb323ae1a --listen=-
+
+test-labs
++- lab-12
+   +- run test lab-12 w
+lab12 roles=2 valid_transitions=10 wire_errors=3 authenticated_ack=1
+failed command: ./.zig-cache/o/d9cf40da10a3cb3c5935e268175ed96b/lab-12 --cache-dir=./.zig-cache --seed=0xb323ae1a --listen=-
+
+test-labs
++- lab-02
+   +- run test lab-02 w
+lab02 scenario=omitted_grant tick=0 credits=0 observation=paused
+lab02 scenario=omitted_grant tick=1 credits=0 observation=paused
+lab02 scenario=omitted_grant tick=2 credits=0 observation=paused
+lab02 scenario=omitted_grant tick=3 credits=0 observation=inactive
+lab02 scenario=omitted_grant tick=4 credits=0 observation=inactive
+lab02 scenario=omitted_grant tick=5 credits=0 observation=inactive
+lab02 scenario=late_grant tick=0 credits=0 observation=paused
+lab02 scenario=late_grant tick=1 credits=0 observation=paused
+lab02 scenario=late_grant tick=2 credits=0 observation=paused
+lab02 scenario=late_grant tick=3 credits=0 observation=inactive
+lab02 scenario=late_grant tick=4 credits=1 observation=ready
+lab02 scenario=late_grant tick=5 credits=1 observation=ready
+lab02 scenario=handler_failure tick=0 credits=0 observation=failed
+lab02 scenario=handler_failure tick=1 credits=0 observation=failed
+lab02 scenario=handler_failure tick=2 credits=0 observation=failed
+lab02 scenario=handler_failure tick=3 credits=0 observation=failed
+lab02 scenario=handler_failure tick=4 credits=0 observation=failed
+lab02 scenario=handler_failure tick=5 credits=0 observation=failed
+lab02 scenario=long_cpu_work tick=0 credits=0 observation=paused
+lab02 scenario=long_cpu_work tick=1 credits=0 observation=paused
+lab02 scenario=long_cpu_work tick=2 credits=0 observation=paused
+lab02 scenario=long_cpu_work tick=3 credits=0 observation=inactive
+lab02 scenario=long_cpu_work tick=4 credits=0 observation=inactive
+lab02 scenario=long_cpu_work tick=5 credits=0 observation=inactive
+failed command: ./.zig-cache/o/f00476168d9bb95fdd92e750d67303ec/lab-02 --cache-dir=./.zig-cache --seed=0xb323ae1a --listen=-
+
+test-labs
++- lab-01
+   +- run test lab-01 w
+lab01 producers=1 capacity=1 received=128
+lab01 producers=1 capacity=4 received=128
+lab01 producers=1 capacity=64 received=128
+lab01 producers=2 capacity=1 received=256
+lab01 producers=2 capacity=4 received=256
+lab01 producers=2 capacity=64 received=256
+lab01 producers=4 capacity=1 received=512
+lab01 producers=4 capacity=4 received=512
+lab01 producers=4 capacity=64 received=512
+lab01 producers=8 capacity=1 received=1024
+lab01 producers=8 capacity=4 received=1024
+lab01 producers=8 capacity=64 received=1024
+lab01 producers=16 capacity=1 received=2048
+lab01 producers=16 capacity=4 received=2048
+lab01 producers=16 capacity=64 received=2048
+failed command: ./.zig-cache/o/5c0c013b1dc0fbb44f21ba3934375cec/lab-01 --cache-dir=./.zig-cache --seed=0xb323ae1a --listen=-
+
+test-labs
++- lab-04
+   +- run test lab-04 w
+lab04 cut=0 old_credit=0 outstanding_bytes=0 fresh_frame_bytes=7
+lab04 cut=1 old_credit=0 outstanding_bytes=0 fresh_frame_bytes=7
+lab04 cut=2 old_credit=0 outstanding_bytes=0 fresh_frame_bytes=7
+lab04 cut=3 old_credit=0 outstanding_bytes=0 fresh_frame_bytes=7
+lab04 cut=4 old_credit=0 outstanding_bytes=0 fresh_frame_bytes=7
+lab04 cut=5 old_credit=0 outstanding_bytes=0 fresh_frame_bytes=7
+lab04 cut=6 old_credit=0 outstanding_bytes=0 fresh_frame_bytes=7
+failed command: ./.zig-cache/o/5508949ad2b868bdaa4cedc855a28916/lab-04 --cache-dir=./.zig-cache --seed=0xb323ae1a --listen=-
+
+test-labs
++- lab-10
+   +- run test lab-10 w
+lab10 identities=48 distinct_pairs=1128 slot_bytes=4 composite_bytes=16
+failed command: ./.zig-cache/o/cf019385b16d0f16397b299d1147e8e5/lab-10 --cache-dir=./.zig-cache --seed=0xb323ae1a --listen=-
+
+Build Summary: 36/36 steps succeeded; 22/22 tests passed
+test-labs success
++- lab-01 success
+|  +- run test lab-01 2 pass (2 total) 95ms MaxRSS:6M
+|     +- compile test lab-01 ReleaseSafe native success 18s MaxRSS:401M
++- lab-02 success
+|  +- run test lab-02 2 pass (2 total) 3ms MaxRSS:5M
+|     +- compile test lab-02 ReleaseSafe native success 18s MaxRSS:395M
++- lab-03 success
+|  +- run test lab-03 2 pass (2 total) 2ms MaxRSS:5M
+|     +- compile test lab-03 ReleaseSafe native success 16s MaxRSS:384M
++- lab-04 success
+|  +- run test lab-04 1 pass (1 total) 3ms MaxRSS:5M
+|     +- compile test lab-04 ReleaseSafe native success 17s MaxRSS:400M
++- lab-07 success
+|  +- run test lab-07 2 pass (2 total) 3ms MaxRSS:4M
+|     +- compile test lab-07 ReleaseSafe native success 17s MaxRSS:396M
++- lab-08 success
+|  +- run test lab-08 2 pass (2 total) 3ms MaxRSS:5M
+|     +- compile test lab-08 ReleaseSafe native success 16s MaxRSS:404M
++- lab-10 success
+|  +- run test lab-10 2 pass (2 total) 2ms MaxRSS:5M
+|     +- compile test lab-10 ReleaseSafe native success 17s MaxRSS:397M
++- lab-11 success
+|  +- run test lab-11 2 pass (2 total) 3ms MaxRSS:4M
+|  |  +- compile test lab-11 ReleaseSafe native success 16s MaxRSS:401M
+|  +- compile test lab-11-compile-fail ReleaseSafe native success 765ms MaxRSS:120M
++- lab-12 success
+|  +- run test lab-12 2 pass (2 total) 3ms MaxRSS:5M
+|  |  +- compile test lab-12 ReleaseSafe native success 18s MaxRSS:406M
+|  +- compile test lab-12-compile-fail ReleaseSafe native success 717ms MaxRSS:119M
++- lab-14 success
+|  +- run test lab-14 3 pass (3 total) 3ms MaxRSS:5M
+|     +- compile test lab-14 ReleaseSafe native success 16s MaxRSS:403M
++- lab-15 success
+   +- run test lab-15 2 pass (2 total) 3ms MaxRSS:5M
+      +- compile test lab-15 ReleaseSafe native success 16s MaxRSS:396M

@@ -1,9 +1,13 @@
 # Matched native worker comparison
 
+**Compiler rollout:** native workers now build on Zig 0.17.0. The old Zigler
+0.16 dependency fails on 0.17 (`Build.args`); NIF migration is a separate pending
+gate, not a matched-compiler benchmark. Historical 0.16 results remain unchanged.
+
 Optional benchmark-only Mix project pinned to Zigler 0.16.0 with `mix.lock`. NIFs use Zig 0.16.0 ReleaseSafe and direct binary marshalling. Normal/dirty CPU modes are eligible; the threaded adapter is quarantined after a repeated-run VM segfault and is not scored. They do not add ETF serialization. Native workers use the same SHA-256 implementation from the Zig standard library. The separate ETF Port uses the existing bounded ETF codec; the old raw-Port runner remains unchanged.
 
 ```sh
-zig build build-research test-research -j2 -Doptimize=ReleaseSafe
+zig build build-research test-research -j2 -Doptimize=safe
 (cd benchmarks/zigler && mix deps.get && ZIG_EXECUTABLE_PATH="$(command -v zig)" ERL_FLAGS='+S 2:2 +SDcpu 2 +SDio 1' mix test)
 python3 scripts/bench/native_matrix.py --self-test
 python3 scripts/bench/native_matrix.py /tmp/native-results --repeats 10 --iterations 1000

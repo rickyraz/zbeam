@@ -1,6 +1,7 @@
 # Implementation Status
 
 - **MVP baseline:** 2026-09-26; reliability and SHA-256 worker extensions verified 2026-09-28
+- **Compiler migration:** native Zig 0.17.0 verification is recorded separately from NIF compatibility
 - **Package version:** 0.0.1 pre-alpha (no release tag created)
 - **Implemented milestone:** [restricted single-actor MVP](mvp.md)
 - **Broader design target:** v0.5.0 draft, not a release description
@@ -12,7 +13,7 @@ This file is authoritative when code and historical specifications differ.
 
 | Area | Current contract | Verification |
 |---|---|---|
-| Packaging | Zig 0.16.0; five independent batteries and a behavior-free umbrella; ADR 0001 dependency DAG | Independent unit builds and integration imports |
+| Packaging | Zig 0.17.0; five independent batteries and a behavior-free umbrella; ADR 0001 dependency DAG | Independent unit builds and integration imports |
 | ETF | Owned integer/UTF-8 atom/tuple/binary/proper list/nil/NEW_PID subset; depth, size and aggregate allocation limits | Unit, golden-vector and conformance tests |
 | EPMD | Registration-socket ownership; node lookup; fail-stop executable when registration socket closes | Deterministic socket-loss test and real OTP discovery/removal |
 | Handshake | Initiating and accepting OTP 23+ format; mutual cookie digest; no read-ahead loss at distribution handoff | Coalesced-frame regression, partial NAME/REPLY and silent-initiator deadline tests; actual OTP 25/26/27 |
@@ -30,6 +31,10 @@ The [handshake deadline record](evidence/phase-b/2026-09-28-handshake-deadline.m
 
 This branch adds optional direct Zigler NIF and ETF-over-Port benchmark adapters, not a runtime dependency or production behavior change. Exact-result and allocation-bound tests, a fresh-VM smoke and core/OTP regression checks are recorded in [native comparison evidence](evidence/phase-c/2026-10-02-native-comparison.md). Benchmark OTP 29 is distinct from the supported regression targets. No performance-win or native-host replication claim follows from adapter availability.
 
+The compiler rollout currently verifies the native comparison workers on 0.17.
+The pinned Zigler 0.16 dependency fails on removed `Build.args`; the all-0.17 NIF
+and matched-compiler gate remains pending. No old measurement is relabeled.
+
 ## Not implemented or not established
 
 - Complete ETF coverage, old handshakes, simultaneous-connection arbitration or general Erlang-node compatibility.
@@ -42,6 +47,20 @@ This branch adds optional direct Zigler NIF and ETF-over-Port benchmark adapters
 - Panic/corruption crash-injection coverage, sanitizers/TSAN or a production security audit.
 
 The service deliberately uses synchronous owned-copy processing. The reusable mailbox/registry is not an implicit asynchronous scheduler. Logical tokens are copyable; they do not prove an OS-thread or task identity. Caller-managed lifetimes remain required.
+
+## Zig 0.17 compiler migration
+
+The current build uses 0.17's `addPassthruArgs` and optimizer values
+`debug`/`safe`/`fast`/`small`; old `ReleaseSafe` command-line values are not accepted.
+Fixed repeated arrays use typed `@splat`, retaining existing stress/lab assertions.
+Core, labs and both intentional compile failures pass in debug/safe; actual OTP
+25/26/27 and run/benchmark argument forwarding also pass. No runtime/protocol
+feature is added by the migration. [Compiler evidence](evidence/phase-a/2026-10-25-zig-0.17-master.md).
+
+The 0.17 startup source selects `SafeAllocator` for debug/safe, independently of
+libc linkage. Older 0.16 allocator/performance records below remain historical,
+not current performance claims. Current compiler/ELF provenance is in the new
+record; no benchmark was re-scored.
 
 ## Allocator provenance
 
