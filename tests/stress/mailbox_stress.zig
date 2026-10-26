@@ -41,7 +41,7 @@ test "bounded mailbox preserves every producer sequence under contention" {
         try group.concurrent(std.testing.io, produce, .{producer});
     }
 
-    var next_expected = [_]u32{0} ** producer_count;
+    var next_expected: [producer_count]u32 = @splat(0);
     const token = actor.Token.init(1);
     for (0..producer_count * messages_per_producer) |_| {
         const message = try mailbox.receive(std.testing.io, token);

@@ -19,7 +19,7 @@ The current benchmark includes negative results. It does not establish a perform
 
 | Area | Status |
 |---|---|
-| Zig 0.16.0 and battery dependency graph | Implemented and tested |
+| Zig 0.17.0 and battery dependency graph | Implemented and tested |
 | ETF | Bounded owned subset, including aggregate allocation limits |
 | EPMD and handshake | Registration/lookup; both handshake roles verified on OTP 25–27 |
 | Distribution | Pass-through framing, tick echo, REG_SEND/SEND subset |
@@ -35,12 +35,12 @@ The current benchmark includes negative results. It does not establish a perform
 
 ## Build and verify
 
-Requirements: Zig 0.16.0 and Git. Zig 0.17 migration is [planned separately](docs/zig-0.17-migration.md), not applied. Interoperability checks additionally require Erlang/EPMD; the pinned-container runner requires Linux and Docker.
+Requirements: Zig 0.17.0 and Git. Optimizer values use the 0.17 names (`debug`, `safe`, `fast`, `small`); historical 0.16 records retain their original labels. The [all-branch rollout](docs/zig-0.17-migration.md) is tracked separately. Interoperability checks additionally require Erlang/EPMD; the pinned-container runner requires Linux and Docker.
 
 ```sh
 zig build
 zig build test-all                            # deterministic, no external EPMD required
-zig build test-all -Doptimize=ReleaseSafe
+zig build test-all -Doptimize=safe
 zig build test-interop-docker                 # all OTP 25/26/27 targets; pinned images
 ```
 

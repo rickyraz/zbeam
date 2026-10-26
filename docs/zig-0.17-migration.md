@@ -1,8 +1,11 @@
 # Migrate master and every active branch to Zig 0.17
 
-**Status: planned, not executed. Reviewed: 2026-10-25.** Establish one
-compiler-only migration on the latest remote `master`, then integrate that exact
-reviewed commit into each branch in an isolated worktree. Preserve research
+**Status: executing, not promoted. Updated: 2026-10-25.** R1 and R2 are verified
+on isolated migration branches; R3/R4 remain separate gates. The canonical
+compiler-only commit is `ae7197d`, based on live remote master `497d346`.
+[Canonical evidence](evidence/phase-a/2026-10-25-zig-0.17-master.md) and
+[M1 evidence](evidence/phase-a/2026-10-25-zig-0.17-monitorable-worker.md)
+record completed gates. Branch integration uses that exact commit. Preserve research
 contracts and historical 0.16 evidence; do not merge research features into master
 as a side effect. No force-push, global compiler switch or other-session checkout
 is required.
@@ -88,10 +91,14 @@ is promoted merely to make this migration easier.
 
 ## R2 — Propagate the canonical commit to baseline and M1 branches
 
-Create `migrate/zig-0.17-<branch>` worktrees from recorded source tips and merge the
+Create `migrate/zig-0.17-<branch>` branches from recorded source tips and merge the
 **exact canonical migration commit**, not an unreviewed moving master. This brings
 accepted upstream labs where absent; it must not flatten each branch's distinct
 runtime/benchmark contract. Preserve history rather than rebasing published work.
+
+A session-owned migration worktree may be reused after each clean commit to share
+compiler caches within the available disk budget. The nine original worktrees
+remain untouched; no source branch is moved behind its owner's checkout.
 
 Start with lab-contracts and the docs branch, then the foundation lifecycle branch
 and M1. Resolve M1's build and runtime additions on its own branch. Its additional
@@ -166,10 +173,10 @@ Run equivalent explicit targets when a branch lacks an aggregate alias:
 "$ZIG_017" fmt --check build.zig src tests examples
 "$ZIG_017" build
 "$ZIG_017" build test-unit test-integration test-conformance test-stress -j2 --summary all
-"$ZIG_017" build test-unit test-integration test-conformance test-stress -j2 -Doptimize=ReleaseSafe --summary all
+"$ZIG_017" build test-unit test-integration test-conformance test-stress -j2 -Doptimize=safe --summary all
 "$ZIG_017" build test-labs -j2 --summary all
-"$ZIG_017" build test-labs -j2 -Doptimize=ReleaseSafe --summary all
-"$ZIG_017" build test-interop-docker -j2 -Doptimize=ReleaseSafe --summary all
+"$ZIG_017" build test-labs -j2 -Doptimize=safe --summary all
+"$ZIG_017" build test-interop-docker -j2 -Doptimize=safe --summary all
 ```
 
 `test-labs` requires upstream lab integration; missing required aliases on a

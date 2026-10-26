@@ -5,7 +5,7 @@
 - **Integration baseline:** local `master` at `11c3319`; restricted MVP introduced by `090bb60`.
 - **Immediate milestone:** M1, one PID-addressable, monitorable native worker with external recovery.
 - **Allocator track:** [snmalloc evaluation](snmalloc-evaluation.md).
-- **Compiler track:** [all-branch Zig 0.17 migration](zig-0.17-migration.md), planned separately from M1 behavior.
+- **Compiler track:** [all-branch Zig 0.17 migration](zig-0.17-migration.md), executing separately from M1 behavior; canonical and combined M1 gates pass on migration branches, not yet promoted.
 
 ## Direction
 

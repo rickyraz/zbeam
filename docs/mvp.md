@@ -24,12 +24,12 @@ Records: [Phase B](evidence/phase-b/2026-09-26-mvp.md), [Phase C](evidence/phase
 
 ## Build and run
 
-Verified toolchain: Zig 0.16.0 on Linux x86-64. Deterministic suites do not require a running EPMD daemon:
+Verified toolchain: Zig 0.17.0 on Linux x86-64; historical September evidence used 0.16.0. Optimized safety-check builds now use `-Doptimize=safe`. Deterministic suites do not require a running EPMD daemon:
 
 ```sh
 zig build
 zig build test-all
-zig build test-all -Doptimize=ReleaseSafe
+zig build test-all -Doptimize=safe
 ```
 
 Start the development service in one terminal:
@@ -161,7 +161,7 @@ zig build test-interop-docker
 The Docker runner pins image digests, uses host networking, and checks all three major versions. The native runner rejects mislabeled executables. A local OTP 28 fallback is explicitly development evidence, not a full matrix pass. CI selects one required target per job with `OTP_VERSIONS`.
 
 ```sh
-ERL_FLAGS='+S 2:2' zig build bench-port-vs-zbeam -Doptimize=ReleaseSafe -- 1000
+ERL_FLAGS='+S 2:2' zig build bench-port-vs-zbeam -Doptimize=safe -- 1000
 ```
 
 ## Remaining work outside this MVP

@@ -28,15 +28,15 @@ waits and test-owned PID cleanup.
 
 ## Runnable monitored worker
 
-Build with the verified Zig 0.16.0 compiler, then run on Linux with Python 3,
+Build with the verified Zig 0.17.0 compiler, then run on Linux with Python 3,
 Elixir and EPMD installed:
 
 ```sh
-zig build -Doptimize=ReleaseSafe
+zig build -Doptimize=safe
 epmd -daemon
 elixir --name worker_client@127.0.0.1 --cookie local_development_cookie \
   examples/monitored_worker.exs "$PWD/zig-out/bin/zbeam"
-zig build test-worker-recovery -Doptimize=ReleaseSafe
+zig build test-worker-recovery -Doptimize=safe
 ```
 
 `NativeWorkerOwner` discovers and monitors the native worker PID, while also
