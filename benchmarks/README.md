@@ -12,7 +12,7 @@ The [snmalloc evaluation plan](../docs/snmalloc-evaluation.md) defines a future 
 
 ```sh
 ZBEAM_BENCH_JOB=sha256 ZBEAM_BENCH_PAYLOAD_BYTES=65536 ERL_FLAGS='+S 2:2' \
-  zig build bench-port-vs-zbeam -Doptimize=ReleaseSafe -- 500
+  zig build bench-port-vs-zbeam -Doptimize=safe -- 1000
 ```
 
 [Repeated 32 B/64 KiB evidence](../docs/evidence/phase-c/2026-09-28-sha256-worker.md) reports the Port advantage; SHA-256 is not evidence of a general native speedup. A 32-byte reply versus a full-length echo changes output size, so these jobs must not be conflated.
