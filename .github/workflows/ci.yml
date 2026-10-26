@@ -26,7 +26,7 @@ jobs:
       - run: for script in scripts/interop/*.sh scripts/bench_port_vs_zbeam.sh; do sh -n "$script"; done
 
   otp-interop:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
