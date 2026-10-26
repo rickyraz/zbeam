@@ -1,6 +1,8 @@
 # M1 merge-result verification — 2026-10-26
 
-**Status:** local acceptance gates passed; PR/CI and review approval remain gates.
+**Historical checkpoint:** local gates passed before final PR/CI and approval.
+[Subsequent acceptance](2026-10-26-m1-integration.md) records explicit approval,
+PR #3, cleanup repair PR #4 and the successful actual repaired-master checks.
 This record covers the bounded M1 development profile, not production readiness.
 The first new push passed seven jobs but failed both OTP 25 installer lanes before
 tests; [runner triage and correction](2026-10-26-m1-ci-runner.md) retain that failure

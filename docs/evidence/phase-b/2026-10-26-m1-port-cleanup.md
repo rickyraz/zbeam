@@ -1,7 +1,8 @@
 # Close owned Ports without a check/use race — 2026-10-26
 
-**Status:** repair verified locally; fresh candidate/PR/master checks still gate
-M1 acceptance. This is external-owner/test cleanup, not a native wire change.
+**Status:** repair accepted through PR #4; candidate, synthetic merge and actual
+repaired master each passed 9/9 CI jobs. [Acceptance closure](2026-10-26-m1-integration.md)
+records the results. This is external-owner/test cleanup, not a native wire change.
 
 [PR #3](https://github.com/rickyraz/zbeam/pull/3) merged normally as
 `2241e7f4a93b5a5e0ff533169494312ade71b34e`, after explicit owner size-exception

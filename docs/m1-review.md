@@ -1,9 +1,11 @@
-# Review the bounded M1 acceptance candidate
+# Bounded M1 review and acceptance
 
-**Status: candidate verified locally; merge blocked on current PR checks and an
-explicit `size:exception` decision.** Implemented W0–W5 is not the same as accepted
-integration or a production release. The [fresh verification record](evidence/phase-b/2026-10-26-m1-acceptance.md)
-retains failed attempts and current results.
+**Status: accepted into master, 2026-10-26.** Explicit owner `size:exception`
+approval authorized normal PR #3 integration; PR #4 repaired the subsequent
+cleanup race. Actual repaired-master CI passed 9/9 jobs. The
+[acceptance record](evidence/phase-b/2026-10-26-m1-integration.md) preserves the
+sequence and failures. Acceptance covers the bounded development profile,
+not M2 or production release.
 
 ## Integration boundary
 
@@ -23,17 +25,16 @@ not a feature merge or an allocator/performance promotion. Package version stays
 
 At `e3cf4d2`, the master-to-candidate diff has **392 files and 25,722 changed text
 lines**, including **20,020 unchanged historical raw-sample lines in 20 files**.
-Later current-status documentation adds to this count; inspect the actual PR
-count before approval. Raw data, tests, comments and provenance are not removed
+The final approved PR #3 contained 396 files and 25,859 changed text lines. Raw data, tests, comments and provenance are not removed
 or compressed to manufacture a smaller review. Existing gzip evidence retains
 its established storage format.
 
 The published work units provide the review slices below. Several cohesive units
 still exceed 400 lines even without a giant combined PR; splitting data rows or
 separating a safety change from its tests/evidence is not an honest solution.
-The exception is **requested, not presumed approved**. No force/squash/rebase of
-published history is needed; the final integration should be an ordinary merge
-only after explicit approval and all current checks pass.
+The owner **explicitly approved `size:exception`** before PR #3 merged normally
+as `2241e7f`. Cleanup repair PR #4 was 106 changed text lines and merged normally
+as `88db721`. No force/squash/rebase or deletion of evidence was used.
 
 | Review slice | Published boundary | Original added + removed lines |
 |---|---|---:|
@@ -65,12 +66,14 @@ not as additional runtime behavior.
 4. Check the Linux guardian and one-slot external owner: uncertain work fails,
    no replay, caller/owner/VM/native loss cleanup, bounded deadlines/restarts.
 5. Require current core/labs debug/safe, native OTP 25/26/27 in both modes and
-   guardian plus all 13 complementary external recovery cases per mode. External
+   guardian plus all 13 original recovery cases and the added cleanup regression
+   per mode (14 current cases). External
    Elixir 1.20.4/OTP 29 evidence is distinct from the native wire matrix.
 6. Review the EPMD readiness counterexample and forced-cleanup regressions. The
    race class is demonstrated; the old runner's exact trace was not captured.
-7. Require an explicit size-exception approval before merge. Do not infer it from
-   green CI, the cleanup instruction, or this review guide.
+7. Retain the [explicit owner approval](https://github.com/rickyraz/zbeam/pull/3#issuecomment-6419841418)
+   and current CI evidence. This exception is specific to PR #3, not permission
+   to bypass review budgets on future work.
 
 M2 implementation, native-host/long-soak certification, alternate allocators,
 zero-copy, transport security and production release gates remain out of scope.

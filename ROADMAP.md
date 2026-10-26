@@ -2,6 +2,17 @@
 
 zbeam advances only when a milestone leaves executable evidence. The v0.5 specification is a design backlog, not a release description.
 
+## Current delivery sequence — 2026-10-26
+
+**Bounded worker M1 is accepted into master**, including PID/named monitoring and
+external no-replay recovery; [acceptance evidence](docs/evidence/phase-b/2026-10-26-m1-integration.md).
+The next milestone is the [task-owning M2 lifecycle](docs/development-plan.md#after-m1--m2-a-small-task-owning-actor-runtime),
+not yet started. The compiler baseline is Zig 0.17.0; the package stays pre-alpha.
+
+The M0–M4 labels/checklists below retain the earlier scaffold roadmap. They are
+broader historical groupings, not the current worker-M1/task-ownership-M2 names;
+uncompleted combined items such as links/monitors are not blanket completion claims.
+
 ## Restricted MVP — verified 2026-09-26
 
 The [single-actor development profile](docs/mvp.md) passes its acceptance gates: both handshake roles on real OTP 25/26/27, bounded owned messages, demand-gated reads, sequential reconnect, process-loss observation and a reproducible Port baseline. This is a subset milestone, not completion of M2–M4 or the full v0.5 specification.

@@ -16,7 +16,8 @@ These records supersede earlier pending-matrix/demand status for the restricted 
 
 - [2026-10-25 references and monitor wire evidence](phase-b/2026-10-25-m1.md)
 - [2026-10-25 worker lifecycle, OTP matrix and external recovery](phase-c/2026-10-25-m1.md)
-- [2026-10-26 fresh master integration, EPMD readiness triage and acceptance gates](phase-b/2026-10-26-m1-acceptance.md) — local gates passed; [PR review and explicit size-exception approval](../m1-review.md) remain required.
+- [2026-10-26 accepted master integration](phase-b/2026-10-26-m1-integration.md) — explicit size approval, normal PR #3/#4 merges and actual repaired-master 9/9 CI; M2 and production remain out of scope.
+- [2026-10-26 pre-acceptance EPMD readiness triage and local gates](phase-b/2026-10-26-m1-acceptance.md) — historical checkpoint; failures and counterexamples retained.
 - [2026-10-26 OTP 25 installer failure and supported CI runner pin](phase-b/2026-10-26-m1-ci-runner.md) — earlier run preserved; all six native OTP/mode lanes remain mandatory.
 - [2026-10-26 actual-merge Port cleanup race and repair](phase-b/2026-10-26-m1-port-cleanup.md) — original failure retained; 14 current recovery cases per mode, including one new cleanup regression.
 
@@ -25,7 +26,7 @@ scheduler or production release.
 
 ## Compiler migration
 
-- [2026-10-26 all-branch verification and delivery ledger](phase-a/2026-10-26-zig-0.17-rollout.md) — historical 14/14 profile verification; later branch handover is recorded below, while M1 feature integration remains pending.
+- [2026-10-26 all-branch verification and delivery ledger](phase-a/2026-10-26-zig-0.17-rollout.md) — historical 14/14 profile verification; branch handover and subsequent M1 acceptance are recorded separately.
 - [2026-10-25 Zig 0.17 probe and initial inventory](phase-a/2026-10-25-zig-0.17.md) — historical failed pre-migration probe, not an acceptance record.
 
 ## Allocator research

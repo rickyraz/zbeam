@@ -31,7 +31,10 @@ The current benchmark includes negative results. It does not establish a perform
 | Process-loss isolation | SIGKILL/nodedown tests with surviving OTP VM and local process |
 | Arena-backed ownership and io_uring | Not implemented; research only |
 
-[Implementation Status](docs/implementation-status.md) is the source of truth. The v0.5 specification describes a broader design, not shipped behavior.
+[Implementation Status](docs/implementation-status.md) is the source of truth.
+[Bounded M1 acceptance](docs/evidence/phase-b/2026-10-26-m1-integration.md) is complete
+on master; task-owning M2 and production release gates remain open. The v0.5
+specification describes a broader design, not shipped behavior.
 
 ## Build and verify
 
