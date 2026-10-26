@@ -60,7 +60,10 @@ service requires a bounded configured name pool or stable-name cleanup barrier.
 Otherwise repeated dynamic node atoms can accumulate in the BEAM VM. The native
 worker and connection monitor table themselves do not grow with restart count.
 The owner assumes exclusive use of its peer connection and disconnects it on
-retirement. It does not provide a native supervision tree or a job queue.
+retirement. Cleanup closes the Port directly and tolerates an already-closed
+Port only after confirming it is gone; checking `Port.info` before close is not
+a lifetime guarantee. Invalid arguments and other live-Port errors still fail.
+It does not provide a native supervision tree or a job queue.
 
 ## Verification and deployment boundary
 
@@ -76,7 +79,10 @@ test, and a panic is not memory-corruption isolation.
 The recorded owner example runs on Elixir 1.20.4 / OTP 29; native distribution
 behavior separately passes pinned OTP 25/26/27. This does not claim that this
 Elixir build runs on those older VMs. Full records and exact commands are in
-[M1 verification](evidence/phase-c/2026-10-25-m1.md).
+[M1 verification](evidence/phase-c/2026-10-25-m1.md). The
+[cleanup-race follow-up](evidence/phase-b/2026-10-26-m1-port-cleanup.md) adds an
+open/closed/invalid-Port regression: the current target executes 13 ordinary
+cases plus the complementary private-EPMD case, 14 cases per optimizer mode.
 
 Cookies appear in process arguments in this local example; distribution is not
 TLS. Secret delivery, cgroup/service-manager containment, supported Elixir/OTP

@@ -2,10 +2,10 @@
 
 - **MVP baseline:** 2026-09-26; reliability and SHA-256 worker extensions verified 2026-09-28
 - **Compiler migration:** Zig 0.17.0 verified 2026-10-25; M1 runtime scope unchanged
-- **All-branch verification:** [14/14 profiles](evidence/phase-a/2026-10-26-zig-0.17-rollout.md) verified and archived; [consolidation executed](evidence/phase-a/2026-10-26-branch-consolidation.md), 28 to 11 local/remote names. Compiler PR #2 is merged; M1 and nine protected research branches remain separate.
+- **All-branch verification:** [14/14 profiles](evidence/phase-a/2026-10-26-zig-0.17-rollout.md) verified and archived; [consolidation executed](evidence/phase-a/2026-10-26-branch-consolidation.md), 28 to 11 local/remote names. Compiler PR #2 and M1 PR #3 are merged; nine protected research topics remain independent.
 - **Package version:** 0.0.1 pre-alpha (no release tag created)
 - **Implemented milestone:** restricted MVP plus the bounded monitorable-worker M1 development profile
-- **Acceptance candidate — 2026-10-26:** master merged normally at `664fc81`; EPMD launcher barrier at `e3cf4d2`; [local merge-result gates passed](evidence/phase-b/2026-10-26-m1-acceptance.md). [Current PR checks and explicit size-exception approval](m1-review.md) remain required; M1 is not yet accepted into master.
+- **Integration verification — 2026-10-26:** owner approved `size:exception`; PR #3 merged normally as `2241e7f`. Actual master passed local core/labs 91/91 per mode and all six OTP/mode combinations, but merge CI failed the private-EPMD cleanup race. The [focused repair and regression](evidence/phase-b/2026-10-26-m1-port-cleanup.md) retain that failure; current all-lane acceptance remains required.
 - **Broader design target:** v0.5.0 draft, not a release description
 - **Proposed next phases:** [development plan](development-plan.md); planning does not change this implementation inventory
 
