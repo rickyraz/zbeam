@@ -22,14 +22,16 @@ jobs:
       - run: zig build test-labs
       - run: zig build test-labs -Doptimize=safe
       - run: sh scripts/test/build_args_smoke.sh
+      - run: python3 tests/integration/epmd_startup_test.py
       - run: for script in scripts/interop/*.sh scripts/bench_port_vs_zbeam.sh; do sh -n "$script"; done
 
   otp-interop:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
         otp: ["25", "26", "27"]
+        optimize: ["debug", "safe"]
     steps:
       - uses: actions/checkout@v4
       - uses: mlugg/setup-zig@v2
@@ -38,10 +40,29 @@ jobs:
       - uses: erlef/setup-beam@v1
         with:
           otp-version: ${{ matrix.otp }}
-      - run: zig build
-      - name: Verify OTP ${{ matrix.otp }} MVP contracts
+      - run: python3 tests/integration/epmd_startup_test.py
+      - run: zig build -Doptimize=${{ matrix.optimize }}
+      - name: Verify OTP ${{ matrix.otp }} worker and MVP contracts
         run: |
           export OTP_ERL_${{ matrix.otp }}="$(command -v erl)"
           export OTP_VERSIONS="${{ matrix.otp }}"
           export ZBEAM_REQUIRE_ALL_OTP=1
-          zig build test-interop
+          zig build test-interop -Doptimize=${{ matrix.optimize }}
+
+  worker-recovery:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        optimize: ["debug", "safe"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.17.0
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "29"
+          elixir-version: "1.20.4"
+      - name: Verify guarded external owner and no-replay recovery
+        run: zig build test-worker-recovery -Doptimize=${{ matrix.optimize }}

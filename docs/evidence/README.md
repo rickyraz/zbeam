@@ -6,8 +6,26 @@ Evidence records support implementation and compatibility claims. Passing tests 
 
 - [2026-09-26 protocol and OTP matrix](phase-b/2026-09-26-mvp.md)
 - [2026-09-26 runtime, backpressure and Port baseline](phase-c/2026-09-26-mvp-runtime.md)
+- [2026-09-28 handshake deadline](phase-b/2026-09-28-handshake-deadline.md)
+- [2026-09-28 frame/EPMD liveness](phase-c/2026-09-28-connection-liveness.md)
+- [2026-09-28 SHA-256 native worker](phase-c/2026-09-28-sha256-worker.md)
 
 These records supersede earlier pending-matrix/demand status for the restricted MVP. Historical files remain unchanged; the full v0.5 design is still unimplemented.
+
+## Monitorable native worker — M1
+
+- [2026-10-25 references and monitor wire evidence](phase-b/2026-10-25-m1.md)
+- [2026-10-25 worker lifecycle, OTP matrix and external recovery](phase-c/2026-10-25-m1.md)
+- [2026-10-26 fresh master integration, EPMD readiness triage and acceptance gates](phase-b/2026-10-26-m1-acceptance.md) — local gates passed; [PR review and explicit size-exception approval](../m1-review.md) remain required.
+- [2026-10-26 OTP 25 installer failure and supported CI runner pin](phase-b/2026-10-26-m1-ci-runner.md) — earlier run preserved; all six native OTP/mode lanes remain mandatory.
+
+These records cover the bounded development profile, not a general actor
+scheduler or production release.
+
+## Compiler migration
+
+- [2026-10-26 all-branch verification and delivery ledger](phase-a/2026-10-26-zig-0.17-rollout.md) — historical 14/14 profile verification; later branch handover is recorded below, while M1 feature integration remains pending.
+- [2026-10-25 Zig 0.17 probe and initial inventory](phase-a/2026-10-25-zig-0.17.md) — historical failed pre-migration probe, not an acceptance record.
 
 ## Allocator research
 

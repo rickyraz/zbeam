@@ -11,11 +11,28 @@ pub const Pid = struct {
     serial: u32,
     creation: u32,
 
+    pub fn eql(self: Pid, other: Pid) bool {
+        return self.id == other.id and self.serial == other.serial and self.creation == other.creation and std.mem.eql(u8, self.node, other.node);
+    }
+
     /// Releases the owned node atom and poisons the value so accidental reuse
     /// fails early in debug builds rather than becoming a silent use-after-free.
     pub fn deinit(self: *Pid, allocator: std.mem.Allocator) void {
         allocator.free(self.node);
         self.* = undefined;
+    }
+};
+
+/// Reference IDs are opaque words; the fixed five-word bound is DFLAG_V4_NC.
+pub const Reference = struct {
+    node: []const u8,
+    creation: u32,
+    ids: [5]u32 = @splat(0),
+    len: u8,
+
+    pub fn eql(self: Reference, other: Reference) bool {
+        return self.creation == other.creation and self.len == other.len and
+            std.mem.eql(u8, self.node, other.node) and std.mem.eql(u32, self.ids[0..self.len], other.ids[0..other.len]);
     }
 };
 
@@ -30,6 +47,7 @@ pub const Term = union(enum) {
     tuple: []Term,
     list: []Term,
     pid: Pid,
+    reference: Reference,
     nil,
 
     /// Releases a term returned by `decode`. Manually constructed terms must
@@ -43,6 +61,7 @@ pub const Term = union(enum) {
                 allocator.free(items);
             },
             .pid => |*pid| pid.deinit(allocator),
+            .reference => |reference| allocator.free(reference.node),
             .integer, .nil => {},
         }
         self.* = undefined;

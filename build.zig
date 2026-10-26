@@ -159,6 +159,22 @@ pub fn build(b: *std.Build) void {
     docker_interop_cmd.step.dependOn(b.getInstallStep());
     docker_interop_step.dependOn(&docker_interop_cmd.step);
 
+    const fault_worker = b.addExecutable(.{
+        .name = "zbeam-test-fault-worker",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/interop/fault_worker.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{.{ .name = "zbeam", .module = lib_mod }},
+        }),
+    });
+    const recovery_step = b.step("test-worker-recovery", "Run Linux Elixir owner, guardian and test-only worker faults");
+    const recovery_cmd = b.addSystemCommand(&.{"sh"});
+    recovery_cmd.addFileArg(b.path("scripts/interop/worker_recovery.sh"));
+    recovery_cmd.addArtifactArg(exe);
+    recovery_cmd.addArtifactArg(fault_worker);
+    recovery_step.dependOn(&recovery_cmd.step);
+
     const benchmark_step = b.step("bench-port-vs-zbeam", "Run local Erlang Port comparison");
     const benchmark_cmd = b.addSystemCommand(&.{"sh"});
     benchmark_cmd.addFileArg(b.path("scripts/bench_port_vs_zbeam.sh"));

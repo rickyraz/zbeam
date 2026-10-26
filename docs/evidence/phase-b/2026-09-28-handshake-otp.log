@@ -1,0 +1,27 @@
+OTP 25 image: erlang@sha256:d838e3fd8b61d29f60be47e826253d97e5758a22cbf070b9686365fa8b498106
+OTP 26 image: erlang@sha256:cb3039645b89c9fbae3beb608e55cd06df131328d608a1e51beb2bce8ef3a2d3
+OTP 27 image: erlang@sha256:f64e891340b38f89adc33e63be00eb027bffa84481f230f981422707efe3fa5e
+RUN otp25 with OTP 25
+ISOLATION_READY
+PASS acceptor roundtrips idle-ticks cookie-rejection reconnect malformed-payload process-loss-isolation
+probe PASS otp_echo_otp25_621129@127.0.0.1
+PASS otp25 OTP 25: initiating and accepting roles
+RUN otp26 with OTP 26
+ISOLATION_READY
+PASS acceptor roundtrips idle-ticks cookie-rejection reconnect malformed-payload process-loss-isolation
+probe PASS otp_echo_otp26_621811@127.0.0.1
+PASS otp26 OTP 26: initiating and accepting roles
+RUN otp27 with OTP 27
+ISOLATION_READY
+PASS acceptor roundtrips idle-ticks cookie-rejection reconnect malformed-payload process-loss-isolation
+probe PASS otp_echo_otp27_622490@127.0.0.1
+PASS otp27 OTP 27: initiating and accepting roles
+Target entries passed: 3; missing: 0
+Build Summary: 7/7 steps succeeded
+test-interop-docker success
++- run sh success 36s
+   +- install success
+      +- install zbeam success
+      |  +- compile exe zbeam ReleaseSafe native cached 21ms MaxRSS:40M
+      +- install zbeam-port-echo cached
+         +- compile exe zbeam-port-echo ReleaseSafe native cached 20ms MaxRSS:40M

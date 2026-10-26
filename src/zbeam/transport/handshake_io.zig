@@ -1,5 +1,6 @@
 const std = @import("std");
 const handshake = @import("zbeam-protocol").handshake;
+const deadline = @import("deadline.zig");
 
 pub const Config = struct {
     node_name: []const u8,
@@ -8,6 +9,8 @@ pub const Config = struct {
     creation: u32,
     challenge: u32,
     max_packet_size: u16 = handshake.max_packet_size,
+    /// Entire exchange, not a fresh budget for each handshake frame.
+    timeout: ?std.Io.Duration = null,
 };
 
 pub const Peer = struct {
@@ -26,6 +29,10 @@ pub const Peer = struct {
 /// Protocol encoding stays in `handshake.zig`; this function owns ordering,
 /// buffering, flushes, and transfer of the decoded peer identity.
 pub fn initiate(stream: std.Io.net.Stream, io: std.Io, allocator: std.mem.Allocator, config: Config) !Peer {
+    return deadline.run(io, allocator, config.timeout, initiateImpl, .{ stream, io, allocator, config }, dropPeer);
+}
+
+fn initiateImpl(stream: std.Io.net.Stream, io: std.Io, allocator: std.mem.Allocator, config: Config) !Peer {
     var writer_buffer: [2048]u8 = undefined;
     // Never read ahead into distribution bytes: this reader ends at handoff.
     var stream_reader = stream.reader(io, &.{});
@@ -82,6 +89,15 @@ pub fn initiate(stream: std.Io.net.Stream, io: std.Io, allocator: std.mem.Alloca
 /// verify the cookie proof, then prove knowledge of the cookie in return.
 /// A `Peer` is returned only after every FSM transition succeeds.
 pub fn accept(stream: std.Io.net.Stream, io: std.Io, allocator: std.mem.Allocator, config: Config) !Peer {
+    return deadline.run(io, allocator, config.timeout, acceptImpl, .{ stream, io, allocator, config }, dropPeer);
+}
+
+fn dropPeer(peer: Peer, allocator: std.mem.Allocator) void {
+    var owned = peer;
+    owned.deinit(allocator);
+}
+
+fn acceptImpl(stream: std.Io.net.Stream, io: std.Io, allocator: std.mem.Allocator, config: Config) !Peer {
     var writer_buffer: [2048]u8 = undefined;
     // The next frame can arrive in the same TCP read as CHALLENGE_REPLY.
     var stream_reader = stream.reader(io, &.{});

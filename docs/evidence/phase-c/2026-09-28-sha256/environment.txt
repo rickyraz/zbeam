@@ -1,0 +1,14 @@
+2026-09-28T11:12:29+07:00
+Linux rickyraz 6.6.114.1-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Mon Dec  1 20:46:23 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux
+0.16.0
+OTP=28
+Erlang/OTP 28 [erts-16.3] [source] [64-bit] [smp:4:4] [ds:4:4:10] [async-threads:1] [jit:ns]
+
+Elixir 1.19.5 (compiled with Erlang/OTP 28)
+44e077de63b1a35f9dc1e1cbb51c0ae61ee1f6f8b140e70fe17467973bc34fc2  zig-out/bin/zbeam
+b85c4f294d0deb71bc4a478df2a1f157846caa871f1e6ac37d349e78f5633985  zig-out/bin/zbeam-port-echo
+33ffa1eb821161d11dfcd5ba0dab20c4b69097e43cd5da797fe7d0eade122d03  src/zbeam/runtime/sha256.zig
+18f29a12ad8c136cc442146e397266257a509c8b68c8752794c159494fd89868  src/zbeam/runtime/node.zig
+59c7b30d0fa776b7fce8673387db3592f9886255fcee7f09f700b924833adbd4  benchmarks/port_echo.zig
+54f669dc31eb73dbac5503f375ca340e4c2367010c5ad362c7d97c6a41584721  benchmarks/port_vs_zbeam.exs
+efdf3620999ab2173a0e2a7abe55d596f723c1247db0ac3698d11e51dd9b32fb  scripts/bench_port_vs_zbeam.sh

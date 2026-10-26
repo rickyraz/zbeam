@@ -4,6 +4,8 @@ const etf = @import("zbeam-etf");
 const protocol = @import("zbeam-protocol");
 const transport = @import("zbeam-transport");
 const Echo = @import("echo.zig").Echo;
+const Sha256 = @import("sha256.zig").Sha256;
+const worker_service = @import("worker.zig");
 
 pub const Config = struct {
     node_name: []const u8,
@@ -12,23 +14,40 @@ pub const Config = struct {
     /// Deterministic override for tests only. Otherwise fresh per connection.
     challenge: ?u32 = null,
     registered_name: []const u8 = "echo",
+    service: enum { echo, sha256, worker } = .echo,
     flags: u64 = protocol.flags.m1,
     limits: protocol.distribution.Limits = .{},
     max_messages: usize = 1,
     /// One preserves the one-shot API; zero serves sequential peers until canceled.
     max_connections: usize = 1,
+    /// One total budget per handshake; null is an explicit unbounded override.
+    handshake_timeout: ?std.Io.Duration = .fromSeconds(5),
+    /// Idle or incomplete frame; permit ordinary OTP tick intervals.
+    frame_timeout: ?std.Io.Duration = .fromSeconds(90),
+    /// Limits blocked replies without preempting CPU-bound handlers.
+    write_timeout: ?std.Io.Duration = .fromSeconds(5),
 };
 
 /// One synchronous actor, one active peer, no prefetch and no detached tasks.
 /// A connection owns its demand, reader and packet lifetimes. Reconnect starts
 /// empty; the EPMD registration (and therefore creation) belongs to the caller.
 pub fn serve(io: std.Io, allocator: std.mem.Allocator, server: *std.Io.net.Server, config: Config) !void {
+    var worker: ?worker_service.Worker = null;
+    if (config.service == .worker) {
+        var identity: [8]u8 = undefined;
+        io.random(&identity);
+        worker = .{ .pid = .{ .node = config.node_name, .creation = config.creation, .id = @bitCast(identity[0..4].*), .serial = @bitCast(identity[4..8].*) } };
+        try worker.?.start();
+    }
     var accepted: usize = 0;
     while (config.max_connections == 0 or accepted < config.max_connections) {
         const stream = try server.accept(io);
         defer stream.close(io);
         if (config.max_connections != 0) accepted += 1;
-        serveConnection(io, allocator, stream, config) catch |err| {
+        (if (worker) |*state|
+            serveWorkerConnection(io, allocator, stream, config, state)
+        else
+            serveConnection(io, allocator, stream, config)) catch |err| {
             // Recover only at the connection boundary; resource exhaustion and
             // cancellation remain visible to the caller/supervisor.
             if (err == error.EndOfStream) continue;
@@ -50,6 +69,7 @@ pub fn probe(io: std.Io, allocator: std.mem.Allocator, stream: std.Io.net.Stream
         .creation = config.creation,
         .flags = config.flags,
         .challenge = config.challenge orelse @bitCast(random),
+        .timeout = config.handshake_timeout,
     });
     defer peer.deinit(allocator);
     if (!std.mem.eql(u8, peer.node_name, expected_peer)) return error.UnexpectedPeer;
@@ -61,16 +81,16 @@ pub fn probe(io: std.Io, allocator: std.mem.Allocator, stream: std.Io.net.Stream
     const request = try protocol.distribution.encodePacket(allocator, &control, &payload);
     defer allocator.free(request);
     var writer = stream.writer(io, &.{});
-    try transport.distribution_io.writePacket(&writer.interface, request);
+    try transport.deadline.run(io, allocator, config.write_timeout, transport.distribution_io.writePacket, .{ &writer.interface, request }, transport.deadline.dropVoid);
     var reader = stream.reader(io, &.{});
     var demand = actor.Demand.init(1);
     while (true) {
-        const bytes = transport.distribution_io.readDemandedPacket(allocator, &reader.interface, config.limits.max_packet_bytes, &demand) catch |err| return reader.err orelse err;
+        const bytes = transport.deadline.run(io, allocator, config.frame_timeout, transport.distribution_io.readDemandedPacket, .{ allocator, &reader.interface, config.limits.max_packet_bytes, &demand }, dropPacket) catch |err| return actualIoError(err, reader.err);
         defer allocator.free(bytes);
         var packet = try protocol.distribution.decodePacket(allocator, bytes, config.limits);
         defer packet.deinit(allocator);
         if (packet == .tick) {
-            try transport.distribution_io.writePacket(&writer.interface, bytes);
+            try transport.deadline.run(io, allocator, config.write_timeout, transport.distribution_io.writePacket, .{ &writer.interface, bytes }, transport.deadline.dropVoid);
             try demand.grant(1);
             continue;
         }
@@ -99,17 +119,53 @@ pub fn probe(io: std.Io, allocator: std.mem.Allocator, stream: std.Io.net.Stream
 }
 
 pub fn serveConnection(io: std.Io, allocator: std.mem.Allocator, stream: std.Io.net.Stream, config: Config) !void {
+    if (config.service == .worker) return error.WorkerRequiresService;
+    var peer = try acceptPeer(io, allocator, stream, config);
+    defer peer.deinit(allocator);
+    if (config.service == .sha256)
+        try dispatch(io, allocator, stream, config, Sha256{ .limits = config.limits })
+    else
+        try dispatch(io, allocator, stream, config, Echo{ .registered_name = config.registered_name, .limits = config.limits });
+}
+
+fn acceptPeer(io: std.Io, allocator: std.mem.Allocator, stream: std.Io.net.Stream, config: Config) !transport.handshake_io.Peer {
     var challenge_bytes: [4]u8 = undefined;
     io.random(&challenge_bytes);
-    var peer = try transport.handshake_io.accept(stream, io, allocator, .{
+    return transport.handshake_io.accept(stream, io, allocator, .{
         .node_name = config.node_name,
         .cookie = config.cookie,
-        .flags = config.flags,
+        .flags = config.flags | (if (config.service == .worker) worker_service.monitor_flags else @as(u64, 0)),
         .creation = config.creation,
         .challenge = config.challenge orelse @bitCast(challenge_bytes),
+        .timeout = config.handshake_timeout,
     });
+}
+
+fn serveWorkerConnection(io: std.Io, allocator: std.mem.Allocator, stream: std.Io.net.Stream, config: Config, worker: *worker_service.Worker) !void {
+    var peer = try acceptPeer(io, allocator, stream, config);
     defer peer.deinit(allocator);
-    try dispatch(io, allocator, stream, config, Echo{ .registered_name = config.registered_name, .limits = config.limits });
+    defer worker.clearMonitors();
+    var reader = stream.reader(io, &.{});
+    var writer = stream.writer(io, &.{});
+    var demand = actor.Demand.init(1);
+    var count: usize = 0;
+    while (config.max_messages == 0 or count < config.max_messages) {
+        const bytes = transport.deadline.run(io, allocator, config.frame_timeout, transport.distribution_io.readDemandedPacket, .{ allocator, &reader.interface, worker_service.limits.max_packet_bytes, &demand }, dropPacket) catch |err|
+            return actualIoError(err, reader.err);
+        defer allocator.free(bytes);
+        transport.deadline.run(io, allocator, config.write_timeout, worker_service.Worker.handle, .{ worker, allocator, bytes, &peer, &writer.interface }, transport.deadline.dropVoid) catch |err|
+            return actualIoError(err, writer.err);
+        try demand.grant(1);
+        if (bytes.len != 4) count += 1;
+    }
+}
+
+fn actualIoError(err: anyerror, cause: ?anyerror) anyerror {
+    return if (err == error.ReadFailed or err == error.WriteFailed) cause orelse err else err;
+}
+
+fn dropPacket(bytes: []u8, allocator: std.mem.Allocator) void {
+    allocator.free(bytes);
 }
 
 /// Runs an authenticated connection. The handler borrows one packet only for
@@ -124,12 +180,12 @@ pub fn dispatch(io: std.Io, allocator: std.mem.Allocator, stream: std.Io.net.Str
     var demand = actor.Demand.init(1);
     var handled: usize = 0;
     while (config.max_messages == 0 or handled < config.max_messages) {
-        const packet = transport.distribution_io.readDemandedPacket(allocator, &reader.interface, config.limits.max_packet_bytes, &demand) catch |err|
-            return reader.err orelse err;
+        const packet = transport.deadline.run(io, allocator, config.frame_timeout, transport.distribution_io.readDemandedPacket, .{ allocator, &reader.interface, config.limits.max_packet_bytes, &demand }, dropPacket) catch |err|
+            return actualIoError(err, reader.err);
         defer allocator.free(packet);
         if (try handler.handle(allocator, packet)) |response| {
             defer allocator.free(response);
-            transport.distribution_io.writePacket(&writer.interface, response) catch |err| return writer.err orelse err;
+            transport.deadline.run(io, allocator, config.write_timeout, transport.distribution_io.writePacket, .{ &writer.interface, response }, transport.deadline.dropVoid) catch |err| return actualIoError(err, writer.err);
             if (packet.len != 4 and config.max_messages != 0) handled += 1;
         }
         try demand.grant(1);

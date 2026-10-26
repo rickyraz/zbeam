@@ -4,14 +4,25 @@
 
 The [development plan](development-plan.md) defines execution order and final release gates. The [snmalloc evaluation](snmalloc-evaluation.md) specifies the allocator experiment without changing the default build.
 
-## Compiler migration boundary — 2026-10-25
+## Compiler migration boundary — 2026-10-26
 
-The canonical MVP build is verified on Zig 0.17.0, including existing labs and
-OTP 25/26/27; this does not validate every research branch. Zigler 0.16.0 NIF
-sources, custom allocator vtables and arena lifetime tests require their own
-migration gates. Current `std.process.Init.gpa` in debug/safe selects
-`SafeAllocator`; historical 0.16 DebugAllocator measurements must not be reused
-as 0.17 allocator or performance evidence. [Verification](evidence/phase-a/2026-10-25-zig-0.17-master.md).
+[All 14 migration candidates](evidence/phase-a/2026-10-26-zig-0.17-rollout.md)
+passed their own native, OTP, eligible-NIF and allocator/lifetime gates. The
+[authorized handover](evidence/phase-a/2026-10-26-branch-consolidation.md) merged
+compiler PR #2 and retained eleven local/remote branches: M1 and all nine research
+topics remain separate from master. Exact archives and ignored assets are
+preserved; no other live Pi checkout was switched. Zigler requires an unreleased exact
+Git pin; threaded NIF teardown remains quarantined. Explicit DebugAllocator is
+still supported but deprecated, separate from startup's SafeAllocator in
+0.17 debug/safe even with libc. Historical 0.16 results are not new-compiler
+allocator/performance evidence. Production, long-soak and non-Linux gates remain
+open. Actual compiler PR/merge and handover CI were observed; current tip checks
+remain necessary. [M1 acceptance triage](evidence/phase-b/2026-10-26-m1-acceptance.md)
+reproduces a source-supported EPMD daemon-exit/readiness race and closes that
+launcher gap, including forced probe cleanup. The original runner's exact trace
+remains unavailable; no native retry or historical-cause certainty is claimed.
+Current local merge-result gates pass; [PR checks and size-exception approval](m1-review.md)
+remain integration gates, separate from all nine research topics.
 
 ## Priority labels
 
@@ -35,11 +46,20 @@ Completion is deliberately limited to the MVP scope. It does not close the broad
 
 ### Transport deadlines and liveness diagnostics
 
-**Risk:** the service accepts one peer at a time. An incomplete handshake/frame, blocked writer or nonreturning handler can occupy it indefinitely. Zero demand also pauses heartbeat processing. EPMD socket loss is not actively detected.
+**Current boundary (2026-09-28):** the runtime has a five-second total handshake budget; partial NAME/REPLY and silent initiating peers expire and the next peer succeeds. Direct transport callers may set their own budget; `null` remains an explicit unbounded override. [Verification](evidence/phase-b/2026-09-28-handshake-deadline.md).
 
-**Required evidence:** bounded handshake/read/write deadlines using `std.Io` cancellation, stalled-handler diagnostics with no fabricated demand, tests for cancellation in every wait state, and an explicit policy for EPMD loss. Preserve the zero-read invariant rather than introducing a heartbeat-prefetch exception.
+**Current boundary (2026-09-28):** the runtime now bounds one frame read to 90 seconds and one reply write to five seconds; a synthetic registration-socket loss makes the executable stop rather than serve an undiscoverable node. The [connection-liveness record](evidence/phase-c/2026-09-28-connection-liveness.md) covers partial-frame recovery, blocked writer cleanup, real OTP and synthetic EPMD loss. Neither timer reads without demand or safely preempts arbitrary handler code.
+
+**Risk:** one nonreturning handler still monopolizes the peer. Demand pauses ticks and may prompt a BEAM-side disconnect. The 90-second idle/partial-frame timeout does not distinguish slowloris data from a silent peer, and the CLI fail-stops on EPMD loss rather than re-registering.
+
+**Required evidence:** stalled-handler diagnostics, separate idle/partial deadlines and externally observed tick policy, controlled error/OOM during each wait, EPMD restart and re-registration policy. Preserve the zero-read invariant instead of introducing heartbeat-prefetch.
 
 ### Mandatory ETF capability coverage
+
+**Additive boundary (2026-10-25):** bounded newer/legacy references and pure
+PID-monitor controls have tests and OTP 25/26/27 reference vectors. Optional
+monitor flags remain disabled at this codec-only stage. Other mandatory tag
+coverage remains unresolved; reference support is not general ETF conformance.
 
 **Risk:** modern OTP requires baseline handshake flags for encodings beyond the MVP decoder. The profile rejects unsupported matching payloads and is not a general-compatible node.
 
@@ -63,6 +83,21 @@ A real TCP sender is stopped during a paused handler and completes after progres
 
 ### Reconnect and incarnation expansion
 
+**Worker identity risk (2026-10-25):** `serve-worker` retains one PID across TCP
+reconnect and never reuses it within that service. Across process replacement,
+EPMD creation and a randomized 64-bit ID/serial provide practical separation,
+not persistent absolute uniqueness if EPMD state is lost/reused. No persistent
+identity allocator or general in-process actor replacement is implemented.
+
+**External deployment boundary (2026-10-25):** the Linux monitored-owner example
+verifies Port/owner/VM cleanup and bounded work admission, not arbitrary forking
+process trees, TLS or secret delivery. Its finite run uses fresh node names;
+indefinite deployments require bounded atom/name allocation or a stable-name
+cleanup barrier. Owner checks currently use Elixir 1.20.4/OTP 29 separately from
+wire checks on OTP 25/26/27. Production Elixir/OTP pairings remain to be verified.
+OS OOM and memory corruption are not covered by deterministic allocator-failure
+and panic fixtures; noncooperative CPU work still requires external termination.
+
 Current behavior discards all per-connection packets/demand and generates a fresh challenge on sequential reconnect. The running node retains its EPMD creation; restarted nodes register anew. There is no outbound backoff or replay.
 
 **Required evidence:** restart/creation changes, stale PID handling, simultaneous connections, interrupted outbound requests, and fragment/cache cleanup if those features are introduced. Never carry old demand or partially decoded state into a new connection.
@@ -83,7 +118,9 @@ SIGKILL process-loss checks pass with a surviving BEAM VM and unrelated local pr
 
 The committed Port comparison is a single sequential payload/workload on one host, with scheduler-wall-time instrumentation and memory snapshots. The source audit identifies `DebugAllocator` in the no-libc ReleaseSafe zbeam build; the Port payload path uses fixed storage. These results do not isolate allocator cost. Restart includes orderly shutdown, launch, readiness polling and first reply; it is one sample, not a distribution or crash-recovery SLO.
 
-**Required evidence:** larger payloads, concurrent clients, repetitions/confidence intervals, ordering effects, allocator profiles, loaded BEAM workloads and operational restart policies. Production work also requires non-argv cookie handling, TLS/trusted-network policy and security review.
+**Current additional evidence (2026-09-28):** a fixed SHA-256 binary worker has exact OTP 25/26/27 checks, a runnable BEAM client and repeated 32 B/64 KiB Port comparisons. The [SHA-256 record](evidence/phase-c/2026-09-28-sha256-worker.md) retains its negative distribution-latency result. This is one useful computation, not general process/monitor support or a worker-supervision framework.
+
+**Required evidence:** concurrent clients, more useful workload mixtures, confidence intervals, randomized path ordering, allocator/CPU profiles, loaded BEAM workloads and operational restart policies. Production work also requires non-argv cookie handling, TLS/trusted-network policy and security review.
 
 ## P1 — Ownership design before implementation
 

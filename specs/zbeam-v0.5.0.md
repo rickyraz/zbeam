@@ -4,7 +4,7 @@
 > **Design target, not implementation status.** The repository implements a restricted single-actor MVP, not the full design below. Pseudocode and statements such as “implemented” or “conformance-tested” describe proposals relative to earlier drafts; they are not current-code or safety proofs. See [`docs/implementation-status.md`](../docs/implementation-status.md).
 
 **Document Status**: Working Draft / Broader Design Target
-**MVP contract update**: 2026-09-26 — [`docs/mvp.md`](../docs/mvp.md) specifies the implemented subset, limits, lifecycle and verification gates. It takes precedence over historical pseudocode for current API behavior. The node uses owned copies, unbuffered demand-gated reads and sequential peers; it has no arena, `BufferHandle`, actor task scheduler or process-link/monitor implementation.
+**MVP contract update**: 2026-09-26 — [`docs/mvp.md`](../docs/mvp.md) specifies the implemented subset, limits, lifecycle and verification gates. It takes precedence over historical pseudocode for current API behavior. The node uses owned copies, unbuffered demand-gated reads and sequential peers; it has no arena, `BufferHandle`, actor task scheduler or process-link implementation. PID/named monitors exist only in the separately selected M1 worker profile; see the [acceptance review](../docs/m1-review.md).
 **Compiler update (2026-10-25):** the implemented subset now targets Zig 0.17.0 with `std.Io`; optimized safety-check commands use `-Doptimize=safe`. The historical 0.16 design pseudocode below is not automatically a compiling 0.17 API. No wire, demand, ownership or scheduling contract is broadened by this compiler migration.
 **Version**: 0.5.0-draft
 **Date**: 2026-07-11
@@ -115,6 +115,16 @@ The transport/protocol prior-art analysis is unchanged from v0.4.0. The atomic-C
 ## 5. Module Specifications
 
 ### 5.3 ETF — External Term Format
+
+**Additive implementation boundary (2026-10-25):** owned NEWER_REFERENCE_EXT
+(1–5 opaque words) and validated legacy NEW_REFERENCE_EXT (1–3 words) are
+implemented and canonicalize to the newer encoding. Pure PID-monitor control
+parsing alone does not enable a runtime monitor capability. The additive
+`serve-worker` profile now implements PID and named monitor controls together;
+OTP requires both flags before sending process-monitor signals. Named discovery
+monitoring outlives worker stop; the shared table is bounded at 64 per connection. The
+[wire evidence](../docs/evidence/phase-b/2026-10-25-m1.md) records OTP vectors;
+other missing ETF tags remain outside the restricted profile.
 
 #### 5.3.1 BufferHandle — Atomic Consumed State (rewritten)
 
@@ -537,7 +547,19 @@ fn myTerminalActor(io: std.Io, ctx: ActorContext) !void {
 
 ## 6. NodeConfig & Public API
 
-The current API is `runtime.node.Config` (`src/zbeam/runtime/node.zig`), not the proposed struct below. Its frame/ETF limits, message bound and sequential-connection bound are documented in [`docs/mvp.md`](../docs/mvp.md). The current `Runtime(T).spawn` registers caller-owned mailbox storage and does not schedule tasks. Tokens enforce logical ownership and reject overlapping receives, not unforgeable task identity.
+**Additive identity profile (2026-10-25):** `serve-worker` provides a single
+service-owned native PID, correlated discovery/hash requests and normal worker
+stop without node exit. It preserves the previous service contracts and does
+not turn the local registry into a scheduler. Ownership and incarnation limits
+are defined in [ADR 0002](../docs/adr/0002-monitorable-worker-lifecycle.md), with
+the monitor-capability correction in [ADR 0003](../docs/adr/0003-pid-and-named-monitor-capabilities.md);
+[verification](../docs/evidence/phase-c/2026-10-25-m1.md) is separate from the
+broader API proposal below. The [external Linux owner example](../docs/worker-recovery.md)
+adds PID discovery/monitoring, one-slot admission, explicit failure without replay,
+bounded restart policy and owner/VM-crash child cleanup. This is a development
+profile with separately documented OS, Elixir/OTP and deployment limits.
+
+The current API is `runtime.node.Config` (`src/zbeam/runtime/node.zig`), not the proposed struct below. It selects the original fixed echo/`sha256` service or the separately documented PID-addressed M1 worker with bounded PID/named monitoring. Hash work accepts a bounded ETF binary and returns its 32-byte digest; this is not a general actor scheduler, link implementation or arbitrary RPC. [Executed OTP and performance evidence](../docs/evidence/phase-c/2026-09-28-sha256-worker.md). Its frame/ETF limits, message bound and sequential-connection bound are documented in [`docs/mvp.md`](../docs/mvp.md). The current `Runtime(T).spawn` registers caller-owned mailbox storage and does not schedule tasks. Tokens enforce logical ownership and reject overlapping receives, not unforgeable task identity.
 
 ```zig
 pub const NodeConfig = struct {
@@ -580,7 +602,7 @@ pub const NodeConfig = struct {
 
 ## 7. Node Lifecycle
 
-The MVP listener retains its EPMD registration across sequential peer connections. Each connection gets fresh handshake challenge, demand and packet ownership; none of that state is retained after disconnect. Invalid peer input closes the connection; cancellation/allocation failure propagates. There is no outbound retry/backoff, EPMD-loss recovery or read deadline. CLI `echo` accepts one peer, `serve` accepts sequential peers, and `probe` validates an initiating request/reply.
+The MVP listener retains its EPMD registration across sequential peer connections. Each connection gets fresh handshake challenge, demand and packet ownership; none of that state is retained after disconnect. Invalid peer input closes the connection; cancellation/allocation failure propagates. There is no outbound retry/backoff or EPMD re-registration. The runtime's initiating/accepting handshake has a five-second total budget; a frame read has a 90-second budget and a reply write five seconds. Direct transport callers may set an optional handshake budget. Timed I/O is canceled and joined before packet or stream teardown; no read occurs without a credit, and timeouts cannot interrupt arbitrary CPU-bound handlers. The executable fail-stops if the EPMD registration socket closes. The 90-second read budget combines idle and partial-frame time; heartbeat during zero-demand pauses remains unresolved. [Handshake evidence](../docs/evidence/phase-b/2026-09-28-handshake-deadline.md) and [liveness evidence](../docs/evidence/phase-c/2026-09-28-connection-liveness.md). CLI `echo` accepts one peer, `serve` accepts sequential peers, and `probe` validates an initiating request/reply.
 
 *(§7.1 startup sequence unchanged from v0.4.0, with one addition at step 5: `TransportArena.init()` now initializes every slot via `SlotRefCount.initFree()` rather than `SlotRefCount.init()` — the arena starts with zero owned slots, not `count` owned slots, correcting an implicit assumption in v0.3.0/v0.4.0 that was harmless only because nothing ever read an uninitialized slot's refcount before its first `acquireSlot()`.)*
 

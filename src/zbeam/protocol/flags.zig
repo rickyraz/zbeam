@@ -6,6 +6,7 @@
 pub const published: u64 = 0x0000_0001;
 pub const extended_references: u64 = 0x0000_0004;
 pub const dist_monitor: u64 = 0x0000_0008;
+pub const dist_monitor_name: u64 = 0x0000_0020;
 pub const fun_tags: u64 = 0x0000_0010;
 pub const new_fun_tags: u64 = 0x0000_0080;
 pub const extended_pids_ports: u64 = 0x0000_0100;

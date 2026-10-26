@@ -1,0 +1,4 @@
+# job=sha256; OTP 28; Elixir 1.19.5; schedulers_online=2
+implementation	iterations	payload_bytes	p50_ns	p95_ns	p99_ns	roundtrips_per_second	child_rss_kib	child_hwm_kib	beam_total_bytes	restart_ns	scheduler_busy_pct
+erlang_port	500	65536	367211	486661	636362	2531.6	2012	2012	55829616	4839845	10.34
+zbeam_distribution	500	65536	1609615	1902584	2272589	609.2	2720	2884	56128912	22829918	1.425

@@ -74,6 +74,22 @@ test "REG_SEND requires the legacy cookie atom and bounded ETF storage" {
     try std.testing.expectEqualStrings("echo", (try protocol.distribution.regSendDestination(&control)).name);
 }
 
+test "MONITOR_P pass-through bytes match the documented PID and reference layout" {
+    const pid = etf.Pid{ .node = "n@h", .id = 1, .serial = 0, .creation = 7 };
+    const reference = etf.Reference{ .node = "n@h", .creation = 7, .len = 1, .ids = .{ 1, 0, 0, 0, 0 } };
+    var fields = [_]etf.Term{ .{ .integer = 19 }, .{ .pid = pid }, .{ .pid = pid }, .{ .reference = reference } };
+    const bytes = try protocol.distribution.encodePacket(std.testing.allocator, &.{ .tuple = &fields }, null);
+    defer std.testing.allocator.free(bytes);
+    const pid_bytes = [_]u8{ 88, 119, 3, 'n', '@', 'h', 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 7 };
+    const reference_bytes = [_]u8{ 90, 0, 1, 119, 3, 'n', '@', 'h', 0, 0, 0, 7, 0, 0, 0, 1 };
+    const body = [_]u8{ 112, 131, 104, 4, 97, 19 } ++ pid_bytes ++ pid_bytes ++ reference_bytes;
+    const expected = [_]u8{ 0, 0, 0, body.len } ++ body;
+    try std.testing.expectEqualSlices(u8, &expected, bytes);
+    var decoded = try protocol.distribution.decodePacket(std.testing.allocator, &expected, .{});
+    defer decoded.deinit(std.testing.allocator);
+    try std.testing.expect(reference.eql((try protocol.monitor.parse(&decoded.message.control)).reference));
+}
+
 test "malformed handshake name length is rejected" {
     const truncated = [_]u8{
         'N',
