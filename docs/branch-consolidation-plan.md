@@ -77,9 +77,13 @@ never shrink tests/evidence to meet a review budget.
 
 Earlier M1 `64f6388` failed OTP 27 safe registration with `ConnectionRefused`.
 Later handover runs passed, including `f07df4d` on the retained feature name;
-the older failure remains undiagnosed, not silently marked fixed. M1 acceptance
-must triage it and require current core/labs debug/safe, native OTP 25/26/27 in
-both modes, guardian and all 13 complementary recovery cases per mode.
+[acceptance triage](evidence/phase-b/2026-10-26-m1-acceptance.md) now reproduces
+and prevents the EPMD launcher readiness race without claiming the old runner's
+exact trace. Master is integrated by ordinary merge `664fc81`; current local
+core/labs debug/safe, native OTP 25/26/27 in both modes, guardian and all 13
+complementary recovery cases per mode pass. [PR review/checks and an explicit
+size exception](m1-review.md) still gate M1-to-master integration; no research
+retirement follows from these results.
 
 Research promotion, production readiness, threaded-NIF safety and performance
 claims remain independent decisions. Branch protection changes and M1-to-master

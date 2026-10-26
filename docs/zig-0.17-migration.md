@@ -204,7 +204,11 @@ retirement or feature promotion accompanied the compiler merge.
 Refresh heads and verify the current merge result for any future promotion.
 Compiler PR/merge and M1 handover CI passed. Earlier M1 `64f6388` failed OTP 27
 safe registration; later green runs do not establish its root cause or corrective
-fix. Retain it for acceptance triage and require current checks.
+fix. The later [acceptance triage](evidence/phase-b/2026-10-26-m1-acceptance.md)
+reproduces and prevents the launcher startup-race class; the original runner's
+exact trace remains unavailable. Master is normally merged into M1 at `664fc81`,
+and current local merge-result gates pass. [Current PR checks and explicit
+size-exception approval](m1-review.md) still gate feature acceptance.
 Normal ancestry, not similar contents, determines whether a fast-forward is valid.
 Never reset, force-push or move a branch behind a live worktree.
 

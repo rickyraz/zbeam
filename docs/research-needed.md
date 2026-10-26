@@ -17,7 +17,12 @@ still supported but deprecated, separate from startup's SafeAllocator in
 0.17 debug/safe even with libc. Historical 0.16 results are not new-compiler
 allocator/performance evidence. Production, long-soak and non-Linux gates remain
 open. Actual compiler PR/merge and handover CI were observed; current tip checks
-remain necessary. Earlier M1 registration failure is retained as undiagnosed.
+remain necessary. [M1 acceptance triage](evidence/phase-b/2026-10-26-m1-acceptance.md)
+reproduces a source-supported EPMD daemon-exit/readiness race and closes that
+launcher gap, including forced probe cleanup. The original runner's exact trace
+remains unavailable; no native retry or historical-cause certainty is claimed.
+Current local merge-result gates pass; [PR checks and size-exception approval](m1-review.md)
+remain integration gates, separate from all nine research topics.
 
 ## Priority labels
 

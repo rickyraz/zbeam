@@ -2,6 +2,9 @@
 
 **Status:** local acceptance gates passed; PR/CI and review approval remain gates.
 This record covers the bounded M1 development profile, not production readiness.
+The first new push passed seven jobs but failed both OTP 25 installer lanes before
+tests; [runner triage and correction](2026-10-26-m1-ci-runner.md) retain that failure
+and pin interop to Ubuntu 24.04. A current all-lane pass remains mandatory.
 Master `3919341` was integrated by ordinary merge `664fc81`. The merge tree was
 byte-identical to its M1 parent: compiler/documentation changes had already been
 backported. Nine research topics remain separate; no scheduler/allocator feature

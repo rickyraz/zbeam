@@ -63,10 +63,13 @@ named discovery monitoring survives worker stop. The accepted lifecycle ADR
 records that extension rather than redefining flag semantics (superseding
 [ADR 0003](adr/0003-pid-and-named-monitor-capabilities.md)).
 
-The final live-remote audit found master at `497d346`, merging lab-contracts PR #1;
-local master remains `11c3319`. This branch has not silently merged that upstream
-change. The compiler rollout must start from refreshed remote master and verify
-its labs together with M1 when integrating the compiler commit.
+The historical pre-migration audit observed remote master `497d346` and stale
+local `11c3319`; neither is the current integration base. Compiler PR #2 and its
+evidence are on master `3919341`, now integrated into M1 by ordinary merge
+`664fc81`. [Current merge-result verification](evidence/phase-b/2026-10-26-m1-acceptance.md)
+passes locally in debug/safe, native OTP 25/26/27 and all complementary owner
+cases. [PR checks, work-unit review and explicit size-exception approval](m1-review.md)
+remain gates before M1-to-master integration. M2 has not started.
 
 ## Research inputs, not completed prerequisites
 
@@ -154,9 +157,11 @@ scheduler changes. M1 deliberately precedes D3's general concurrent runtime.
 
 ## Active implementation increments
 
-No increment is marked complete by this plan. Each implementation increment
-includes its tests, contract updates and evidence in the same reviewable work
-unit. Split codec, routing and monitor changes at independently verifiable
+W0–W5 implementation is complete in the current development profile; M1
+acceptance/integration remains gated separately. The increments below retain the
+requirements and review boundaries, not an unexecuted-task inventory. Each
+implementation increment includes its tests, contract updates and evidence in
+the same reviewable work unit. Split codec, routing and monitor changes at independently verifiable
 boundaries; do not bundle all research branches into one integration commit.
 
 ```text

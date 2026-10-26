@@ -4,7 +4,7 @@
 > **Design target, not implementation status.** The repository implements a restricted single-actor MVP, not the full design below. Pseudocode and statements such as “implemented” or “conformance-tested” describe proposals relative to earlier drafts; they are not current-code or safety proofs. See [`docs/implementation-status.md`](../docs/implementation-status.md).
 
 **Document Status**: Working Draft / Broader Design Target
-**MVP contract update**: 2026-09-26 — [`docs/mvp.md`](../docs/mvp.md) specifies the implemented subset, limits, lifecycle and verification gates. It takes precedence over historical pseudocode for current API behavior. The node uses owned copies, unbuffered demand-gated reads and sequential peers; it has no arena, `BufferHandle`, actor task scheduler or process-link/monitor implementation.
+**MVP contract update**: 2026-09-26 — [`docs/mvp.md`](../docs/mvp.md) specifies the implemented subset, limits, lifecycle and verification gates. It takes precedence over historical pseudocode for current API behavior. The node uses owned copies, unbuffered demand-gated reads and sequential peers; it has no arena, `BufferHandle`, actor task scheduler or process-link implementation. PID/named monitors exist only in the separately selected M1 worker profile; see the [acceptance review](../docs/m1-review.md).
 **Compiler update (2026-10-25):** the implemented subset now targets Zig 0.17.0 with `std.Io`; optimized safety-check commands use `-Doptimize=safe`. The historical 0.16 design pseudocode below is not automatically a compiling 0.17 API. No wire, demand, ownership or scheduling contract is broadened by this compiler migration.
 **Version**: 0.5.0-draft
 **Date**: 2026-07-11
@@ -559,7 +559,7 @@ adds PID discovery/monitoring, one-slot admission, explicit failure without repl
 bounded restart policy and owner/VM-crash child cleanup. This is a development
 profile with separately documented OS, Elixir/OTP and deployment limits.
 
-The current API is `runtime.node.Config` (`src/zbeam/runtime/node.zig`), not the proposed struct below. It selects either the original fixed echo worker or a fixed `sha256` service accepting only a bounded ETF binary and returning its 32-byte digest; this is not a general actor scheduler, monitor/link implementation or arbitrary RPC. [Executed OTP and performance evidence](../docs/evidence/phase-c/2026-09-28-sha256-worker.md). Its frame/ETF limits, message bound and sequential-connection bound are documented in [`docs/mvp.md`](../docs/mvp.md). The current `Runtime(T).spawn` registers caller-owned mailbox storage and does not schedule tasks. Tokens enforce logical ownership and reject overlapping receives, not unforgeable task identity.
+The current API is `runtime.node.Config` (`src/zbeam/runtime/node.zig`), not the proposed struct below. It selects the original fixed echo/`sha256` service or the separately documented PID-addressed M1 worker with bounded PID/named monitoring. Hash work accepts a bounded ETF binary and returns its 32-byte digest; this is not a general actor scheduler, link implementation or arbitrary RPC. [Executed OTP and performance evidence](../docs/evidence/phase-c/2026-09-28-sha256-worker.md). Its frame/ETF limits, message bound and sequential-connection bound are documented in [`docs/mvp.md`](../docs/mvp.md). The current `Runtime(T).spawn` registers caller-owned mailbox storage and does not schedule tasks. Tokens enforce logical ownership and reject overlapping receives, not unforgeable task identity.
 
 ```zig
 pub const NodeConfig = struct {
