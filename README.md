@@ -49,7 +49,7 @@ Native OTP installations can use `OTP_ERL_25`, `OTP_ERL_26` and `OTP_ERL_27` wit
 ## Run the echo service
 
 ```sh
-epmd -daemon
+sh scripts/interop/ensure_epmd.sh
 ./zig-out/bin/zbeam serve zbeam_echo development_cookie
 ```
 

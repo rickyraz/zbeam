@@ -36,7 +36,7 @@ wait_registered() {
 
 otp_release=$(timeout 15 "$erl_bin" +S 2:2 -noshell -eval 'io:format("~s",[erlang:system_info(otp_release)]),halt().')
 echo "RUN $label with OTP $otp_release"
-epmd -daemon
+sh "$(dirname "$0")/ensure_epmd.sh"
 "$zbeam_bin" serve "$short_name" zbeam_test_cookie >"$logs/zbeam.log" 2>&1 &
 peer_pid=$!
 wait_registered "$short_name"

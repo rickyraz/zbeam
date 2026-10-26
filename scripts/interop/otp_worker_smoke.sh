@@ -15,7 +15,7 @@ cleanup() {
 }
 trap cleanup EXIT
 trap 'exit 130' INT TERM
-epmd -daemon
+sh "$(dirname "$0")/ensure_epmd.sh"
 "$bin" serve-worker "$name" zbeam_test_cookie >"$log" 2>&1 &
 pid=$!
 tries=0

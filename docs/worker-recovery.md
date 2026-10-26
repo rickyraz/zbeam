@@ -33,7 +33,7 @@ Elixir and EPMD installed:
 
 ```sh
 zig build -Doptimize=safe
-epmd -daemon
+sh scripts/interop/ensure_epmd.sh
 elixir --name worker_client@127.0.0.1 --cookie local_development_cookie \
   examples/monitored_worker.exs "$PWD/zig-out/bin/zbeam"
 zig build test-worker-recovery -Doptimize=safe

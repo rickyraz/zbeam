@@ -15,7 +15,7 @@ trap cleanup EXIT
 trap 'exit 130' INT TERM
 for program in elixir python3 epmd kill; do command -v "$program" >/dev/null; done
 python3 "$root/tests/integration/worker_guard_test.py"
-epmd -daemon
+sh "$root/scripts/interop/ensure_epmd.sh"
 timeout 90 elixir --erl '+S 2:2' --name "recovery_$$@127.0.0.1" --cookie zbeam_test_cookie \
     "$root/tests/interop/worker_recovery_test.exs" "$bin" "$fault_bin"
 timeout 15 elixir --erl '+S 2:2' --name "example_$$@127.0.0.1" --cookie zbeam_test_cookie \

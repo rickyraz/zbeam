@@ -22,6 +22,7 @@ jobs:
       - run: zig build test-labs
       - run: zig build test-labs -Doptimize=safe
       - run: sh scripts/test/build_args_smoke.sh
+      - run: python3 tests/integration/epmd_startup_test.py
       - run: for script in scripts/interop/*.sh scripts/bench_port_vs_zbeam.sh; do sh -n "$script"; done
 
   otp-interop:
@@ -39,6 +40,7 @@ jobs:
       - uses: erlef/setup-beam@v1
         with:
           otp-version: ${{ matrix.otp }}
+      - run: python3 tests/integration/epmd_startup_test.py
       - run: zig build -Doptimize=${{ matrix.optimize }}
       - name: Verify OTP ${{ matrix.otp }} worker and MVP contracts
         run: |

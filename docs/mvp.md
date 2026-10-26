@@ -32,10 +32,13 @@ zig build test-all
 zig build test-all -Doptimize=safe
 ```
 
-Start the development service in one terminal:
+Start the development service in one terminal. The launcher bounds EPMD startup
+and readiness to a five-second budget plus one-second forced-cleanup grace
+before starting the native peer; daemonization alone is not readiness. Native EPMD failures remain fail-stop, without implicit
+runtime retry or re-registration:
 
 ```sh
-epmd -daemon
+sh scripts/interop/ensure_epmd.sh
 ./zig-out/bin/zbeam serve zbeam_echo development_cookie
 ```
 
