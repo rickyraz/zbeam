@@ -9,7 +9,7 @@ The [snmalloc evaluation plan](../docs/snmalloc-evaluation.md) defines a future 
 ## Port versus distribution
 
 ```sh
-ERL_FLAGS='+S 2:2' zig build bench-port-vs-zbeam -Doptimize=ReleaseSafe -- 1000
+ERL_FLAGS='+S 2:2' zig build bench-port-vs-zbeam -Doptimize=safe -- 1000
 ```
 
 Both paths use one BEAM process and one Zig worker, with the same 32-byte payload and sequential request/reply workload. The Port uses four-byte packet framing; distribution adds ETF/control framing and routing. Both paths warm up before measurement. EPMD and handshakes are outside steady-state latency samples.
@@ -28,7 +28,7 @@ Restart is one sample, not a percentile or crash-recovery SLO. Scheduler busy ti
 Persist individual samples as well as summary output:
 
 ```sh
-zig build -Doptimize=ReleaseSafe
+zig build -Doptimize=safe
 ERL_FLAGS='+S 2:2' ZBEAM_BENCH_SAMPLES=/tmp/zbeam-samples.tsv \
   ./scripts/bench_port_vs_zbeam.sh 1000 > /tmp/zbeam-summary.tsv
 ```

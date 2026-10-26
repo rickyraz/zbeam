@@ -77,7 +77,7 @@ pub fn build(b: *std.Build) void {
     const run_step = b.step("run", "Run the zbeam executable");
     const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(b.getInstallStep());
-    if (b.args) |args| run_cmd.addArgs(args);
+    run_cmd.addPassthruArgs();
     run_step.dependOn(&run_cmd.step);
 
     const test_unit_step = b.step("test-unit", "Compile and test every public battery module");
@@ -162,7 +162,7 @@ pub fn build(b: *std.Build) void {
     const benchmark_step = b.step("bench-port-vs-zbeam", "Run local Erlang Port comparison");
     const benchmark_cmd = b.addSystemCommand(&.{"sh"});
     benchmark_cmd.addFileArg(b.path("scripts/bench_port_vs_zbeam.sh"));
-    if (b.args) |args| benchmark_cmd.addArgs(args);
+    benchmark_cmd.addPassthruArgs();
     benchmark_cmd.step.dependOn(b.getInstallStep());
     benchmark_step.dependOn(&benchmark_cmd.step);
 

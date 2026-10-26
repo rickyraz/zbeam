@@ -32,7 +32,7 @@ test "lab01: producer and capacity matrix preserves exact per-producer order" {
                 producer.* = .{ .mailbox = &mailbox, .id = id };
                 try group.concurrent(io, Producer.run, .{producer});
             }
-            var expected = [_]usize{0} ** 16;
+            var expected: [16]usize = @splat(0);
             for (0..count * 128) |_| {
                 const message = try mailbox.receive(io, .init(1));
                 try std.testing.expect(message.producer < count);

@@ -52,8 +52,9 @@ test "lab07: conversion rejects shape, range and capacity violations" {
     fields[0] = .{ .integer = @as(i64, std.math.maxInt(u32)) + 1 };
     try std.testing.expectError(error.SequenceOutOfRange, Envelope.fromTerm(.{ .tuple = &fields }));
     fields[0] = .{ .integer = 0 };
-    fields[1] = .{ .binary = "x" ** 33 };
+    const payload: [33]u8 = @splat('x');
+    fields[1] = .{ .binary = &payload };
     try std.testing.expectError(error.PayloadTooLarge, Envelope.fromTerm(.{ .tuple = &fields }));
-    fields[1] = .{ .binary = "x" ** 32 };
+    fields[1] = .{ .binary = payload[0..32] };
     try std.testing.expectEqual(@as(usize, 32), (try Envelope.fromTerm(.{ .tuple = &fields })).used);
 }
