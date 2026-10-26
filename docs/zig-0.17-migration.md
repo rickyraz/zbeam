@@ -191,15 +191,17 @@ M1 additionally runs `test-worker-recovery` in both modes and OTP in `debug`;
 external Elixir/OTP compatibility is recorded separately from native wire support.
 CI should expose required external-tool lanes rather than hiding them in test-all.
 
-The proposed [branch consolidation plan](branch-consolidation-plan.md) supersedes
-promotion of every original name: retain master and one M1 integration branch,
-then archive inactive source/candidate pairs without first promoting experiments.
-This does not authorize deletion; exact recovery tags and owner release are gates.
+The revised [branch consolidation plan](branch-consolidation-plan.md) protects
+active and unconfirmed research. Consolidate each source/migration pair into one
+approved working branch per ongoing topic; archive only approved redundant or
+explicitly inactive refs. There is no fixed two-branch target or blanket research
+retirement. Exact recovery tags, current checks and owner release are gates.
 
-Refresh remote heads and verify the current merge result before promotion. The
-canonical candidate has successful GitHub CI; the inspected M1 `64f6388` run fails
-OTP 27 safe registration and must be resolved before M1 merge. Normal merge
-ancestry, not similar file contents, determines whether a fast-forward is valid.
+Refresh remote heads and verify the current merge result before promotion.
+Canonical CI and the inspected M1 `c4b53e1` run passed. Earlier M1 `64f6388` failed
+OTP 27 safe registration; the later green run does not establish its root cause
+or a corrective fix. Retain it for acceptance triage and require current checks.
+Normal ancestry, not similar contents, determines whether a fast-forward is valid.
 Never reset, force-push or move a branch behind a live worktree.
 
 The **14/14 local candidate verification** record remains complete. Branch
