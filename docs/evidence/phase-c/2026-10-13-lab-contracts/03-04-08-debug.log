@@ -1,0 +1,42 @@
+lab-03
++- run test lab-03 w
+lab03 paused_attempts=100 paused_reads=0 allocation_attempts=0 admitted_bytes=5 unread_bytes=4
+failed command: ./.zig-cache/o/aa33e2673e2b6b218001030a36eecd80/lab-03 --cache-dir=./.zig-cache --seed=0x8490d61f --listen=-
+
+lab-04
++- run test lab-04 w
+lab04 cut=0 old_credit=0 outstanding_bytes=0 fresh_frame_bytes=7
+lab04 cut=1 old_credit=0 outstanding_bytes=0 fresh_frame_bytes=7
+lab04 cut=2 old_credit=0 outstanding_bytes=0 fresh_frame_bytes=7
+lab04 cut=3 old_credit=0 outstanding_bytes=0 fresh_frame_bytes=7
+lab04 cut=4 old_credit=0 outstanding_bytes=0 fresh_frame_bytes=7
+lab04 cut=5 old_credit=0 outstanding_bytes=0 fresh_frame_bytes=7
+lab04 cut=6 old_credit=0 outstanding_bytes=0 fresh_frame_bytes=7
+failed command: ./.zig-cache/o/91ed3e44d247f3ef8cf3e21b785574ec/lab-04 --cache-dir=./.zig-cache --seed=0x8490d61f --listen=-
+
+lab-08
++- run test lab-08 w
+lab08 chunk=1 reader_calls=7 allocations=1 allocated_bytes=7 unread_bytes=4
+lab08 chunk=2 reader_calls=4 allocations=1 allocated_bytes=7 unread_bytes=4
+lab08 chunk=3 reader_calls=3 allocations=1 allocated_bytes=7 unread_bytes=4
+lab08 chunk=4 reader_calls=2 allocations=1 allocated_bytes=7 unread_bytes=4
+lab08 chunk=5 reader_calls=2 allocations=1 allocated_bytes=7 unread_bytes=4
+lab08 chunk=6 reader_calls=2 allocations=1 allocated_bytes=7 unread_bytes=4
+lab08 chunk=7 reader_calls=2 allocations=1 allocated_bytes=7 unread_bytes=4
+lab08 chunk=8 reader_calls=2 allocations=1 allocated_bytes=7 unread_bytes=4
+lab08 chunk=9 reader_calls=2 allocations=1 allocated_bytes=7 unread_bytes=4
+lab08 chunk=10 reader_calls=2 allocations=1 allocated_bytes=7 unread_bytes=4
+lab08 chunk=11 reader_calls=2 allocations=1 allocated_bytes=7 unread_bytes=4
+failed command: ./.zig-cache/o/4fb142c7bb46f4093ac7b3314fabf603/lab-08 --cache-dir=./.zig-cache --seed=0x8490d61f --listen=-
+
+Build Summary: 9/9 steps succeeded; 5/5 tests passed
+lab-03 success
++- run test lab-03 2 pass (2 total) 13ms MaxRSS:4M
+   +- compile test lab-03 Debug native success 1s MaxRSS:140M
+lab-04 success
++- run test lab-04 1 pass (1 total) 14ms MaxRSS:4M
+   +- compile test lab-04 Debug native success 1s MaxRSS:140M
+lab-08 success
++- run test lab-08 2 pass (2 total) 8ms MaxRSS:4M
+   +- compile test lab-08 Debug native success 1s MaxRSS:139M
+

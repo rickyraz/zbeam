@@ -1,6 +1,6 @@
 # Lab 01 — Mailbox Correctness
 
-**Status:** Initial contract implemented and stress-tested on 2026-07-19; broader shutdown/fault injection remains open.
+**Status:** Runnable production-contract experiment; broader shutdown/fault injection remains open.
 
 ## Objective
 
@@ -22,6 +22,19 @@ A mutex-guarded queue with predicate checks under the lock and notification afte
 
 Commands, Zig version, CPU/thread count, raw counters, failure seeds, and a Phase C stress record.
 
+## Runnable subset
+
+Run `zig build lab-01 -j2 --summary all` from the repository root. The
+[experiment](experiment.zig) exercises the existing actor battery with 1/2/4/8/16
+producers, 128 messages each, and capacities 1/4/64. Every received sequence is
+checked, producers are joined before storage destruction, and close/drain is
+checked separately. Output records all 15 cases (11,904 total deliveries).
+
+This measures correctness, not throughput or contention. An external timeout
+bounds a broken test; no test run establishes freedom from all thread schedules.
+Wakeup counters, blocked-operation shutdown races and sanitizer runs remain open.
+
 ## Promotion gate
 
-Mailbox code enters `src/zbeam/actor/` only after the contract and regression test are documented.
+The mailbox already exists in `src/zbeam/actor/`. This lab adds verification,
+not a new mailbox implementation or a stronger task-identity guarantee.
