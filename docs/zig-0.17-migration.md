@@ -191,17 +191,21 @@ M1 additionally runs `test-worker-recovery` in both modes and OTP in `debug`;
 external Elixir/OTP compatibility is recorded separately from native wire support.
 CI should expose required external-tool lanes rather than hiding them in test-all.
 
-Promote only after refreshing remote heads again. Fast-forward master through its
-normal reviewed PR; then fast-forward each named branch to its tested migration
-branch with that worktree owner's cooperation. A moved/dirty branch blocks its
-promotion until reconciled and reverified. Never `reset --hard`, force-push or use
-`update-ref` behind a live worktree. Remote-only branches receive normal reviewed
-fast-forward updates; none is silently omitted or deleted.
+The proposed [branch consolidation plan](branch-consolidation-plan.md) supersedes
+promotion of every original name: retain master and one M1 integration branch,
+then archive inactive source/candidate pairs without first promoting experiments.
+This does not authorize deletion; exact recovery tags and owner release are gates.
 
-Verification acceptance is **14/14 sources with verified, pushed 0.17 candidates**,
-plus any new heads discovered during the rollout. This gate is complete; original
-branch promotion, owner coordination and GitHub workflow execution remain
-separate pending checks. A newly blocked required gate reopens verification. Retain pre-migration refs; rollback through a reviewed
-revert/new commit or explicit old-toolchain deployment, not rewritten history.
+Refresh remote heads and verify the current merge result before promotion. The
+canonical candidate has successful GitHub CI; the inspected M1 `64f6388` run fails
+OTP 27 safe registration and must be resolved before M1 merge. Normal merge
+ancestry, not similar file contents, determines whether a fast-forward is valid.
+Never reset, force-push or move a branch behind a live worktree.
+
+The **14/14 local candidate verification** record remains complete. Branch
+retention, current GitHub checks, owner coordination and feature acceptance are
+separate decisions. A newly blocked required gate reopens its acceptance. Retain
+pre-migration refs; rollback through a reviewed revert/new commit or explicit
+old-toolchain deployment, not rewritten history.
 The [development plan](development-plan.md) remains responsible for M2/runtime
 features after this compiler-only rollout.
