@@ -1,10 +1,23 @@
 # Matched native worker comparison
 
-Optional benchmark-only Mix project pinned to Zigler 0.16.0 with `mix.lock`. NIFs use Zig 0.16.0 ReleaseSafe and direct binary marshalling. Normal/dirty CPU modes are eligible; the threaded adapter is quarantined after a repeated-run VM segfault and is not scored. They do not add ETF serialization. Native workers use the same SHA-256 implementation from the Zig standard library. The separate ETF Port uses the existing bounded ETF codec; the old raw-Port runner remains unchanged.
+**Compiler rollout:** native workers and normal/dirty NIFs are verified on Zig
+0.17.0. Zigler is pinned to upstream Git commit
+`feb80162d597ede227e9d4d5c9798a42beee9695`, since its latest Hex release remains
+0.16.0 and fails on removed `Build.args`. This unreleased dependency and its
+C-translation dependencies are locked by SHA; Elixir 1.18+ is required.
+Historical 0.16 results remain unchanged; correctness is not a new speed claim.
+
+Optional benchmark-only Mix project with `mix.lock`. NIFs use Zig 0.17.0 `safe` and direct binary marshalling. Normal/dirty CPU modes are eligible; the threaded adapter is quarantined after a repeated-run VM segfault and is not scored. They do not add ETF serialization. Native workers use the same SHA-256 implementation from the Zig standard library. The separate ETF Port uses the existing bounded ETF codec; the old raw-Port runner remains unchanged.
 
 ```sh
-zig build build-research test-research -j2 -Doptimize=ReleaseSafe
-(cd benchmarks/zigler && mix deps.get && ZIG_EXECUTABLE_PATH="$(command -v zig)" ERL_FLAGS='+S 2:2 +SDcpu 2 +SDio 1' mix test)
+zig build build-research test-research -j2 -Doptimize=safe
+(cd benchmarks/zigler &&
+  export MIX_ENV=test ZIG_EXECUTABLE_PATH="$(command -v zig)" &&
+  export ZIGLER_STAGING_ROOT="$PWD/_build/zigler-017-stage" &&
+  unset ZIG_ARCHIVE_PATH &&
+  test "$("$ZIG_EXECUTABLE_PATH" version)" = 0.17.0 &&
+  mkdir -p "$ZIGLER_STAGING_ROOT" && mix deps.get &&
+  ERL_FLAGS='+S 2:2 +SDcpu 2 +SDio 1' mix test)
 python3 scripts/bench/native_matrix.py --self-test
 python3 scripts/bench/native_matrix.py /tmp/native-results --repeats 10 --iterations 1000
 ```
