@@ -14,11 +14,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: mlugg/setup-zig@v2
         with:
-          version: 0.16.0
+          version: 0.17.0
       - run: zig fmt --check build.zig src tests examples
       - run: zig build
       - run: zig build test-all
-      - run: zig build test-all -Doptimize=ReleaseSafe
+      - run: zig build test-all -Doptimize=safe
+      - run: zig build test-labs
+      - run: zig build test-labs -Doptimize=safe
+      - run: sh scripts/test/build_args_smoke.sh
       - run: for script in scripts/interop/*.sh scripts/bench_port_vs_zbeam.sh; do sh -n "$script"; done
 
   otp-interop:
@@ -31,7 +34,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: mlugg/setup-zig@v2
         with:
-          version: 0.16.0
+          version: 0.17.0
       - uses: erlef/setup-beam@v1
         with:
           otp-version: ${{ matrix.otp }}
