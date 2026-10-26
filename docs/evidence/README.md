@@ -14,6 +14,10 @@ These records supersede earlier pending-matrix/demand status for the restricted 
 - [2026-09-26 allocator source and binary audit](phase-a/2026-09-26-allocator-source-audit.md) — baseline selection/linkage and pinned snmalloc source findings, not snmalloc integration or performance evidence.
 - [Evaluation plan](../snmalloc-evaluation.md) — proposed experiment and promotion criteria.
 
+## Branch consolidation
+
+- [2026-10-26 execution and recovery record](phase-a/2026-10-26-branch-consolidation.md) — 28 to 11 branches; all nine research topics retained, compiler-only PR #2 merged, immutable recovery tags and local assets preserved.
+
 ## Phases
 
 - `phase-a/` — local logic, type/API contract, and compile-fail evidence.
