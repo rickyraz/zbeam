@@ -18,6 +18,7 @@ These records supersede earlier pending-matrix/demand status for the restricted 
 - [2026-10-25 worker lifecycle, OTP matrix and external recovery](phase-c/2026-10-25-m1.md)
 - [2026-10-26 fresh master integration, EPMD readiness triage and acceptance gates](phase-b/2026-10-26-m1-acceptance.md) — local gates passed; [PR review and explicit size-exception approval](../m1-review.md) remain required.
 - [2026-10-26 OTP 25 installer failure and supported CI runner pin](phase-b/2026-10-26-m1-ci-runner.md) — earlier run preserved; all six native OTP/mode lanes remain mandatory.
+- [2026-10-26 actual-merge Port cleanup race and repair](phase-b/2026-10-26-m1-port-cleanup.md) — original failure retained; 14 current recovery cases per mode, including one new cleanup regression.
 
 These records cover the bounded development profile, not a general actor
 scheduler or production release.

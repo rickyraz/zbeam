@@ -162,7 +162,15 @@ defmodule NativeWorkerOwner do
   def terminate(_, state) do
     Node.monitor(state.peer, false)
     Node.disconnect(state.peer)
-    if Port.info(state.port), do: Port.close(state.port)
+    close_port(state.port)
     :ok
+  end
+
+  defp close_port(port) do
+    Port.close(port)
+  rescue
+    error in ArgumentError ->
+      # Exit can close the port between an info check and close.
+      if Port.info(port) != nil, do: reraise(error, __STACKTRACE__)
   end
 end

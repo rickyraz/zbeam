@@ -33,6 +33,13 @@ defmodule WorkerRecoveryTest do
     end
   end
 
+  defp close_port(port) do
+    Port.close(port)
+  rescue
+    error in ArgumentError ->
+      if Port.info(port) != nil, do: reraise(error, __STACKTRACE__)
+  end
+
   defp kill(pid, signal) do
     {_, 0} = System.cmd("kill", ["-#{signal}", to_string(pid)], stderr_to_stdout: true)
   end
@@ -147,6 +154,24 @@ defmodule WorkerRecoveryTest do
     assert state.pid != old_pid
     assert NativeWorkerOwner.hash(@name, "new work") == {:ok, :crypto.hash(:sha256, "new work")}
     state
+  end
+
+  @tag :ordinary
+  test "port cleanup tolerates closure but preserves invalid arguments" do
+    for close <- [
+          &close_port/1,
+          fn port ->
+            NativeWorkerOwner.terminate(:normal, %{peer: :"cleanup_missing@127.0.0.1", port: port})
+          end
+        ] do
+      port = Port.open({:spawn_executable, System.find_executable("cat")}, [:binary])
+      assert Port.info(port) != nil
+      close.(port)
+      assert Port.info(port) == nil
+      assert_raise ArgumentError, fn -> Port.close(port) end
+      close.(port)
+      assert_raise ArgumentError, fn -> close.(42) end
+    end
   end
 
   @tag :ordinary
@@ -349,7 +374,7 @@ defmodule WorkerRecoveryTest do
       kill(vm, "KILL")
       await(fn -> not live?(guard) and not live?(native) end)
     after
-      if Port.info(port), do: Port.close(port)
+      close_port(port)
       File.rm(path)
     end
   end
@@ -377,7 +402,8 @@ defmodule WorkerRecoveryTest do
       after
         if info = Port.info(epmd) do
           kill(Keyword.fetch!(info, :os_pid), "TERM")
-          if Port.info(epmd), do: Port.close(epmd)
+          assert_receive {^epmd, {:exit_status, _}}, 2_000
+          close_port(epmd)
         end
       end
     end)
