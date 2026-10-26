@@ -73,13 +73,19 @@ test "full slow mailbox permits admitted fast progress; terminate joins resolved
     try fast.processed.waitTimeout(io, .{ .duration = .{ .raw = .fromSeconds(2), .clock = .awake } });
     try std.testing.expect(registry.terminate(slow_id.id));
     try std.testing.expect(registry.terminate(fast_id.id));
+    try std.testing.expectError(error.ActorNotFound, registry.sendNamed("slow", .{}));
+    try std.testing.expectError(error.Closed, slow_box.deliver(io, .{}));
     slow.resume_event.set(io);
     try group.await(io);
-    try std.testing.expectEqual(@as(usize, 5), slow.count);
     try std.testing.expectEqual(@as(usize, 1), fast.count);
     try std.testing.expect(slow.failure == null and fast.failure == null);
-    const failure = sender.failure orelse return error.TestUnexpectedResult;
-    try std.testing.expect(failure == error.Closed or failure == error.ActorNotFound);
+    // An in-flight Queue put can finish during close; account for exactly that send.
+    if (sender.failure) |failure| {
+        try std.testing.expect(failure == error.Closed or failure == error.ActorNotFound);
+        try std.testing.expectEqual(@as(usize, 5), slow.count);
+    } else {
+        try std.testing.expectEqual(@as(usize, 6), slow.count);
+    }
     try std.testing.expectEqual(@as(usize, 4), slow_box.capacity());
 }
 
