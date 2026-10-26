@@ -2,7 +2,7 @@
     .name = .zbeam,
     .version = "0.0.1",
     .fingerprint = 0xe5967e33ab6caced,
-    .minimum_zig_version = "0.16.0",
+    .minimum_zig_version = "0.17.0",
     .dependencies = .{},
     .paths = .{
         "build.zig",

@@ -2,12 +2,19 @@
 
 Experimental branches leave the default application allocator as `process` (`std.process.Init.gpa`). No battery depends on the application selector. `-Dallocator=debug|smp|libc` selects only the allocator passed into the CLI runtime; startup/I/O allocation is still controlled by Zig's process initialization. `-Dlink-libc=true` supplies a matched libc-linked control. Selecting `libc` requires libc automatically.
 
+On Zig 0.17, `process` uses startup's `SafeAllocator` in debug/safe, including
+libc-linked controls. The explicit `debug` comparator deliberately retains the
+still-available, deprecated `DebugAllocator`; it is not renamed or silently
+replaced. Historical 0.16 allocator/timing records do not describe this new
+process-default policy. A future removal of DebugAllocator needs a separate
+compiler/comparator migration.
+
 ## Checks and workloads
 
 ```sh
-zig build test-allocators -Dallocator=smp -Doptimize=ReleaseSafe
-zig build bench-allocators -Dallocator=smp -Doptimize=ReleaseSafe -- echo 2000 4096 /tmp/echo-samples.tsv
-zig build bench-allocators -Dallocator=smp -Doptimize=ReleaseSafe -- handoff 2000 4096 /tmp/handoff-samples.tsv
+zig build test-allocators -Dallocator=smp -Doptimize=safe
+zig build bench-allocators -Dallocator=smp -Doptimize=safe -- echo 2000 4096 /tmp/echo-samples.tsv
+zig build bench-allocators -Dallocator=smp -Doptimize=safe -- handoff 2000 4096 /tmp/handoff-samples.tsv
 ```
 
 The Linux-only executable reads `/proc` through a streaming reader with fixed scratch storage. Each process warms up, executes three cycles, and samples memory immediately and after 100 ms idle. These cycles are correlated; compare medians per process before aggregating independent launches.
@@ -26,8 +33,13 @@ Raw samples are optional in single runs, mandatory in the matrix. Reported perce
 ```sh
 sh scripts/bench/build_snmalloc.sh /path/to/pinned/checkout /tmp/snmalloc.o normal
 zig build test-allocators -Dallocator=snmalloc -Dsnmalloc-object=/tmp/snmalloc.o
-zig build bench-allocators -Doptimize=ReleaseSafe -Dallocator=snmalloc -Dsnmalloc-object=/tmp/snmalloc.o -Dsnmalloc-resize=true -- echo 2000 65536
+zig build bench-allocators -Doptimize=safe -Dallocator=snmalloc -Dsnmalloc-object=/tmp/snmalloc.o -Dsnmalloc-resize=true -- echo 2000 65536
 ```
+
+Rebuild the object with Zig 0.17 for this compiler migration; an old 0.16 object
+is not fresh 0.17 ABI/provenance evidence. The adjacent `.o.txt` records compiler,
+flags, source revision and object hash. `checks` is upstream client hardening,
+not an ASan/TSan or production-safety certification.
 
 The checkout must be clean at `526c55bdffa17aae20a9a3d24fe68a7a3b8d9894`. `checks` instead of `normal` builds upstream client hardening. `-Dsnmalloc-resize=true` reuses existing capacity without moving; it defaults to false. Native Linux x86-64 GNU ABI is the only tested target. The [recorded results](../../docs/evidence/phase-c/2026-09-27-snmalloc.md) reject default adoption and include matched controls, lifecycle tests and limitations.
 
@@ -38,8 +50,8 @@ Use 32, 4096 and 65536-byte payloads; five independent launches per variant/work
 Build each variant into its own prefix, avoiding rebuilds during measurement:
 
 ```sh
-zig build -j2 -Doptimize=ReleaseSafe -Dallocator=smp -Dlink-libc=true -p /tmp/zbeam-smp-libc
-zig build build-allocator-bench -j2 -Doptimize=ReleaseSafe -Dallocator=smp -Dlink-libc=true -p /tmp/zbeam-smp-libc
+zig build -j2 -Doptimize=safe -Dallocator=smp -Dlink-libc=true -p /tmp/zbeam-smp-libc
+zig build build-allocator-bench -j2 -Doptimize=safe -Dallocator=smp -Dlink-libc=true -p /tmp/zbeam-smp-libc
 python3 scripts/bench/allocator_matrix.py /tmp/allocator-results smp-libc=/tmp/zbeam-smp-libc
 ```
 

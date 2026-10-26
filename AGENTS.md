@@ -39,7 +39,7 @@ Prioritize strict module boundaries, protocol conformance evidence, and auditabl
 
 ## Environment
 Required:
-- Zig 0.16.0+ (`std.Io` interface mandatory)
+- Zig 0.17.0 (`std.Io` interface mandatory; optimized safety checks use `-Doptimize=safe`)
 - Git
 
 Recommended:

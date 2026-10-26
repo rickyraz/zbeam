@@ -1,0 +1,34 @@
+lab-15
++- run test lab-15 w
+lab15 slots=1 size=64 pool_bytes=64 fitting_frames=80/100 fallback_bytes=85760 cumulative_padding=2560
+lab15 slots=1 size=1024 pool_bytes=1024 fitting_frames=95/100 fallback_bytes=81920 cumulative_padding=90880
+lab15 slots=1 size=65536 pool_bytes=65536 fitting_frames=100/100 fallback_bytes=0 cumulative_padding=6465280
+lab15 slots=4 size=64 pool_bytes=256 fitting_frames=80/100 fallback_bytes=85760 cumulative_padding=2560
+lab15 slots=4 size=1024 pool_bytes=4096 fitting_frames=95/100 fallback_bytes=81920 cumulative_padding=90880
+lab15 slots=4 size=65536 pool_bytes=262144 fitting_frames=100/100 fallback_bytes=0 cumulative_padding=6465280
+lab15 slots=16 size=64 pool_bytes=1024 fitting_frames=80/100 fallback_bytes=85760 cumulative_padding=2560
+lab15 slots=16 size=1024 pool_bytes=16384 fitting_frames=95/100 fallback_bytes=81920 cumulative_padding=90880
+lab15 slots=16 size=65536 pool_bytes=1048576 fitting_frames=100/100 fallback_bytes=0 cumulative_padding=6465280
+failed command: ./.zig-cache/o/0cdb85da440df457eebcad9ee2784869/lab-15 --cache-dir=./.zig-cache --seed=0xc7d027f5 --listen=-
+
+lab-12
++- run test lab-12 w
+lab12 roles=2 valid_transitions=10 wire_errors=3 authenticated_ack=1
+failed command: ./.zig-cache/o/4e255a0794fbc180fba1f9cef643e23f/lab-12 --cache-dir=./.zig-cache --seed=0xc7d027f5 --listen=-
+
+lab-14
++- run test lab-14 w
+lab14 balanced_deliveries=4,4,4 skewed_deliveries=4,1,0 residual_credit=0
+failed command: ./.zig-cache/o/5308d5532190ef1f72dc99b42bbf4904/lab-14 --cache-dir=./.zig-cache --seed=0xc7d027f5 --listen=-
+
+Build Summary: 10/10 steps succeeded; 7/7 tests passed
+lab-12 success
++- run test lab-12 2 pass (2 total) 9ms MaxRSS:4M
+|  +- compile test lab-12 Debug native success 910ms MaxRSS:141M
++- compile test lab-12-compile-fail Debug native success 595ms MaxRSS:105M
+lab-14 success
++- run test lab-14 3 pass (3 total) 6ms MaxRSS:5M
+   +- compile test lab-14 Debug native success 643ms MaxRSS:139M
+lab-15 success
++- run test lab-15 2 pass (2 total) 9ms MaxRSS:4M
+   +- compile test lab-15 Debug native success 871ms MaxRSS:142M
