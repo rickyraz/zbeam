@@ -93,7 +93,7 @@ pub fn build(b: *std.Build) void {
     const run_step = b.step("run", "Run the zbeam executable");
     const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(b.getInstallStep());
-    if (b.args) |args| run_cmd.addArgs(args);
+    run_cmd.addPassthruArgs();
     run_step.dependOn(&run_cmd.step);
 
     const test_unit_step = b.step("test-unit", "Compile and test every public battery module");
@@ -181,7 +181,7 @@ pub fn build(b: *std.Build) void {
     const benchmark_step = b.step("bench-port-vs-zbeam", "Run local Erlang Port comparison");
     const benchmark_cmd = b.addSystemCommand(&.{"sh"});
     benchmark_cmd.addFileArg(b.path("scripts/bench_port_vs_zbeam.sh"));
-    if (b.args) |args| benchmark_cmd.addArgs(args);
+    benchmark_cmd.addPassthruArgs();
     benchmark_cmd.step.dependOn(b.getInstallStep());
     benchmark_step.dependOn(&benchmark_cmd.step);
 
@@ -207,12 +207,66 @@ pub fn build(b: *std.Build) void {
     b.step("build-allocator-bench", "Install the isolated allocator benchmark").dependOn(&b.addInstallArtifact(allocator_bench, .{}).step);
     const allocator_bench_step = b.step("bench-allocators", "Run the isolated allocator workload (echo|handoff iterations bytes)");
     const allocator_bench_run = b.addRunArtifact(allocator_bench);
-    if (b.args) |args| allocator_bench_run.addArgs(args);
+    allocator_bench_run.addPassthruArgs();
     allocator_bench_step.dependOn(&allocator_bench_run.step);
     const allocator_tests = b.addTest(.{ .root_module = allocator_bench.root_module });
     const allocator_test_step = b.step("test-allocators", "Check the selected allocator and measured workload cleanup");
     allocator_test_step.dependOn(&b.addRunArtifact(allocator_tests).step);
     allocator_test_step.dependOn(&app_allocator_tests_run.step);
+
+    const lab_reader_mod = b.createModule(.{ .root_source_file = b.path("labs/reader.zig") });
+    const test_labs_step = b.step("test-labs", "Run isolated research contracts (not production acceptance)");
+    for ([_][]const u8{
+        "01_mailbox_correctness_lab",
+        "02_demand_liveness_lab",
+        "03_backpressure_oracle_lab",
+        "04_reconnect_semantics_lab",
+        "07_local_message_ir_lab",
+        "08_transport_io_lab",
+        "10_identity_namespace_lab",
+        "11_bufferhandle_typestate_lab",
+        "12_protocol_typestate_lab",
+        "14_demand_fanout_lab",
+        "15_buffer_sizing_lab",
+    }) |directory| {
+        const id = directory[0..2];
+        const lab_step = b.step(b.fmt("lab-{s}", .{id}), b.fmt("Run research lab {s}", .{id}));
+        const lab_tests = b.addTest(.{
+            .name = b.fmt("lab-{s}", .{id}),
+            .root_module = b.createModule(.{
+                .root_source_file = b.path(b.fmt("labs/{s}/experiment.zig", .{directory})),
+                .target = target,
+                .optimize = optimize,
+                .imports = &.{
+                    .{ .name = "lab-reader", .module = lab_reader_mod },
+                    .{ .name = "zbeam-actor", .module = actor_mod },
+                    .{ .name = "zbeam-etf", .module = etf_mod },
+                    .{ .name = "zbeam-protocol", .module = protocol_mod },
+                    .{ .name = "zbeam-transport", .module = transport_mod },
+                },
+            }),
+        });
+        const run_lab = b.addRunArtifact(lab_tests);
+        run_lab.has_side_effects = true;
+        lab_step.dependOn(&run_lab.step);
+        if (std.mem.eql(u8, id, "11") or std.mem.eql(u8, id, "12")) {
+            const rejected = b.addTest(.{
+                .name = b.fmt("lab-{s}-compile-fail", .{id}),
+                .root_module = b.createModule(.{
+                    .root_source_file = b.path(b.fmt("labs/{s}/compile_fail.zig", .{directory})),
+                    .target = target,
+                    .optimize = optimize,
+                    .imports = &.{.{ .name = "zbeam-protocol", .module = protocol_mod }},
+                }),
+            });
+            rejected.expect_errors = .{ .contains = if (std.mem.eql(u8, id, "11"))
+                "error: no field or member function named 'access' in 'experiment.ForwardOnly'"
+            else
+                "error: invalid typed handshake transition" };
+            lab_step.dependOn(&rejected.step);
+        }
+        test_labs_step.dependOn(lab_step);
+    }
 
     const test_all_step = b.step("test-all", "Run deterministic test suites (excludes external OTP matrix)");
     test_all_step.dependOn(test_unit_step);

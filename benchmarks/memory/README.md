@@ -2,12 +2,19 @@
 
 Experimental branches leave the default application allocator as `process` (`std.process.Init.gpa`). No battery depends on the application selector. `-Dallocator=debug|smp|libc` selects only the allocator passed into the CLI runtime; startup/I/O allocation is still controlled by Zig's process initialization. `-Dlink-libc=true` supplies a matched libc-linked control. Selecting `libc` requires libc automatically.
 
+On Zig 0.17, `process` uses startup's `SafeAllocator` in debug/safe, including
+libc-linked controls. The explicit `debug` comparator deliberately retains the
+still-available, deprecated `DebugAllocator`; it is not renamed or silently
+replaced. Historical 0.16 allocator/timing records do not describe this new
+process-default policy. A future removal of DebugAllocator needs a separate
+compiler/comparator migration.
+
 ## Checks and workloads
 
 ```sh
-zig build test-allocators -Dallocator=smp -Doptimize=ReleaseSafe
-zig build bench-allocators -Dallocator=smp -Doptimize=ReleaseSafe -- echo 2000 4096 /tmp/echo-samples.tsv
-zig build bench-allocators -Dallocator=smp -Doptimize=ReleaseSafe -- handoff 2000 4096 /tmp/handoff-samples.tsv
+zig build test-allocators -Dallocator=smp -Doptimize=safe
+zig build bench-allocators -Dallocator=smp -Doptimize=safe -- echo 2000 4096 /tmp/echo-samples.tsv
+zig build bench-allocators -Dallocator=smp -Doptimize=safe -- handoff 2000 4096 /tmp/handoff-samples.tsv
 ```
 
 The Linux-only executable reads `/proc` through a streaming reader with fixed scratch storage. Each process warms up, executes three cycles, and samples memory immediately and after 100 ms idle. These cycles are correlated; compare medians per process before aggregating independent launches.
@@ -24,8 +31,8 @@ Raw samples are optional in single runs, mandatory in the matrix. Reported perce
 On `explore/request-arena`, `-Drequest-arena-retain=N` applies an opt-in arena to synchronous dispatch and the isolated echo path; omitted means no arena, `N=0` frees all after each frame, and `N=1048576` retains at most 1 MiB of arena capacity between frames. The bounded cross-thread handoff workload does **not** use the arena and acts only as a negative control. Response bytes are verified and freed before reset. The cap excludes physical rounding and is not an RSS limit. A failed retain resize falls back to free-all. No new library dependency is required.
 
 ```sh
-zig build -j2 -Doptimize=ReleaseSafe -Dallocator=smp -Drequest-arena-retain=1048576 -p /tmp/arena-1m
-zig build build-allocator-bench -j2 -Doptimize=ReleaseSafe -Dallocator=smp -Drequest-arena-retain=1048576 -p /tmp/arena-1m
+zig build -j2 -Doptimize=safe -Dallocator=smp -Drequest-arena-retain=1048576 -p /tmp/arena-1m
+zig build build-allocator-bench -j2 -Doptimize=safe -Dallocator=smp -Drequest-arena-retain=1048576 -p /tmp/arena-1m
 zig build test-allocators -j2 -Dallocator=smp -Drequest-arena-retain=1048576
 ```
 
@@ -38,8 +45,8 @@ Use 32, 4096 and 65536-byte payloads; five independent launches per variant/work
 Build each variant into its own prefix, avoiding rebuilds during measurement:
 
 ```sh
-zig build -j2 -Doptimize=ReleaseSafe -Dallocator=smp -Dlink-libc=true -p /tmp/zbeam-smp-libc
-zig build build-allocator-bench -j2 -Doptimize=ReleaseSafe -Dallocator=smp -Dlink-libc=true -p /tmp/zbeam-smp-libc
+zig build -j2 -Doptimize=safe -Dallocator=smp -Dlink-libc=true -p /tmp/zbeam-smp-libc
+zig build build-allocator-bench -j2 -Doptimize=safe -Dallocator=smp -Dlink-libc=true -p /tmp/zbeam-smp-libc
 python3 scripts/bench/allocator_matrix.py /tmp/allocator-results smp-libc=/tmp/zbeam-smp-libc
 ```
 

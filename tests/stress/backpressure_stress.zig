@@ -65,7 +65,7 @@ const Sender = struct {
         const stream = try self.address.connect(std.testing.io, .{ .mode = .stream });
         defer stream.close(std.testing.io);
         var writer = stream.writer(std.testing.io, &.{});
-        var packet = [_]u8{0} ** (payload_size + 4);
+        var packet: [payload_size + 4]u8 = @splat(0);
         std.mem.writeInt(u32, packet[0..4], payload_size, .big);
         for (0..frames) |_| {
             try writer.interface.writeAll(&packet);

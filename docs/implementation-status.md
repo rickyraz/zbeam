@@ -1,6 +1,7 @@
 # Implementation Status
 
 - **MVP last verified:** 2026-09-26; experimental branch verification: 2026-09-28
+- **Compiler migration:** 2026-10-25; request-local arena scope unchanged
 - **Package version:** 0.0.1 pre-alpha (no release tag created)
 - **Implemented milestone:** [restricted single-actor MVP](mvp.md)
 - **Broader design target:** v0.5.0 draft, not a release description
@@ -12,7 +13,7 @@ This file is authoritative when code and historical specifications differ.
 
 | Area | Current contract | Verification |
 |---|---|---|
-| Packaging | Zig 0.16.0; five independent batteries and a behavior-free umbrella; ADR 0001 dependency DAG | Independent unit builds and integration imports |
+| Packaging | Zig 0.17.0; five independent batteries and a behavior-free umbrella; ADR 0001 dependency DAG | Independent unit builds and integration imports |
 | ETF | Owned integer/UTF-8 atom/tuple/binary/proper list/nil/NEW_PID subset; depth, size and aggregate allocation limits | Unit, golden-vector and conformance tests |
 | EPMD | Registration-socket ownership; node lookup; exact short error response | Deterministic client wire tests and real OTP discovery/removal |
 | Handshake | Initiating and accepting OTP 23+ format; mutual cookie digest; no read-ahead loss at distribution handoff | Coalesced-frame regression in both roles; actual OTP 25/26/27 |
@@ -39,9 +40,29 @@ Details and commands are in [mvp.md](mvp.md). Verification records are [Phase B]
 
 The service deliberately uses synchronous owned-copy processing. The reusable mailbox/registry is not an implicit asynchronous scheduler. Logical tokens are copyable; they do not prove an OS-thread or task identity. Caller-managed lifetimes remain required.
 
+## Zig 0.17 compiler migration
+
+The current build uses 0.17's `addPassthruArgs` and optimizer values
+`debug`/`safe`/`fast`/`small`; old `ReleaseSafe` command-line values are not accepted.
+Fixed repeated arrays use typed `@splat`, retaining existing stress/lab assertions.
+Core, labs and both intentional compile failures pass in debug/safe; actual OTP
+25/26/27 and run/benchmark argument forwarding also pass. No runtime/protocol
+feature is added by the migration. [Compiler evidence](evidence/phase-a/2026-10-25-zig-0.17-master.md).
+
+The 0.17 startup source selects `SafeAllocator` for debug/safe, independently of
+libc linkage. Older 0.16 allocator/performance records below remain historical,
+not current performance claims. Current compiler/ELF provenance is in the new
+record; no benchmark was re-scored.
+
 ## Allocator provenance
 
 The executable passes `std.process.Init.gpa` to the runtime. The [source/binary audit](evidence/phase-a/2026-09-26-allocator-source-audit.md) establishes that the recorded Zig 0.16.0, no-libc ReleaseSafe configuration selects `DebugAllocator`; it is not an explicit `smp_allocator` baseline. The Port worker uses fixed payload storage. This does not attribute the latency gap to allocation. The separate `explore/snmalloc` branch has experimental benchmark results; the original MVP baseline is unchanged.
+
+Current 0.17 experimental routing keeps `process` as the default and preserves
+explicit debug/smp/libc selections. In debug/safe, `process` now means startup's
+SafeAllocator even with libc; explicit `debug` is still the deprecated
+DebugAllocator. These distinct backends are not relabeled as one another, and
+old 0.16 performance evidence is not reused as current provenance.
 
 ## Experimental branch — 2026-09-27
 

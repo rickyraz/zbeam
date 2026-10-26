@@ -5,6 +5,7 @@
 
 **Document Status**: Working Draft / Broader Design Target
 **MVP contract update**: 2026-09-26 — [`docs/mvp.md`](../docs/mvp.md) specifies the implemented subset, limits, lifecycle and verification gates. It takes precedence over historical pseudocode for current API behavior. The default node uses owned copies, unbuffered demand-gated reads and sequential peers; it has no transport arena, `BufferHandle`, actor task scheduler or process-link/monitor implementation. A separate branch tests an opt-in synchronous request-local arena without those broader features.
+**Compiler update (2026-10-25):** the implemented subset now targets Zig 0.17.0 with `std.Io`; optimized safety-check commands use `-Doptimize=safe`. The historical 0.16 design pseudocode below is not automatically a compiling 0.17 API. No wire, demand, ownership or scheduling contract is broadened by this compiler migration.
 **Version**: 0.5.0-draft
 **Date**: 2026-07-11
 **Language**: Zig 0.16.0 (`std.Io` interface mandatory)
