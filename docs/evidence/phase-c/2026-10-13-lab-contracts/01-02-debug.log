@@ -1,0 +1,58 @@
+test-labs
++- lab-02
+   +- run test lab-02 w
+lab02 scenario=omitted_grant tick=0 credits=0 observation=paused
+lab02 scenario=omitted_grant tick=1 credits=0 observation=paused
+lab02 scenario=omitted_grant tick=2 credits=0 observation=paused
+lab02 scenario=omitted_grant tick=3 credits=0 observation=inactive
+lab02 scenario=omitted_grant tick=4 credits=0 observation=inactive
+lab02 scenario=omitted_grant tick=5 credits=0 observation=inactive
+lab02 scenario=late_grant tick=0 credits=0 observation=paused
+lab02 scenario=late_grant tick=1 credits=0 observation=paused
+lab02 scenario=late_grant tick=2 credits=0 observation=paused
+lab02 scenario=late_grant tick=3 credits=0 observation=inactive
+lab02 scenario=late_grant tick=4 credits=1 observation=ready
+lab02 scenario=late_grant tick=5 credits=1 observation=ready
+lab02 scenario=handler_failure tick=0 credits=0 observation=failed
+lab02 scenario=handler_failure tick=1 credits=0 observation=failed
+lab02 scenario=handler_failure tick=2 credits=0 observation=failed
+lab02 scenario=handler_failure tick=3 credits=0 observation=failed
+lab02 scenario=handler_failure tick=4 credits=0 observation=failed
+lab02 scenario=handler_failure tick=5 credits=0 observation=failed
+lab02 scenario=long_cpu_work tick=0 credits=0 observation=paused
+lab02 scenario=long_cpu_work tick=1 credits=0 observation=paused
+lab02 scenario=long_cpu_work tick=2 credits=0 observation=paused
+lab02 scenario=long_cpu_work tick=3 credits=0 observation=inactive
+lab02 scenario=long_cpu_work tick=4 credits=0 observation=inactive
+lab02 scenario=long_cpu_work tick=5 credits=0 observation=inactive
+failed command: ./.zig-cache/o/ef860a986281f13449b5d223f1dd5b8e/lab-02 --cache-dir=./.zig-cache --seed=0xf312a7ad --listen=-
+
+test-labs
++- lab-01
+   +- run test lab-01 w
+lab01 producers=1 capacity=1 received=128
+lab01 producers=1 capacity=4 received=128
+lab01 producers=1 capacity=64 received=128
+lab01 producers=2 capacity=1 received=256
+lab01 producers=2 capacity=4 received=256
+lab01 producers=2 capacity=64 received=256
+lab01 producers=4 capacity=1 received=512
+lab01 producers=4 capacity=4 received=512
+lab01 producers=4 capacity=64 received=512
+lab01 producers=8 capacity=1 received=1024
+lab01 producers=8 capacity=4 received=1024
+lab01 producers=8 capacity=64 received=1024
+lab01 producers=16 capacity=1 received=2048
+lab01 producers=16 capacity=4 received=2048
+lab01 producers=16 capacity=64 received=2048
+failed command: ./.zig-cache/o/5866a17e6a5d96acfa33fe864f87021d/lab-01 --cache-dir=./.zig-cache --seed=0xf312a7ad --listen=-
+
+Build Summary: 7/7 steps succeeded; 4/4 tests passed
+test-labs success
++- lab-01 success
+|  +- run test lab-01 2 pass (2 total) 145ms MaxRSS:8M
+|     +- compile test lab-01 Debug native success 736ms MaxRSS:139M
++- lab-02 success
+   +- run test lab-02 2 pass (2 total) 8ms MaxRSS:4M
+      +- compile test lab-02 Debug native success 736ms MaxRSS:141M
+
