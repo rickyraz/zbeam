@@ -1,0 +1,173 @@
+{
+  "schema": 1,
+  "date": "2026-10-26",
+  "scope": "User-authorized ref consolidation; no M1/research feature merge",
+  "before_remote_count": 28,
+  "after_local_remote_count": 11,
+  "master_pr": "https://github.com/rickyraz/zbeam/pull/2",
+  "master_merge": "dc06c6493460671968176a847ee0e0a19a60c680",
+  "snapshot_note": "After ref consolidation and actor test-only follow-up, before documentation recording commits",
+  "branch_heads": {
+    "explore/actor-admission": "b1dff6c2b35b4c0b46618f2c626aedb36cc2a024",
+    "explore/allocator-baselines": "3d4a5413ccd0ba6fe7fe3d3b1c29bb542d222833",
+    "explore/batched-requests": "ad9df2fa031ed7aeef1f953b5df6de0c41736ae6",
+    "explore/beam-backpressure": "89cb7fd42ead24394deb4c3dc70f338632366caa",
+    "explore/io-overhead": "667a00f6e1291f51f8450f7f1fdfc0163fa41de0",
+    "explore/request-arena": "0faf241d95eb4d19ec0ff027a4ff5f834dd02d61",
+    "explore/snmalloc": "889a563cd7275d6da7aaa50ca7bf86eae81d7217",
+    "explore/worker-recovery": "c6e21c1398377eafe2fdb8531b4d1f2a0c91e559",
+    "explore/zigler-baseline": "83d5a1233f0a595603cdfb89694fa1b70cd33a84",
+    "feat/monitorable-worker": "f07df4dc9941434e2532e296749ca1a6e677dc6c",
+    "master": "dc06c6493460671968176a847ee0e0a19a60c680"
+  },
+  "retired_heads": {
+    "migrate/zig-0.17-master": "a0464e675c4e53e91f5c926154eb8a5eb7d4030f",
+    "migrate/zig-0.17-lab-contracts": "a0464e675c4e53e91f5c926154eb8a5eb7d4030f",
+    "migrate/zig-0.17-docs-plan": "605df482585217ca9c7d37714b9dc6ab003a2469",
+    "migrate/zig-0.17-worker-lifecycle": "88a578629f80691ef678cfebc969039ab7084d18",
+    "migrate/zig-0.17-monitorable-worker": "f07df4dc9941434e2532e296749ca1a6e677dc6c",
+    "migrate/zig-0.17-zigler-baseline": "83d5a1233f0a595603cdfb89694fa1b70cd33a84",
+    "migrate/zig-0.17-batched-requests": "ad9df2fa031ed7aeef1f953b5df6de0c41736ae6",
+    "migrate/zig-0.17-beam-backpressure": "89cb7fd42ead24394deb4c3dc70f338632366caa",
+    "migrate/zig-0.17-io-overhead": "667a00f6e1291f51f8450f7f1fdfc0163fa41de0",
+    "migrate/zig-0.17-worker-recovery": "c6e21c1398377eafe2fdb8531b4d1f2a0c91e559",
+    "migrate/zig-0.17-actor-admission": "b3d1299a2779bbcf38fdb55c3dd4521723124961",
+    "migrate/zig-0.17-allocator-baselines": "3d4a5413ccd0ba6fe7fe3d3b1c29bb542d222833",
+    "migrate/zig-0.17-request-arena": "0faf241d95eb4d19ec0ff027a4ff5f834dd02d61",
+    "migrate/zig-0.17-snmalloc": "889a563cd7275d6da7aaa50ca7bf86eae81d7217",
+    "explore/lab-contracts": "2fa191140c6037294542e78363798be8bb394e47",
+    "docs/worker-lifecycle-plan": "4aa7333555940583758132abc35ef1e0c090a29a",
+    "feat/worker-lifecycle": "38caeb4730712ef5b5a73eec6ceda999282917c1"
+  },
+  "migration_archives": [
+    {
+      "source": "master",
+      "old": "497d34697303a00820554a2cacb98f8ae54fc0d1",
+      "candidate": "migrate/zig-0.17-master",
+      "new": "a0464e675c4e53e91f5c926154eb8a5eb7d4030f",
+      "tag": "archive/zig-0.17/master",
+      "ci_run": 40275692277,
+      "ci_conclusion": "success"
+    },
+    {
+      "source": "explore/lab-contracts",
+      "old": "2fa191140c6037294542e78363798be8bb394e47",
+      "candidate": "migrate/zig-0.17-lab-contracts",
+      "new": "a0464e675c4e53e91f5c926154eb8a5eb7d4030f",
+      "tag": "archive/zig-0.17/explore/lab-contracts",
+      "ci_run": 40275723993,
+      "ci_conclusion": "success"
+    },
+    {
+      "source": "docs/worker-lifecycle-plan",
+      "old": "4aa7333555940583758132abc35ef1e0c090a29a",
+      "candidate": "migrate/zig-0.17-docs-plan",
+      "new": "605df482585217ca9c7d37714b9dc6ab003a2469",
+      "tag": "archive/zig-0.17/docs/worker-lifecycle-plan",
+      "ci_run": 40275695351,
+      "ci_conclusion": "success"
+    },
+    {
+      "source": "feat/worker-lifecycle",
+      "old": "38caeb4730712ef5b5a73eec6ceda999282917c1",
+      "candidate": "migrate/zig-0.17-worker-lifecycle",
+      "new": "88a578629f80691ef678cfebc969039ab7084d18",
+      "tag": "archive/zig-0.17/feat/worker-lifecycle",
+      "ci_run": 40276534595,
+      "ci_conclusion": "success"
+    },
+    {
+      "source": "feat/monitorable-worker",
+      "old": "a9e13a90dcb249e4e013a925a79a1440b18a4013",
+      "candidate": "migrate/zig-0.17-monitorable-worker",
+      "new": "f07df4dc9941434e2532e296749ca1a6e677dc6c",
+      "tag": "archive/zig-0.17/feat/monitorable-worker",
+      "ci_run": 40284096877,
+      "ci_conclusion": "success"
+    },
+    {
+      "source": "explore/zigler-baseline",
+      "old": "d0f9ff20ab3b06cbdab3b65d75ca6f97639476aa",
+      "candidate": "migrate/zig-0.17-zigler-baseline",
+      "new": "83d5a1233f0a595603cdfb89694fa1b70cd33a84",
+      "tag": "archive/zig-0.17/explore/zigler-baseline",
+      "ci_run": 40276799627,
+      "ci_conclusion": "success"
+    },
+    {
+      "source": "explore/batched-requests",
+      "old": "8f161ea63be5245725d5cfb2008462fac5b72b38",
+      "candidate": "migrate/zig-0.17-batched-requests",
+      "new": "ad9df2fa031ed7aeef1f953b5df6de0c41736ae6",
+      "tag": "archive/zig-0.17/explore/batched-requests",
+      "ci_run": 40276875662,
+      "ci_conclusion": "success"
+    },
+    {
+      "source": "explore/beam-backpressure",
+      "old": "7f3e5fb8cb41829e91d52b1cce0e58da5148af76",
+      "candidate": "migrate/zig-0.17-beam-backpressure",
+      "new": "89cb7fd42ead24394deb4c3dc70f338632366caa",
+      "tag": "archive/zig-0.17/explore/beam-backpressure",
+      "ci_run": 40276906924,
+      "ci_conclusion": "success"
+    },
+    {
+      "source": "explore/io-overhead",
+      "old": "d6656b0d8266680a625fbb3cc3ca5467970f5351",
+      "candidate": "migrate/zig-0.17-io-overhead",
+      "new": "667a00f6e1291f51f8450f7f1fdfc0163fa41de0",
+      "tag": "archive/zig-0.17/explore/io-overhead",
+      "ci_run": 40276937855,
+      "ci_conclusion": "success"
+    },
+    {
+      "source": "explore/worker-recovery",
+      "old": "e08175ea465e26f013152d2d1ad271946a6d3fe7",
+      "candidate": "migrate/zig-0.17-worker-recovery",
+      "new": "c6e21c1398377eafe2fdb8531b4d1f2a0c91e559",
+      "tag": "archive/zig-0.17/explore/worker-recovery",
+      "ci_run": 40276968625,
+      "ci_conclusion": "success"
+    },
+    {
+      "source": "explore/actor-admission",
+      "old": "ddf5ecec7ca5f5d76d3350a93855dce482ccaf2e",
+      "candidate": "migrate/zig-0.17-actor-admission",
+      "new": "b3d1299a2779bbcf38fdb55c3dd4521723124961",
+      "tag": "archive/zig-0.17/explore/actor-admission",
+      "ci_run": 40276972285,
+      "ci_conclusion": "success"
+    },
+    {
+      "source": "explore/allocator-baselines",
+      "old": "27b0feed2c55cfc1087ab32e9fe525e8337ec8e6",
+      "candidate": "migrate/zig-0.17-allocator-baselines",
+      "new": "3d4a5413ccd0ba6fe7fe3d3b1c29bb542d222833",
+      "tag": "archive/zig-0.17/explore/allocator-baselines",
+      "ci_run": 40275718968,
+      "ci_conclusion": "success"
+    },
+    {
+      "source": "explore/request-arena",
+      "old": "ff5ac17167ba69e7a78a306c585f70bd9e943020",
+      "candidate": "migrate/zig-0.17-request-arena",
+      "new": "0faf241d95eb4d19ec0ff027a4ff5f834dd02d61",
+      "tag": "archive/zig-0.17/explore/request-arena",
+      "ci_run": 40275721669,
+      "ci_conclusion": "success"
+    },
+    {
+      "source": "explore/snmalloc",
+      "old": "62c511ce9f5ec861c0b53580f2f6952477536c91",
+      "candidate": "migrate/zig-0.17-snmalloc",
+      "new": "889a563cd7275d6da7aaa50ca7bf86eae81d7217",
+      "tag": "archive/zig-0.17/explore/snmalloc",
+      "ci_run": 40275689636,
+      "ci_conclusion": "success"
+    }
+  ],
+  "ignored_assets_verified": 399,
+  "worktrees_retained": 10,
+  "archived_detached_worktrees": 2
+}
