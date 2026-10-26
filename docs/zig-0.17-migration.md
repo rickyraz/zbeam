@@ -5,7 +5,8 @@ consolidation executed. Updated: 2026-10-26.** Eleven local/remote working branc
 remain: master, M1 and nine protected research topics. See the
 [execution record](evidence/phase-a/2026-10-26-branch-consolidation.md).
 R0–R4 below describe the completed campaign, not instructions to recreate retired
-migration branches. M1 feature acceptance remains separate.
+migration branches. [M1 feature acceptance](evidence/phase-b/2026-10-26-m1-integration.md)
+was subsequently completed separately through PR #3 and cleanup repair PR #4.
 The canonical compiler-only commit is `ae7197d`, based on live remote master
 `497d346`. The [final ledger and evidence](evidence/phase-a/2026-10-26-zig-0.17-rollout.md)
 record source/delivery SHAs, separate branch gates and retained exclusions.
@@ -26,7 +27,8 @@ for compiler paths/hashes, live remote refs and the failed probe.
 remote master was `497d346` after lab PR #1. The migration used the live baseline,
 not the stale local ref. Compiler PR #2 subsequently merged as `dc06c64`; local
 master now tracks actual remote master. Always refresh upstream before new work,
-without moving another live Pi session's branch. M1 is still not on master.
+without moving another live Pi session's branch. M1 was not part of that
+compiler merge; its later acceptance is recorded separately.
 
 ## Complete branch ledger
 
@@ -207,8 +209,10 @@ safe registration; later green runs do not establish its root cause or correctiv
 fix. The later [acceptance triage](evidence/phase-b/2026-10-26-m1-acceptance.md)
 reproduces and prevents the launcher startup-race class; the original runner's
 exact trace remains unavailable. Master is normally merged into M1 at `664fc81`,
-and current local merge-result gates pass. [Current PR checks and explicit
-size-exception approval](m1-review.md) still gate feature acceptance.
+and local merge-result gates passed. Explicit size-exception approval preceded
+PR #3; PR #4 repaired a subsequent cleanup failure. Repaired master `88db721`
+passed 9/9 CI jobs. [M1 acceptance](m1-review.md) is complete, without broadening
+the compiler campaign or promoting any research feature.
 Normal ancestry, not similar contents, determines whether a fast-forward is valid.
 Never reset, force-push or move a branch behind a live worktree.
 

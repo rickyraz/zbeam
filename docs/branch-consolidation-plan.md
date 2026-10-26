@@ -4,17 +4,20 @@
 explicit execution instruction authorized the handover after validation; this
 is no longer an approval-pending plan. **28 remote names became 11**, with the
 same 11 local branches and synchronized upstreams. All nine research topics stay
-protected as active or unconfirmed. M1 remains a separate feature branch.
+protected as active or unconfirmed. M1 was later accepted into master through
+PR #3 and repair PR #4; its branch/checkout remains retained, not auto-deleted.
 
 The [execution/recovery record](evidence/phase-a/2026-10-26-branch-consolidation.md)
 contains exact snapshots, operations, checks and exclusions. The compiler-only
-[PR #2](https://github.com/rickyraz/zbeam/pull/2) is merged; no M1 or experimental
-research feature was imported into master to reduce branch count.
+[PR #2](https://github.com/rickyraz/zbeam/pull/2) imported no M1 or experimental
+feature to reduce branch count. [Later M1 acceptance](evidence/phase-b/2026-10-26-m1-integration.md)
+was separately authorized and verified; all nine research topics stay independent.
 
 ## Retained working branches
 
-- `master`: accepted Zig 0.17 compiler baseline and labs.
-- `feat/monitorable-worker`: existing W0–W5 development profile; not M1 acceptance.
+- `master`: accepted Zig 0.17 compiler baseline, labs and bounded M1 profile.
+- `feat/monitorable-worker`: retained M1 integration/documentation checkout;
+  branch retirement remains a separate coordinated operation.
 
 | Protected research branch | Disposition |
 |---|---|
@@ -68,12 +71,11 @@ owner first. Do not force-remove worktrees or clean another session's files.
 Resume archived work from its exact tag for a named task and port/retest against
 current master; do not recreate all migration branches automatically.
 
-## Remaining integration work, not cleanup blockers
+## Separate M1 acceptance — 2026-10-26
 
-M1 needs its own review and current merge-result acceptance. Completing branch
-consolidation does not waive it or merge M1 just to reach ten branches. Preserve
-W0–W5 review units, or request an explicit size exception for cohesive overages;
-never shrink tests/evidence to meet a review budget.
+M1 completed its own review and current merge-result acceptance, rather than
+merging merely to reach ten branches. The owner explicitly approved the
+preserved-history size exception; original W0–W5 units and evidence remain.
 
 Earlier M1 `64f6388` failed OTP 27 safe registration with `ConnectionRefused`.
 Later handover runs passed, including `f07df4d` on the retained feature name;
@@ -81,10 +83,11 @@ Later handover runs passed, including `f07df4d` on the retained feature name;
 and prevents the EPMD launcher readiness race without claiming the old runner's
 exact trace. Master is integrated by ordinary merge `664fc81`; current local
 core/labs debug/safe, native OTP 25/26/27 in both modes, guardian and all 13
-complementary recovery cases per mode pass. [PR review/checks and an explicit
-size exception](m1-review.md) still gate M1-to-master integration; no research
-retirement follows from these results.
+original recovery cases per mode passed. PR #3 merged normally; actual-merge
+CI exposed a Port cleanup race, repaired in PR #4. Repaired master `88db721`
+passed all nine CI jobs, including 14 current recovery cases per mode.
+[Acceptance](m1-review.md) closes M1, not any research topic.
 
 Research promotion, production readiness, threaded-NIF safety and performance
-claims remain independent decisions. Branch protection changes and M1-to-master
-integration were not performed as part of this cleanup.
+claims remain independent decisions. Branch protection was not changed;
+M1-to-master integration occurred separately from branch consolidation.

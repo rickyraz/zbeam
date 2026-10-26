@@ -1,11 +1,11 @@
 # Development Plan: MVP to a Supported Native Worker Peer
 
-- **Status:** W0–W5 implemented and verified on `feat/monitorable-worker`; broader D0–D5/M2 gates remain proposals.
+- **Status:** bounded M1 W0–W5 accepted into master through PR #3 and cleanup repair PR #4; broader D0–D5 gates remain incomplete. M2 is not started.
 - **Reviewed:** 2026-10-26.
 - **Historical planning baseline:** local `master` at `11c3319`; restricted MVP introduced by `090bb60`. The compiler candidate includes live remote master's accepted labs at `497d346`.
-- **Immediate milestone:** M1, one PID-addressable, monitorable native worker with external recovery.
+- **Next milestone:** M2 task ownership, shutdown and bounded multi-actor lifetimes; design and implementation remain future work.
 - **Allocator track:** [snmalloc evaluation](snmalloc-evaluation.md).
-- **Compiler track:** [Zig 0.17 migration](zig-0.17-migration.md) verified all 14 profiles; compiler PR #2 merged. [Consolidation executed](evidence/phase-a/2026-10-26-branch-consolidation.md): eleven local/remote branches retain M1 and all nine research topics, separately from feature acceptance.
+- **Compiler track:** [Zig 0.17 migration](zig-0.17-migration.md) verified all 14 profiles; compiler PR #2 merged. [Consolidation executed](evidence/phase-a/2026-10-26-branch-consolidation.md): eleven local/remote branches retain the M1 checkout and all nine research topics. [M1 acceptance](evidence/phase-b/2026-10-26-m1-integration.md) is a later, separate decision.
 
 ## Direction
 
@@ -15,7 +15,7 @@ The differentiator must be useful native worker identities and lifecycle control
 
 The supported profile must state its actual ETF tags, control operations, platforms and OTP versions. A release cannot turn the v0.5 historical pseudocode into an implementation claim.
 
-## Immediate target — M1: a monitorable native worker
+## Accepted milestone — M1: a monitorable native worker
 
 M1 delivers a bounded native worker that a BEAM application can discover,
 address by PID, monitor and recover through an external supervisor. It is a
@@ -50,8 +50,8 @@ published; adding monitors alone does not establish general node compatibility.
 
 ## M1 execution record — 2026-10-25
 
-The W0–W5 development profile is implemented on the integration branch, not yet
-merged into `master`. [Implementation status](implementation-status.md) and
+At the 2026-10-25 checkpoint, W0–W5 was implemented on the integration branch,
+not yet merged. It is now [accepted into master](evidence/phase-b/2026-10-26-m1-integration.md). [Implementation status](implementation-status.md) and
 [M1 evidence](evidence/phase-c/2026-10-25-m1.md) define the verified subset.
 Debug/ReleaseSafe core tests and pinned OTP 25/26/27 pass; the Linux external
 owner has separate Elixir 1.20.4/OTP 29 recovery evidence. Production release,
@@ -67,9 +67,11 @@ The historical pre-migration audit observed remote master `497d346` and stale
 local `11c3319`; neither is the current integration base. Compiler PR #2 and its
 evidence are on master `3919341`, now integrated into M1 by ordinary merge
 `664fc81`. [Current merge-result verification](evidence/phase-b/2026-10-26-m1-acceptance.md)
-passes locally in debug/safe, native OTP 25/26/27 and all complementary owner
-cases. [PR checks, work-unit review and explicit size-exception approval](m1-review.md)
-remain gates before M1-to-master integration. M2 has not started.
+passed locally in debug/safe, native OTP 25/26/27 and all complementary owner
+cases. Explicit size-exception approval preceded normal PR #3 merge `2241e7f`;
+PR #4 repaired the actual-merge Port cleanup race. Repaired master `88db721`
+passed 9/9 CI jobs, with 14 recovery cases per mode. [Review and acceptance](m1-review.md)
+are complete for this bounded profile. M2 has not started.
 
 ## Research inputs, not completed prerequisites
 
@@ -157,8 +159,7 @@ scheduler changes. M1 deliberately precedes D3's general concurrent runtime.
 
 ## Active implementation increments
 
-W0–W5 implementation is complete in the current development profile; M1
-acceptance/integration remains gated separately. The increments below retain the
+W0–W5 implementation and bounded M1 acceptance/integration are complete. The increments below retain the
 requirements and review boundaries, not an unexecuted-task inventory. Each
 implementation increment includes its tests, contract updates and evidence in
 the same reviewable work unit. Split codec, routing and monitor changes at independently verifiable
@@ -299,7 +300,8 @@ not M1/M2 prerequisites. Performance work resumes only against a stable baseline
 ## Verification and documentation gates
 
 - Run `test-unit`, `test-integration`, `test-conformance`, `test-stress` and
-  `test-all` with the pinned compiler; record Debug and ReleaseSafe results.
+  `test-all` with the pinned compiler; record `debug` and `safe` results.
+  Historical Zig 0.16 records retain their original optimizer names.
 - For wire changes, run the pinned OTP 25/26/27 matrix and new monitor cases;
   skipped/unavailable targets are not passes. Review deployment-supported OTP
   versions separately from the retained compatibility regression matrix.
@@ -311,9 +313,9 @@ not M1/M2 prerequisites. Performance work resumes only against a stable baseline
   [design-target sections](../specs/zbeam-v0.5.0.md) with each implemented
   lifecycle/protocol increment; planning alone changes no implementation status.
 
-**Next action:** W0's commit inventory and integrated regression baseline, then
-W1's lifecycle ADR. The first new feature is bounded identity/monitor support,
-not a general scheduler or another performance comparator.
+**Next action:** a separate M2 lifecycle ADR and ownership design for task join,
+shutdown and bounded two-actor admission. M1 acceptance does not authorize or
+implement that work, a general scheduler or another performance comparator.
 
 ## Acceptance policy
 

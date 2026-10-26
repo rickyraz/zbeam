@@ -1,6 +1,6 @@
 # Research and Risk Backlog
 
-**Reviewed:** 2026-09-26. The [single-actor MVP](mvp.md) is implemented; the full v0.5 design is not. [Implementation status](implementation-status.md) distinguishes executed evidence from proposals.
+**Reviewed:** 2026-10-26. The [single-actor MVP](mvp.md) and bounded M1 profile are accepted; task-owning M2 and the full v0.5 design are not implemented. [Implementation status](implementation-status.md) distinguishes executed evidence from proposals.
 
 The [development plan](development-plan.md) defines execution order and final release gates. The [snmalloc evaluation](snmalloc-evaluation.md) specifies the allocator experiment without changing the default build.
 
@@ -9,8 +9,9 @@ The [development plan](development-plan.md) defines execution order and final re
 [All 14 migration candidates](evidence/phase-a/2026-10-26-zig-0.17-rollout.md)
 passed their own native, OTP, eligible-NIF and allocator/lifetime gates. The
 [authorized handover](evidence/phase-a/2026-10-26-branch-consolidation.md) merged
-compiler PR #2 and retained eleven local/remote branches: M1 and all nine research
-topics remain separate from master. Exact archives and ignored assets are
+compiler PR #2 and retained eleven local/remote branches. M1 was subsequently
+accepted through PR #3 and cleanup repair PR #4; all nine research topics remain
+independent of master. Exact archives and ignored assets are
 preserved; no other live Pi checkout was switched. Zigler requires an unreleased exact
 Git pin; threaded NIF teardown remains quarantined. Explicit DebugAllocator is
 still supported but deprecated, separate from startup's SafeAllocator in
@@ -21,8 +22,10 @@ remain necessary. [M1 acceptance triage](evidence/phase-b/2026-10-26-m1-acceptan
 reproduces a source-supported EPMD daemon-exit/readiness race and closes that
 launcher gap, including forced probe cleanup. The original runner's exact trace
 remains unavailable; no native retry or historical-cause certainty is claimed.
-Current local merge-result gates pass; [PR checks and size-exception approval](m1-review.md)
-remain integration gates, separate from all nine research topics.
+Explicit size-exception approval, candidate/PR checks and actual repaired-master
+CI closed [M1 acceptance](evidence/phase-b/2026-10-26-m1-integration.md). The
+post-merge Port cleanup failure and repair remain recorded, not rerun away.
+This closes the bounded M1 gate, separately from all nine research topics.
 
 ## Priority labels
 
@@ -57,9 +60,10 @@ Completion is deliberately limited to the MVP scope. It does not close the broad
 ### Mandatory ETF capability coverage
 
 **Additive boundary (2026-10-25):** bounded newer/legacy references and pure
-PID-monitor controls have tests and OTP 25/26/27 reference vectors. Optional
-monitor flags remain disabled at this codec-only stage. Other mandatory tag
-coverage remains unresolved; reference support is not general ETF conformance.
+PID/named-monitor controls have tests and OTP 25/26/27 reference vectors. Flags
+were disabled at the codec-only checkpoint; the accepted worker profile enables
+both flags after integrated W4 checks. Other mandatory tag coverage remains
+unresolved; references/monitors do not establish general ETF conformance.
 
 **Risk:** modern OTP requires baseline handshake flags for encodings beyond the MVP decoder. The profile rejects unsupported matching payloads and is not a general-compatible node.
 
@@ -67,7 +71,10 @@ coverage remains unresolved; reference support is not general ETF conformance.
 
 ### Protocol control and actor addressing
 
-Implement process links/monitors, registered-name monitoring, PID-directed local delivery and any required OTP service protocols only with explicit semantics and black-box checks. Published-node housekeeping is currently ignored when addressed to unknown registered names; there is no distributed `global` implementation. Do not infer `gen_server:call` or `net_adm:ping` support from a successful handshake.
+M1 implements bounded BEAM-to-native PID/named monitors and PID-directed delivery
+for one worker. Process links, outbound monitors, generic multi-actor routing and
+OTP service protocols remain separate work requiring explicit semantics and
+black-box checks. Published-node housekeeping is currently ignored when addressed to unknown registered names; there is no distributed `global` implementation. Do not infer `gen_server:call` or `net_adm:ping` support from a successful handshake.
 
 ### Mailbox task ownership and lifetimes
 
@@ -110,9 +117,15 @@ The MVP rejects cached/fragmented headers, checks wire lengths before allocation
 
 ### Actor failure blast radius
 
-SIGKILL process-loss checks pass with a surviving BEAM VM and unrelated local process. This is not a panic, allocator-failure or deliberate memory-corruption campaign and does not isolate actors inside one native process.
+SIGKILL process-loss checks preserve the BEAM VM and unrelated local process.
+M1 additionally verifies test-only panic, deterministic allocator failure, spin,
+external recovery and owned-process cleanup, including a regression for concurrent
+Port closure. This does not establish OS-OOM/memory-corruption safety or isolate
+actors inside one native process.
 
-**Required evidence:** separate fault-injection cases in test-only executables, bounded nodedown observation, leak/resource cleanup where applicable and externally supervised restart behavior. No fault-injection endpoint belongs in the production service.
+**Required evidence for expansion:** OS-OOM/corruption and native-host soak or
+sanitizer coverage where supported; no test endpoint belongs in the production
+service. Native task isolation and general in-process supervision remain unimplemented.
 
 ### Broader baseline and deployment
 
