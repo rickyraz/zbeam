@@ -22,7 +22,7 @@ scheduler or production release.
 
 ## Compiler migration
 
-- [2026-10-26 all-branch verification and delivery ledger](phase-a/2026-10-26-zig-0.17-rollout.md) — 14/14 tested/pushed candidates; original branches and M1 integration not promoted.
+- [2026-10-26 all-branch verification and delivery ledger](phase-a/2026-10-26-zig-0.17-rollout.md) — historical 14/14 profile verification; later branch handover is recorded below, while M1 feature integration remains pending.
 - [2026-10-25 Zig 0.17 probe and initial inventory](phase-a/2026-10-25-zig-0.17.md) — historical failed pre-migration probe, not an acceptance record.
 
 ## Allocator research

@@ -7,13 +7,17 @@ The [development plan](development-plan.md) defines execution order and final re
 ## Compiler migration boundary — 2026-10-26
 
 [All 14 migration candidates](evidence/phase-a/2026-10-26-zig-0.17-rollout.md)
-pass their own native, OTP, eligible-NIF and allocator/lifetime gates. They are
-pushed, not promoted behind other worktrees. Zigler requires an unreleased exact
+passed their own native, OTP, eligible-NIF and allocator/lifetime gates. The
+[authorized handover](evidence/phase-a/2026-10-26-branch-consolidation.md) merged
+compiler PR #2 and retained eleven local/remote branches: M1 and all nine research
+topics remain separate from master. Exact archives and ignored assets are
+preserved; no other live Pi checkout was switched. Zigler requires an unreleased exact
 Git pin; threaded NIF teardown remains quarantined. Explicit DebugAllocator is
 still supported but deprecated, separate from startup's SafeAllocator in
 0.17 debug/safe even with libc. Historical 0.16 results are not new-compiler
 allocator/performance evidence. Production, long-soak and non-Linux gates remain
-open; local YAML checks do not establish successful GitHub workflow execution.
+open. Actual compiler PR/merge and handover CI were observed; current tip checks
+remain necessary. Earlier M1 registration failure is retained as undiagnosed.
 
 ## Priority labels
 

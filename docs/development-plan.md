@@ -5,7 +5,7 @@
 - **Historical planning baseline:** local `master` at `11c3319`; restricted MVP introduced by `090bb60`. The compiler candidate includes live remote master's accepted labs at `497d346`.
 - **Immediate milestone:** M1, one PID-addressable, monitorable native worker with external recovery.
 - **Allocator track:** [snmalloc evaluation](snmalloc-evaluation.md).
-- **Compiler track:** [all-branch Zig 0.17 migration](zig-0.17-migration.md), 14/14 candidates verified and pushed separately from M1 behavior; original branches not yet promoted.
+- **Compiler track:** [Zig 0.17 migration](zig-0.17-migration.md) verified all 14 profiles; compiler PR #2 merged. [Consolidation executed](evidence/phase-a/2026-10-26-branch-consolidation.md): eleven local/remote branches retain M1 and all nine research topics, separately from feature acceptance.
 
 ## Direction
 

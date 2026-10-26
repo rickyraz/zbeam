@@ -1,7 +1,11 @@
 # Migrate master and every active branch to Zig 0.17
 
-**Status: 14/14 migration candidates verified and pushed; promotion pending.
-Updated: 2026-10-26.** R0–R4 local gates are complete on delivery branches.
+**Status: 14/14 profiles verified and archived; compiler PR #2 merged and branch
+consolidation executed. Updated: 2026-10-26.** Eleven local/remote working branches
+remain: master, M1 and nine protected research topics. See the
+[execution record](evidence/phase-a/2026-10-26-branch-consolidation.md).
+R0–R4 below describe the completed campaign, not instructions to recreate retired
+migration branches. M1 feature acceptance remains separate.
 The canonical compiler-only commit is `ae7197d`, based on live remote master
 `497d346`. The [final ledger and evidence](evidence/phase-a/2026-10-26-zig-0.17-rollout.md)
 record source/delivery SHAs, separate branch gates and retained exclusions.
@@ -18,20 +22,19 @@ The M1 worker is verified on 0.16.0 at `b43f5df`. A real 0.17.0 probe fails at
 not a complete error inventory. See [readiness evidence](evidence/phase-a/2026-10-25-zig-0.17.md)
 for compiler paths/hashes, live remote refs and the failed probe.
 
-**Refresh upstream before starting:** local `master`/cached `origin/master` are
-`11c3319`, but live remote `master` is `497d346` (lab-contracts PR #1 merged).
-The canonical migration must include those labs. Do not build the migration on
-stale local master, overwrite the new remote tip or silently move another Pi
-session's branch. M1 is not yet on master; its integration remains a separate
-reviewed concern.
+**Historical R0 upstream check:** local/cached master was `11c3319` while live
+remote master was `497d346` after lab PR #1. The migration used the live baseline,
+not the stale local ref. Compiler PR #2 subsequently merged as `dc06c64`; local
+master now tracks actual remote master. Always refresh upstream before new work,
+without moving another live Pi session's branch. M1 is still not on master.
 
 ## Complete branch ledger
 
-This inventory identifies the original 14 source branches. The final ledger
-records their verified delivery tips; none of the original names is promoted.
-The 2026-10-26 live-ref audit found the same 14 source heads, all still at their
-archived checkpoints. Refresh and add any new remote heads before promotion. Migration-generated temporary branches are delivery
-artifacts, not an excuse to omit any source branch.
+This is the historical inventory of 14 source profiles, not the current head
+list. The rollout ledger records their verified delivery tips. The subsequent
+[disposition](evidence/phase-a/2026-10-26-branch-consolidation.json) records retained
+source names and retired aliases: all nine research topics and M1 received their
+0.17 histories; completed profiles remain recoverable through immutable tags.
 
 | Branch | Inspected source tip | Order / branch-specific gate |
 |---|---|---|
@@ -98,9 +101,10 @@ Create `migrate/zig-0.17-<branch>` branches from recorded source tips and merge 
 accepted upstream labs where absent; it must not flatten each branch's distinct
 runtime/benchmark contract. Preserve history rather than rebasing published work.
 
-A session-owned migration worktree may be reused after each clean commit to share
-compiler caches within the available disk budget. The nine original worktrees
-remain untouched; no source branch is moved behind its owner's checkout.
+During R0–R4, the session-owned migration worktree was reused after clean commits
+to share compiler caches, while nine original worktrees remained untouched.
+The later explicit owner-authorized handover is recorded separately; it did not
+switch a checkout belonging to another live Pi session.
 
 Start with lab-contracts and the docs branch, then the foundation lifecycle branch
 and M1. Resolve M1's build and runtime additions on its own branch. Its additional
@@ -191,16 +195,16 @@ M1 additionally runs `test-worker-recovery` in both modes and OTP in `debug`;
 external Elixir/OTP compatibility is recorded separately from native wire support.
 CI should expose required external-tool lanes rather than hiding them in test-all.
 
-The revised [branch consolidation plan](branch-consolidation-plan.md) protects
-active and unconfirmed research. Consolidate each source/migration pair into one
-approved working branch per ongoing topic; archive only approved redundant or
-explicitly inactive refs. There is no fixed two-branch target or blanket research
-retirement. Exact recovery tags, current checks and owner release are gates.
+The [retention policy](branch-consolidation-plan.md) is now executed: 28 names
+became 11 locally/remotely, while all nine research topics and M1 remain working
+branches. Fourteen annotated 0.17 snapshots and existing 0.16 tags preserve the
+retired profiles; ignored assets were separately backed up. No blanket research
+retirement or feature promotion accompanied the compiler merge.
 
-Refresh remote heads and verify the current merge result before promotion.
-Canonical CI and the inspected M1 `c4b53e1` run passed. Earlier M1 `64f6388` failed
-OTP 27 safe registration; the later green run does not establish its root cause
-or a corrective fix. Retain it for acceptance triage and require current checks.
+Refresh heads and verify the current merge result for any future promotion.
+Compiler PR/merge and M1 handover CI passed. Earlier M1 `64f6388` failed OTP 27
+safe registration; later green runs do not establish its root cause or corrective
+fix. Retain it for acceptance triage and require current checks.
 Normal ancestry, not similar contents, determines whether a fast-forward is valid.
 Never reset, force-push or move a branch behind a live worktree.
 
