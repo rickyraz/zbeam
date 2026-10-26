@@ -147,8 +147,8 @@ zig build test-unit
 zig build test-integration
 zig build test-conformance
 zig build test-stress
-zig build test-all -Doptimize=ReleaseSafe
-zig build test-interop-docker -Doptimize=ReleaseSafe
+zig build test-all -Doptimize=safe
+zig build test-interop-docker -Doptimize=safe
 ```
 
 Keep OTP 25/26/27 as explicit regression targets; benchmark OTP versions are recorded separately and do not silently widen support. Missing Docker/OTP/profiling tools are skipped evidence with a reason, never a pass. Preserve raw results, commands, environment, source/binary hashes and failure outcomes under `docs/evidence/phase-{a,b,c}` as appropriate. Update implementation status and the relevant lifecycle/specification sections only when behavior is actually implemented and verified.
