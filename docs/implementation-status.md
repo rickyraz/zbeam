@@ -2,6 +2,7 @@
 
 - **MVP baseline:** 2026-09-26; reliability and SHA-256 worker extensions verified 2026-09-28
 - **Compiler migration:** Zig 0.17.0 verified 2026-10-25; M1 runtime scope unchanged
+- **All-branch verification:** [14/14 delivery candidates](evidence/phase-a/2026-10-26-zig-0.17-rollout.md) verified/pushed 2026-10-26; original names and M1-to-master integration remain unpromoted
 - **Package version:** 0.0.1 pre-alpha (no release tag created)
 - **Implemented milestone:** restricted MVP plus the bounded monitorable-worker M1 development profile
 - **Broader design target:** v0.5.0 draft, not a release description

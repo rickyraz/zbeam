@@ -1,17 +1,17 @@
 # Development Plan: MVP to a Supported Native Worker Peer
 
 - **Status:** W0–W5 implemented and verified on `feat/monitorable-worker`; broader D0–D5/M2 gates remain proposals.
-- **Reviewed:** 2026-10-25.
-- **Integration baseline:** local `master` at `11c3319`; restricted MVP introduced by `090bb60`.
+- **Reviewed:** 2026-10-26.
+- **Historical planning baseline:** local `master` at `11c3319`; restricted MVP introduced by `090bb60`. The compiler candidate includes live remote master's accepted labs at `497d346`.
 - **Immediate milestone:** M1, one PID-addressable, monitorable native worker with external recovery.
 - **Allocator track:** [snmalloc evaluation](snmalloc-evaluation.md).
-- **Compiler track:** [all-branch Zig 0.17 migration](zig-0.17-migration.md), executing separately from M1 behavior; canonical and combined M1 gates pass on migration branches, not yet promoted.
+- **Compiler track:** [all-branch Zig 0.17 migration](zig-0.17-migration.md), 14/14 candidates verified and pushed separately from M1 behavior; original branches not yet promoted.
 
 ## Direction
 
 The product target is a Zig library and separate-process worker node that Erlang/Elixir applications can address, monitor and operate predictably. It is not a replacement BEAM VM, a NIF framework, or an attempt to implement every OTP service.
 
-The differentiator must be useful native worker identities and lifecycle control through distribution, not an unsupported claim that distribution is faster than Ports. The current 32-byte benchmark favors the Port path. It also uses a diagnostic allocator in the ReleaseSafe configuration; allocator and transport costs must be separated before attributing that result.
+The differentiator must be useful native worker identities and lifecycle control through distribution, not an unsupported claim that distribution is faster than Ports. The recorded 0.16 32-byte benchmark favors Port and uses a diagnostic allocator in its no-libc ReleaseSafe configuration. Zig 0.17 startup selects SafeAllocator in debug/safe; old timings are not new-compiler evidence. Allocator and transport costs must remain separate.
 
 The supported profile must state its actual ETF tags, control operations, platforms and OTP versions. A release cannot turn the v0.5 historical pseudocode into an implementation claim.
 

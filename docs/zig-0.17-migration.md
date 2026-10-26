@@ -1,11 +1,12 @@
 # Migrate master and every active branch to Zig 0.17
 
-**Status: executing, not promoted. Updated: 2026-10-25.** R1 and R2 are verified
-on isolated migration branches; R3/R4 remain separate gates. The canonical
-compiler-only commit is `ae7197d`, based on live remote master `497d346`.
-[Canonical evidence](evidence/phase-a/2026-10-25-zig-0.17-master.md) and
-[M1 evidence](evidence/phase-a/2026-10-25-zig-0.17-monitorable-worker.md)
-record completed gates. Branch integration uses that exact commit. Preserve research
+**Status: 14/14 migration candidates verified and pushed; promotion pending.
+Updated: 2026-10-26.** R0–R4 local gates are complete on delivery branches.
+The canonical compiler-only commit is `ae7197d`, based on live remote master
+`497d346`. The [final ledger and evidence](evidence/phase-a/2026-10-26-zig-0.17-rollout.md)
+record source/delivery SHAs, separate branch gates and retained exclusions.
+Branch integration uses the exact canonical commit and reviewed compatibility
+patches; the allocator siblings reuse their tested shared-parent adaptation. Preserve research
 contracts and historical 0.16 evidence; do not merge research features into master
 as a side effect. No force-push, global compiler switch or other-session checkout
 is required.
@@ -26,9 +27,10 @@ reviewed concern.
 
 ## Complete branch ledger
 
-This inventory has 14 distinct branch names, not a claim that they are migrated.
-Duplicate local/remote tracking refs are one branch. Refresh and add any new
-remote heads before promotion. Migration-generated temporary branches are delivery
+This inventory identifies the original 14 source branches. The final ledger
+records their verified delivery tips; none of the original names is promoted.
+The 2026-10-26 live-ref audit found the same 14 source heads, all still at their
+archived checkpoints. Refresh and add any new remote heads before promotion. Migration-generated temporary branches are delivery
 artifacts, not an excuse to omit any source branch.
 
 | Branch | Inspected source tip | Order / branch-specific gate |
@@ -36,7 +38,7 @@ artifacts, not an excuse to omit any source branch.
 | `master` | local `11c3319`; live remote `497d346` | R1; core, OTP 25/26/27, labs and negative compile tests |
 | `explore/lab-contracts` | `2fa1911` | R2; already upstream; all 22 lab cases and both expected failures must retain their intent |
 | `docs/worker-lifecycle-plan` | `4aa7333` | R2; code follows canonical compiler commit; roadmap remains appropriate to this branch's actual implementation |
-| `feat/monitorable-worker` | `a22412c`; behavior at `b43f5df` | R2; core, upstream labs, PID/named monitors, all 13 owner scenarios and guard checks |
+| `feat/monitorable-worker` | `a9e13a9` clean R0 checkpoint; behavior at `b43f5df` | R2; core, upstream labs, PID/named monitors, all 13 owner scenarios and guard checks |
 | `feat/worker-lifecycle` | remote-only `38caeb4` | R2; reliability/SHA-256 and OTP regression; do not substitute the newer M1 profile |
 | `explore/zigler-baseline` | `d0f9ff2` | R3 root; native comparison workers plus independently verified Zigler compiler compatibility |
 | `explore/batched-requests` | `8f161ea` | R3; batch bounds, malformed batches and exact per-item results |
@@ -85,8 +87,8 @@ Run independent battery/package-consumption checks and all common gates below.
 Review the actual 0.17 allocator source/binary selection again; the 0.16
 DebugAllocator audit is not evidence for 0.17's default allocator or I/O backend.
 
-**Exit:** a compiler-only canonical commit on current master, passing Debug and
-ReleaseSafe core/labs plus actual OTP 25/26/27. No M1, allocator or research feature
+**Exit:** a compiler-only candidate based on current remote master, passing
+`debug` and `safe` core/labs plus actual OTP 25/26/27. No M1, allocator or research feature
 is promoted merely to make this migration easier.
 
 ## R2 — Propagate the canonical commit to baseline and M1 branches
@@ -126,8 +128,11 @@ Available branch-specific build targets include `build-research`, `test-research
 `build-research-peer` and `build-frame-profile`; use only the targets present in
 that branch. Run its Python self-checks and Elixir/Mix correctness checks as well.
 
-**Zigler is an explicit blocker until verified.** The comparison project pins
-Zigler 0.16.0 and explicitly builds NIFs with Zig 0.16.0. Check upstream support
+**The demonstrated Zigler blocker is resolved for eligible adapters.** The original
+0.16 project fails generated `b.args` on 0.17. The exact upstream Git pin
+`feb80162d597ede227e9d4d5c9798a42beee9695` passes fresh-VM correctness checks;
+[dependency evidence](evidence/phase-a/2026-10-25-zig-0.17-zigler.md) records its
+unreleased status, helper locks and retained threaded quarantine. Check upstream support
 for 0.17, isolate any necessary dependency/adapter update and run malformed-input,
 exact-result and scheduler-mode tests in fresh VMs. Never silently use 0.16 for
 NIFs while calling the whole branch 0.17 or declaring a matched-compiler speedup.
@@ -182,7 +187,7 @@ Run equivalent explicit targets when a branch lacks an aggregate alias:
 `test-labs` requires upstream lab integration; missing required aliases on a
 research branch need equivalent explicit checks, not a silent skip. Format/build
 all branch-owned Zig tools and benchmark sources too, not only these directories.
-M1 additionally runs `test-worker-recovery` in both modes and OTP in Debug;
+M1 additionally runs `test-worker-recovery` in both modes and OTP in `debug`;
 external Elixir/OTP compatibility is recorded separately from native wire support.
 CI should expose required external-tool lanes rather than hiding them in test-all.
 
@@ -193,9 +198,10 @@ promotion until reconciled and reverified. Never `reset --hard`, force-push or u
 `update-ref` behind a live worktree. Remote-only branches receive normal reviewed
 fast-forward updates; none is silently omitted or deleted.
 
-Final acceptance is **14/14 source branches with verified 0.17 tips**, plus any
-new heads discovered during the rollout. A blocked Zigler/allocator/OTP gate means
-migration is incomplete. Retain pre-migration refs; rollback through a reviewed
+Verification acceptance is **14/14 sources with verified, pushed 0.17 candidates**,
+plus any new heads discovered during the rollout. This gate is complete; original
+branch promotion, owner coordination and GitHub workflow execution remain
+separate pending checks. A newly blocked required gate reopens verification. Retain pre-migration refs; rollback through a reviewed
 revert/new commit or explicit old-toolchain deployment, not rewritten history.
 The [development plan](development-plan.md) remains responsible for M2/runtime
 features after this compiler-only rollout.

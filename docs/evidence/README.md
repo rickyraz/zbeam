@@ -20,9 +20,10 @@ These records supersede earlier pending-matrix/demand status for the restricted 
 These records cover the bounded development profile, not a general actor
 scheduler or production release.
 
-## Compiler migration readiness
+## Compiler migration
 
-- [2026-10-25 Zig 0.17 probe and all-branch inventory](phase-a/2026-10-25-zig-0.17.md) — migration remains planned; no 0.17 acceptance claim.
+- [2026-10-26 all-branch verification and delivery ledger](phase-a/2026-10-26-zig-0.17-rollout.md) — 14/14 tested/pushed candidates; original branches and M1 integration not promoted.
+- [2026-10-25 Zig 0.17 probe and initial inventory](phase-a/2026-10-25-zig-0.17.md) — historical failed pre-migration probe, not an acceptance record.
 
 ## Allocator research
 

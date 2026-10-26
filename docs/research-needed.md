@@ -4,14 +4,16 @@
 
 The [development plan](development-plan.md) defines execution order and final release gates. The [snmalloc evaluation](snmalloc-evaluation.md) specifies the allocator experiment without changing the default build.
 
-## Compiler migration boundary — 2026-10-25
+## Compiler migration boundary — 2026-10-26
 
-The canonical MVP build is verified on Zig 0.17.0, including existing labs and
-OTP 25/26/27; this does not validate every research branch. Zigler 0.16.0 NIF
-sources, custom allocator vtables and arena lifetime tests require their own
-migration gates. Current `std.process.Init.gpa` in debug/safe selects
-`SafeAllocator`; historical 0.16 DebugAllocator measurements must not be reused
-as 0.17 allocator or performance evidence. [Verification](evidence/phase-a/2026-10-25-zig-0.17-master.md).
+[All 14 migration candidates](evidence/phase-a/2026-10-26-zig-0.17-rollout.md)
+pass their own native, OTP, eligible-NIF and allocator/lifetime gates. They are
+pushed, not promoted behind other worktrees. Zigler requires an unreleased exact
+Git pin; threaded NIF teardown remains quarantined. Explicit DebugAllocator is
+still supported but deprecated, separate from startup's SafeAllocator in
+0.17 debug/safe even with libc. Historical 0.16 results are not new-compiler
+allocator/performance evidence. Production, long-soak and non-Linux gates remain
+open; local YAML checks do not establish successful GitHub workflow execution.
 
 ## Priority labels
 
