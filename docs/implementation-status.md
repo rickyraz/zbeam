@@ -63,6 +63,13 @@ allocation failure and spin are test-only fixtures, never production endpoints.
 Owner tests use Elixir 1.20.4 / OTP 29; wire interoperability remains independently
 verified on OTP 25/26/27. This is not a production deployment certification.
 
+## M2a prerequisites — implementation in progress
+
+Nonblocking mailbox admission and an internal owned-copy/completion-ticket
+ledger are tested; the ledger is not an exported task runtime. Task startup,
+stop/join and concurrent lifetime acceptance remain pending.
+[Ledger evidence](evidence/phase-a/2026-10-27-m2a-owned-admission.md).
+
 ## Not implemented or not established
 
 - Complete ETF coverage, old handshakes, simultaneous-connection arbitration or general Erlang-node compatibility.

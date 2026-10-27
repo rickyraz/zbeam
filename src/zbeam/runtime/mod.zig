@@ -11,5 +11,6 @@ pub const node = @import("node.zig");
 pub const Runtime = @import("actors.zig").Runtime;
 
 test {
+    _ = @import("task_admission.zig");
     @import("std").testing.refAllDecls(@This());
 }
