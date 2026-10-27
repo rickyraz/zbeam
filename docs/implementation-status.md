@@ -5,9 +5,9 @@
 - **All-branch verification:** [14/14 profiles](evidence/phase-a/2026-10-26-zig-0.17-rollout.md) verified and archived; [consolidation executed](evidence/phase-a/2026-10-26-branch-consolidation.md), 28 to 11 local/remote names. Compiler PR #2 and M1 PR #3 are merged; nine protected research topics remain independent.
 - **Package version:** 0.0.1 pre-alpha (no release tag created)
 - **Implemented milestone:** restricted MVP plus the bounded monitorable-worker M1 development profile
-- **M1 accepted into master — 2026-10-26:** owner approved `size:exception`; PR #3 merged as `2241e7f`, followed by cleanup repair PR #4 as `88db721`. [Actual repaired-master CI 40354417903](https://github.com/rickyraz/zbeam/actions/runs/40354417903) passed 9/9 jobs, including all six native OTP/mode lanes and 14 complementary recovery cases per mode. [Acceptance record](evidence/phase-b/2026-10-26-m1-integration.md); earlier failures remain preserved. M2 is not started.
+- **M1 accepted into master — 2026-10-26:** owner approved `size:exception`; PR #3 merged as `2241e7f`, followed by cleanup repair PR #4 as `88db721`. [Actual repaired-master CI 40354417903](https://github.com/rickyraz/zbeam/actions/runs/40354417903) passed 9/9 jobs, including all six native OTP/mode lanes and 14 complementary recovery cases per mode. [Acceptance record](evidence/phase-b/2026-10-26-m1-integration.md); earlier failures remain preserved. M2a local implementation is in progress; full M2 acceptance remains pending.
 - **Broader design target:** v0.5.0 draft, not a release description
-- **Proposed next phases:** [development plan](development-plan.md); [M2a task ownership design](m2-task-lifecycle-plan.md) approved 2026-10-27; implementation authorized but not yet delivered. M2b wire design remains gated. Planning does not change this inventory.
+- **Proposed next phases:** [development plan](development-plan.md); [M2a task ownership design](m2-task-lifecycle-plan.md) approved 2026-10-27; basic local ownership implemented, lifecycle acceptance pending. M2b wire design remains gated. Planning does not change this inventory.
 
 This file is authoritative when code and historical specifications differ.
 
@@ -63,12 +63,14 @@ allocation failure and spin are test-only fixtures, never production endpoints.
 Owner tests use Elixir 1.20.4 / OTP 29; wire interoperability remains independently
 verified on OTP 25/26/27. This is not a production deployment certification.
 
-## M2a prerequisites — implementation in progress
+## M2a local task ownership — acceptance in progress
 
-Nonblocking mailbox admission and an internal owned-copy/completion-ticket
-ledger are tested; the ledger is not an exported task runtime. Task startup,
-stop/join and concurrent lifetime acceptance remain pending.
-[Ledger evidence](evidence/phase-a/2026-10-27-m2a-owned-admission.md).
+[TaskRuntime](task-runtime.md) now owns two fixed SHA-256 tasks, copied inputs,
+completion-held admission and stable mailbox storage. Startup rollback joins all
+started tasks; stop/join/shutdown drain before deinit, which refuses early free.
+Basic digest/identity/cleanup and first/second-start failure tests pass. The
+full deterministic lifecycle/fault matrix and M2a acceptance remain pending;
+M2b routing is not implemented. Existing `Runtime(T)` and M1 are unchanged.
 
 ## Not implemented or not established
 

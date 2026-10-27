@@ -402,16 +402,18 @@ pub const TransportArena = struct {
 
 ### 5.6 Actor Runtime
 
-**Approved M2a design (2026-10-27), implementation pending:** [ADR 0004](../docs/adr/0004-bounded-task-owned-runtime.md)
+**Approved M2a design (2026-10-27), local acceptance pending:** [ADR 0004](../docs/adr/0004-bounded-task-owned-runtime.md)
 defines additive task ownership, fixed lifetime slots and stop/join barriers;
 [M2a/M2b gates](../docs/m2-task-lifecycle-plan.md) separate local ownership from
-wire expansion. This is not implementation or a change to M1/`Runtime(T)`.
+wire expansion. The additive [TaskRuntime](../docs/task-runtime.md) implements basic local task
+ownership and stop/join, with lifecycle acceptance still pending. M1 and the
+caller-owned `Runtime(T)` remain unchanged.
 
 **M2a prerequisite:** `Mailbox(T).tryDeliver` adds one-element nonblocking
 capacity admission with caller ownership retained on error. It does not change
 blocking `deliver`, queue-close races or caller-managed storage lifetime.
-An internal owned-admission ledger additionally tests four logical queue positions,
-five outstanding tickets and copied 1 MiB inputs; it is not yet a task-owning API.
+The owned-admission ledger bounds four logical queue positions, five outstanding
+tickets and copied 1 MiB inputs per local actor; uncollected results retain tickets.
 
 #### 5.6.1–5.6.3
 
