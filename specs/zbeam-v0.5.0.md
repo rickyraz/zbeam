@@ -410,6 +410,8 @@ wire expansion. This is not implementation or a change to M1/`Runtime(T)`.
 **M2a prerequisite:** `Mailbox(T).tryDeliver` adds one-element nonblocking
 capacity admission with caller ownership retained on error. It does not change
 blocking `deliver`, queue-close races or caller-managed storage lifetime.
+An internal owned-admission ledger additionally tests four logical queue positions,
+five outstanding tickets and copied 1 MiB inputs; it is not yet a task-owning API.
 
 #### 5.6.1–5.6.3
 
