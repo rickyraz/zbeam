@@ -577,6 +577,9 @@ bounded restart policy and owner/VM-crash child cleanup. Port cleanup tolerates
 concurrent closure only when the Port is confirmed gone; invalid arguments or
 other live-Port errors remain observable. This is a development
 profile with separately documented OS, Elixir/OTP and deployment limits.
+Guardian verification treats procfs `Z`/`X`/legacy `x` as terminal and does not
+re-probe or signal a confirmed non-live child; the bounded observation budget
+and production launcher behavior are unchanged.
 
 The current API is `runtime.node.Config` (`src/zbeam/runtime/node.zig`), not the proposed struct below. It selects the original fixed echo/`sha256` service or the separately documented PID-addressed M1 worker with bounded PID/named monitoring. Hash work accepts a bounded ETF binary and returns its 32-byte digest; this is not a general actor scheduler, link implementation or arbitrary RPC. [Executed OTP and performance evidence](../docs/evidence/phase-c/2026-09-28-sha256-worker.md). Its frame/ETF limits, message bound and sequential-connection bound are documented in [`docs/mvp.md`](../docs/mvp.md). The current `Runtime(T).spawn` registers caller-owned mailbox storage and does not schedule tasks. Tokens enforce logical ownership and reject overlapping receives, not unforgeable task identity.
 
