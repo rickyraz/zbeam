@@ -1,6 +1,6 @@
 # ADR 0004 — Bounded task-owned runtime
 
-**Status:** accepted for local M2a by owner approval on 2026-10-27; implementation pending. M2b remains a separately gated proposal, not an accepted wire contract.
+**Status:** accepted for local M2a by owner approval on 2026-10-27; local implementation accepted at `221a48d` (actual-master CI 40468839059). M2b remains a separately gated proposal, not an accepted wire contract.
 **Date:** 2026-10-27.
 **Baseline:** accepted M1, master `cd81a21`.
 **Relation:** additive to ADR 0001; does not supersede ADR 0002/0003's M1 profile.

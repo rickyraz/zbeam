@@ -1,9 +1,10 @@
 # M2 plan: own tasks before expanding wire concurrency
 
-**Status: local M2a design approved by owner, 2026-10-27; implementation authorized, not yet delivered.** Base:
+**Status: local M2a implemented and accepted, 2026-10-27; M2b unstarted and gated.** Original design base:
 master `cd81a21`, accepted bounded M1. Review
 [ADR 0004](adr/0004-bounded-task-owned-runtime.md) first. This plan adds no runtime
-API, changes no existing `spawn` behavior and accepts no research branch wholesale.
+API by itself; delivered code is recorded in [M2a acceptance](evidence/phase-c/2026-10-27-m2a-acceptance.md).
+Existing `spawn` behavior and all independent research branches remain unchanged.
 
 ## Deliverables and acceptance boundaries
 
@@ -21,6 +22,9 @@ A canceled/noncooperative task does not authorize early free.
 
 ## Reviewable work units
 
+T0–T4 are executed through PR #6–#12, with actual-master acceptance at `221a48d`.
+The table preserves review/rollback boundaries; T5–T6 remain unstarted.
+
 Each row is an intended independently reviewable change with tests/docs/evidence,
 not a promise that an entire stage fits one PR. Target <=400 added+removed lines;
 slice once by coherent behavior if needed, otherwise request a new size exception.
@@ -33,7 +37,7 @@ PR #3's exception does not apply. Use ordinary merges; no published-history rewr
 | T2 — task owner | Startup/readiness wrapper, per-slot Future, runtime export and integration import test | Second-start failure joins first; real concurrency or explicit error, no half-publication, no mailbox/token escape; remove additive export without changing old Runtime |
 | T3 — stop/join | Lifecycle implementation and deterministic stress tests | Send/stop linearization, cancellation, idle/full queues, both tasks joined after errors, completion conservation, deinit refusal; T2 must already provide safe basic teardown, never publish an unsafe interim API |
 | T4 — M2a acceptance | Two-actor example, regression/evidence/status | Independent admitted progress, slow result collector, exact bounds and no live task after shutdown; accept only M2a, keep M1 unchanged |
-| T5 — M2b contract | New wire-profile ADR or explicit extension of this still-proposed design | Discovery, per-actor stop versus node shutdown, PID/name monitor ordering, epoch fence, all memory bounds and control-output reserve decided before implementation |
+| T5 — M2b contract | New wire-profile ADR; accepted ADR 0004 body remains immutable | Discovery, per-actor stop versus node shutdown, PID/name monitor ordering, epoch fence, all memory bounds and control-output reserve decided before implementation |
 | T6 — wire adapter | Separate runtime adapter, CLI/profile, protocol tests/fixtures only if changed | Demand reservations shared with local senders; one writer; stale completion rejection; all existing M1 and new OTP/owner gates on the integrated tree |
 
 Implementation may combine inseparable T1/T2 safety pieces into a reviewed unit,

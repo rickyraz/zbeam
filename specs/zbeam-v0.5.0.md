@@ -402,13 +402,14 @@ pub const TransportArena = struct {
 
 ### 5.6 Actor Runtime
 
-**Approved M2a design (2026-10-27), local acceptance pending:** [ADR 0004](../docs/adr/0004-bounded-task-owned-runtime.md)
+**Accepted local M2a (2026-10-27):** [ADR 0004](../docs/adr/0004-bounded-task-owned-runtime.md)
 defines additive task ownership, fixed lifetime slots and stop/join barriers;
 [M2a/M2b gates](../docs/m2-task-lifecycle-plan.md) separate local ownership from
 wire expansion. The additive [TaskRuntime](../docs/task-runtime.md) implements basic local task
 ownership and stop/join. Deterministic lifecycle/conservation tests pass;
 the noncooperative subprocess gate verifies external kill/reap after stalled
-join, not preemption. Final integrated acceptance remains pending. M1 and the
+join, not preemption. [Actual-master acceptance](../docs/evidence/phase-c/2026-10-27-m2a-acceptance.md)
+closes local M2a only; M2b wire routes remain unimplemented. M1 and the
 caller-owned `Runtime(T)` remain unchanged. `example-task-runtime` exercises the
 production-mode local API; it neither registers EPMD nor adds wire actor routes.
 

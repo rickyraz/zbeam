@@ -24,9 +24,12 @@ These records supersede earlier pending-matrix/demand status for the restricted 
 These records cover the bounded development profile, not a general actor
 scheduler or production release.
 
-## M2 design inputs
+## Local task-owning M2a
 
-- [2026-10-27 ownership/task API inspection](phase-a/2026-10-27-m2-design.md) — proposed ADR/work plan and unchanged-code baseline, not M2 implementation evidence.
+- [2026-10-27 actual-master acceptance](phase-c/2026-10-27-m2a-acceptance.md) — local T0–T4 only; M2b wire expansion remains gated.
+- [Nonblocking mailbox](phase-a/2026-10-27-m2a-nonblocking-mailbox.md) and [owned admission](phase-a/2026-10-27-m2a-owned-admission.md).
+- [Basic task owner](phase-c/2026-10-27-m2a-task-owner.md), [deterministic lifetimes](phase-c/2026-10-27-m2a-lifecycle.md), [shutdown watchdog](phase-c/2026-10-27-m2a-shutdown-watchdog.md) and [public API regression candidate](phase-c/2026-10-27-m2a-public-api.md).
+- [Initial design inspection](phase-a/2026-10-27-m2-design.md) — historical proposed-design/unchanged-code checkpoint, not implementation evidence.
 
 ## Compiler migration
 

@@ -4,10 +4,11 @@
 - **Compiler migration:** Zig 0.17.0 verified 2026-10-25; M1 runtime scope unchanged
 - **All-branch verification:** [14/14 profiles](evidence/phase-a/2026-10-26-zig-0.17-rollout.md) verified and archived; [consolidation executed](evidence/phase-a/2026-10-26-branch-consolidation.md), 28 to 11 local/remote names. Compiler PR #2 and M1 PR #3 are merged; nine protected research topics remain independent.
 - **Package version:** 0.0.1 pre-alpha (no release tag created)
-- **Implemented milestone:** restricted MVP plus the bounded monitorable-worker M1 development profile
-- **M1 accepted into master — 2026-10-26:** owner approved `size:exception`; PR #3 merged as `2241e7f`, followed by cleanup repair PR #4 as `88db721`. [Actual repaired-master CI 40354417903](https://github.com/rickyraz/zbeam/actions/runs/40354417903) passed 9/9 jobs, including all six native OTP/mode lanes and 14 complementary recovery cases per mode. [Acceptance record](evidence/phase-b/2026-10-26-m1-integration.md); earlier failures remain preserved. M2a local implementation is in progress; full M2 acceptance remains pending.
+- **Implemented milestone:** restricted MVP, bounded monitorable-worker M1, and local fixed-task M2a
+- **M1 accepted into master — 2026-10-26:** owner approved `size:exception`; PR #3 merged as `2241e7f`, followed by cleanup repair PR #4 as `88db721`. [Actual repaired-master CI 40354417903](https://github.com/rickyraz/zbeam/actions/runs/40354417903) passed 9/9 jobs, including all six native OTP/mode lanes and 14 complementary recovery cases per mode. [Acceptance record](evidence/phase-b/2026-10-26-m1-integration.md); earlier failures remain preserved. Local M2a is subsequently accepted; M2b wire expansion remains pending.
 - **Broader design target:** v0.5.0 draft, not a release description
-- **Proposed next phases:** [development plan](development-plan.md); [M2a task ownership design](m2-task-lifecycle-plan.md) approved 2026-10-27; basic local ownership implemented, lifecycle acceptance pending. M2b wire design remains gated. Planning does not change this inventory.
+- **M2a accepted — 2026-10-27:** local task ownership at `221a48d`; [actual-master CI 40468839059](https://github.com/rickyraz/zbeam/actions/runs/40468839059) passed 9/9 jobs. [Acceptance evidence](evidence/phase-c/2026-10-27-m2a-acceptance.md) separates local implementation from unchanged M1 wire regressions.
+- **Next phase:** [M2b wire design](m2-task-lifecycle-plan.md) remains gated; full M2 and production acceptance are not established.
 
 This file is authoritative when code and historical specifications differ.
 
@@ -63,7 +64,7 @@ allocation failure and spin are test-only fixtures, never production endpoints.
 Owner tests use Elixir 1.20.4 / OTP 29; wire interoperability remains independently
 verified on OTP 25/26/27. This is not a production deployment certification.
 
-## M2a local task ownership — acceptance in progress
+## M2a local task ownership — accepted 2026-10-27
 
 [TaskRuntime](task-runtime.md) now owns two fixed SHA-256 tasks, copied inputs,
 completion-held admission and stable mailbox storage. Startup rollback joins all
@@ -72,10 +73,11 @@ Basic digest/identity/cleanup and first/second-start failure tests pass.
 [Deterministic lifecycle tests](evidence/phase-c/2026-10-27-m2a-lifecycle.md)
 cover stop/cancel before claim, saturation, handler error and independent progress.
 The [subprocess watchdog](evidence/phase-c/2026-10-27-m2a-shutdown-watchdog.md)
-verifies stalled join and external kill/reap; final integrated M2a acceptance remains pending;
-M2b routing is not implemented. Existing `Runtime(T)` and M1 are unchanged.
-The [production-mode local example and public API stress](evidence/phase-c/2026-10-27-m2a-public-api.md)
-verify exact work and caller-side sender joins, with final master acceptance pending.
+verifies stalled join and external kill/reap, not preemption.
+The [production-mode example/public API stress](evidence/phase-c/2026-10-27-m2a-public-api.md)
+and [actual-master acceptance](evidence/phase-c/2026-10-27-m2a-acceptance.md)
+close local T0–T4 only. M2b routing is not implemented; existing `Runtime(T)`
+and all M1 network services remain unchanged.
 
 ## Not implemented or not established
 
