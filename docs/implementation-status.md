@@ -8,7 +8,7 @@
 - **M1 accepted into master — 2026-10-26:** owner approved `size:exception`; PR #3 merged as `2241e7f`, followed by cleanup repair PR #4 as `88db721`. [Actual repaired-master CI 40354417903](https://github.com/rickyraz/zbeam/actions/runs/40354417903) passed 9/9 jobs, including all six native OTP/mode lanes and 14 complementary recovery cases per mode. [Acceptance record](evidence/phase-b/2026-10-26-m1-integration.md); earlier failures remain preserved. Local M2a is subsequently accepted; M2b wire expansion remains pending.
 - **Broader design target:** v0.5.0 draft, not a release description
 - **M2a accepted — 2026-10-27:** local task ownership at `221a48d`; [actual-master CI 40468839059](https://github.com/rickyraz/zbeam/actions/runs/40468839059) passed 9/9 jobs. [Acceptance evidence](evidence/phase-c/2026-10-27-m2a-acceptance.md) separates local implementation from unchanged M1 wire regressions.
-- **Next phase:** [M2b wire design](adr/0005-two-worker-wire-profile.md) is proposed, with schema, shared reservations, output and connection-lifetime gates open. A [per-actor reservation primitive](evidence/phase-a/2026-10-27-m2b-ledger-reservation.md) exists internally; it does not enable reads or an adapter. Full M2 and production acceptance are not established.
+- **Next phase:** [M2b wire design](adr/0005-two-worker-wire-profile.md) is proposed, with schema, output and connection-lifetime gates open. Internal [per-actor](evidence/phase-a/2026-10-27-m2b-ledger-reservation.md) and [shared-route](evidence/phase-a/2026-10-27-m2b-shared-reservation.md) reservations exist; they do not yet authorize reads or enable an adapter. Full M2 and production acceptance are not established.
 
 This file is authoritative when code and historical specifications differ.
 
