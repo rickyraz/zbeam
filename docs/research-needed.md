@@ -132,8 +132,9 @@ The MVP rejects cached/fragmented headers, checks wire lengths before allocation
 schema, atomic pre-read reservation, bounded reply/control output, connection
 epoch and stop/monitor ordering gates. An internal shared-route lease now reserves
 actor capacity before a potential read. An internal output-credit table and pre-read
-gate now have a counted-reader oracle, but socket service integration, encoded-byte
-bounds and connection teardown remain unimplemented; no M2b profile is enabled.
+gate now have a counted-reader oracle. A fixed 16 KiB scratch encoder bounds its
+own output/transient allocation; socket integration, lifecycle/epoch teardown and
+wire conformance remain unimplemented. No M2b profile is enabled.
 
 ### Actor failure blast radius
 
