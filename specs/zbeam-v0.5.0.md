@@ -406,7 +406,8 @@ pub const TransportArena = struct {
 defines additive task ownership, fixed lifetime slots and stop/join barriers;
 [M2a/M2b gates](../docs/m2-task-lifecycle-plan.md) separate local ownership from
 wire expansion. The additive [TaskRuntime](../docs/task-runtime.md) implements basic local task
-ownership and stop/join, with lifecycle acceptance still pending. M1 and the
+ownership and stop/join. Deterministic lifecycle/conservation tests pass;
+noncooperative-process and final acceptance gates remain pending. M1 and the
 caller-owned `Runtime(T)` remain unchanged.
 
 **M2a prerequisite:** `Mailbox(T).tryDeliver` adds one-element nonblocking

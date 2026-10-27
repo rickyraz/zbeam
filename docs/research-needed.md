@@ -80,8 +80,9 @@ black-box checks. Published-node housekeeping is currently ignored when addresse
 
 [Approved M2a design](adr/0004-bounded-task-owned-runtime.md) uses two retained
 slots, nonblocking copy admission and completion-held budgets. Basic local
-startup rollback and stop/join are implemented; deterministic race/fault and
-external-user quiescence acceptance remain pending. Caller-owned registry
+startup rollback and stop/join are implemented; deterministic stop/send/cancel,
+saturation and controlled-handler-error tests pass. Noncooperative subprocess
+and final acceptance remain pending; external-user quiescence is caller-owned. Caller-owned registry
 lifetimes remain unchanged; [local API](task-runtime.md).
 M2b additionally needs atomic shared-route reservations, output/monitor bounds
 and connection-epoch ownership before wire expansion; [gates](m2-task-lifecycle-plan.md).
