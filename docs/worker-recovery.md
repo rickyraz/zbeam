@@ -24,7 +24,11 @@ python3 tests/integration/worker_guard_test.py
 ```
 
 The checks cover stdin EOF, launcher TERM/KILL and native-child exit with bounded
-waits and test-owned PID cleanup.
+waits and test-owned PID cleanup. Procfs `Z`/`X`/legacy `x` are terminal;
+a confirmed terminal child is not re-probed or signaled again. Permission and
+malformed-state errors remain failures. The [oracle correction](evidence/phase-c/2026-10-27-guardian-terminal-state.md)
+retains the original CI failure and a controlled counterexample; it changes no
+guardian/native production code or three-second observation budget.
 
 ## Runnable monitored worker
 

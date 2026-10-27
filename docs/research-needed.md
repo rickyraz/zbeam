@@ -127,6 +127,12 @@ The MVP rejects cached/fragmented headers, checks wire lengths before allocation
 
 ### Actor failure blast radius
 
+[Guardian-oracle follow-up](evidence/phase-c/2026-10-27-guardian-terminal-state.md):
+PR #13's original safe recovery job failed after a terminal re-probe. Tests now
+parse all procfs terminal states without repeating a successful death observation.
+The runner's raw stat snapshots are unavailable; no unique historical X-state
+cause or production guardian repair is claimed.
+
 SIGKILL process-loss checks preserve the BEAM VM and unrelated local process.
 M1 additionally verifies test-only panic, deterministic allocator failure, spin,
 external recovery and owned-process cleanup, including a regression for concurrent
