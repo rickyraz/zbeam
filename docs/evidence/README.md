@@ -21,6 +21,8 @@ These records supersede earlier pending-matrix/demand status for the restricted 
 - [2026-10-26 OTP 25 installer failure and supported CI runner pin](phase-b/2026-10-26-m1-ci-runner.md) — earlier run preserved; all six native OTP/mode lanes remain mandatory.
 - [2026-10-26 actual-merge Port cleanup race and repair](phase-b/2026-10-26-m1-port-cleanup.md) — original failure retained; 14 current recovery cases per mode, including one new cleanup regression.
 
+- [2026-10-27 guardian-oracle correction](phase-c/2026-10-27-guardian-terminal-state.md) — retained PR #13 failure, terminal procfs state parsing and no redundant post-terminal probe; production guardian unchanged.
+
 These records cover the bounded development profile, not a general actor
 scheduler or production release.
 

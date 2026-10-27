@@ -68,6 +68,24 @@ Installed `lib/std/Io.zig` SHA-256:
 `382a4e343017183eff88e311f983066f88306e7bfcd85a890723b3697f4b2732`.
 These identify installed inputs, not independent upstream signature verification.
 
+## Guardian-oracle follow-up before documentation closure
+
+Initial closure head `d93a9a5` passed push 40470011719 but PR 40470016562
+failed 8/9 at the existing guardian kill test's final procfs re-probe. Both
+outcomes and the raw failure remain in the [oracle record](2026-10-27-guardian-terminal-state.md).
+PR #14 (`f21c076`, 108 changed lines) corrects terminal-state parsing and removes
+redundant post-terminal probes without changing production code or the deadline.
+The old-oracle controlled counterexample is proven; original runner snapshots
+are unavailable, so no unique historical X-state cause is asserted.
+
+Repair push **40471116630**, PR **40471125388** and actual merge
+**`885c930a7124f4d553b4554f9344617ddbd288e0`**, run **40471678530**, each
+passed **9/9**. All actual-master job checkouts and both full owner campaigns
+were checked. One hundred local guardian launches cover 400 real process
+boundaries. M2a/M1 production code remains identical to `221a48d`; only the
+verification oracle and notes change. Ordinary master-into-closure merge
+preserves published history and the failed original candidate; no rerun erased it.
+
 ## Preservation, rollback and remaining work
 
 All nine research refs and the retained M1 ref are unchanged. Original **399
@@ -79,7 +97,8 @@ ADR 0004 changes only its allowed status since design acceptance.
 Rollback of M2a removes its additive owner/export/ledger, nonblocking method,
 example and tests/build wiring; M1 code remains independently usable. Individual
 work-unit records define narrower rollback boundaries. The documentation closure
-contains no runtime/test/build/workflow change from this accepted tree.
+contains no runtime/test/build/workflow change from the accepted guardian-repair
+boundary `885c930`; its additive M2a production tree remains `221a48d`.
 
 M2b still requires its own wire-profile ADR, atomic shared-route reservations,
 output/monitor capacity and connection-epoch teardown proof. No generic handlers,
