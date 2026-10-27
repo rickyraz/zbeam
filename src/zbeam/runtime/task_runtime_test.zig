@@ -11,12 +11,14 @@ pub const Control = struct {
     release: std.Io.Event = .unset,
     active_entries: std.atomic.Value(usize) = .init(0),
     fail: bool = false,
+    spin: bool = false,
 
     pub fn checkpoint(self: *@This(), context: std.Io, actor: usize, phase: Phase) !void {
         if (actor != self.actor) return;
         if (phase == .active) _ = self.active_entries.fetchAdd(1, .monotonic);
         if (phase != self.phase) return;
         self.entered.set(context);
+        if (self.spin) while (true) std.atomic.spinLoopHint();
         try self.release.wait(context);
         if (self.fail) return error.HandlerFailed;
     }
@@ -189,6 +191,34 @@ test "lifecycle: handler error retires actor, joins and preserves sibling progre
     try std.testing.expectEqual(@as(usize, 1), failed);
     try std.testing.expectEqual(@as(usize, 4), stopped);
     try std.testing.expectEqual(@as(usize, 1), digests);
+}
+
+test "lifecycle: noncooperative spin requires external process termination" {
+    const enabled = std.testing.environ.getAlloc(std.testing.allocator, "ZBEAM_M2_SPIN_PROBE") catch |err| switch (err) {
+        error.EnvironmentVariableMissing => return error.SkipZigTest,
+        else => return err,
+    };
+    defer std.testing.allocator.free(enabled);
+    if (!std.mem.eql(u8, enabled, "1")) return error.SkipZigTest;
+    const Shim = struct {
+        fn cancel(userdata: ?*anyopaque, future: *std.Io.AnyFuture, result: []u8, alignment: std.mem.Alignment) void {
+            std.debug.print("M2_JOIN_WAIT\n", .{});
+            std.testing.io.vtable.cancel(userdata, future, result, alignment);
+        }
+    };
+    var vtable = io.vtable.*;
+    vtable.cancel = Shim.cancel;
+    const wrapped = std.Io{ .userdata = io.userdata, .vtable = &vtable };
+    var control = Control{ .spin = true };
+    const tasks = try Runtime.create(std.testing.allocator, wrapped, .{ "a", "b" });
+    defer tasks.deinit() catch unreachable;
+    defer _ = tasks.shutdown();
+    tasks.control = &control;
+    _ = try tasks.trySend(1, "noncooperative");
+    try waitEntered(&control);
+    std.debug.print("M2_SPIN_ENTERED\n", .{});
+    _ = tasks.shutdown();
+    return error.TestUnexpectedResult;
 }
 
 test "lifecycle: canceled insertion rolls back copy; exhaustion never wraps IDs" {

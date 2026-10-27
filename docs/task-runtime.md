@@ -29,6 +29,9 @@ handler claims, not effects of already accepted work; digest can win a stop race
 Shutdown closes both admissions before joining either and drains queued payloads.
 `deinit` refuses `NotJoined`; callers must also join **their own API users** before
 actual destruction. A future's cooperative cancel is a join, not CPU preemption.
-No hard shutdown deadline, actor-local panic isolation or replay is promised.
+No hard in-process shutdown deadline, actor-local panic isolation or replay is
+promised. `zig build test-task-lifecycle -Doptimize=debug|safe` runs the Linux
+lifecycle/watchdog harness; conditional spin skips in ordinary unit runs are
+not counted as passing the separately executed kill/reap probe.
 See [ADR 0004](adr/0004-bounded-task-owned-runtime.md) and the
 [M2 verification plan](m2-task-lifecycle-plan.md) for the remaining acceptance gates.

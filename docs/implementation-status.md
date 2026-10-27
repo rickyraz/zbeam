@@ -71,7 +71,8 @@ started tasks; stop/join/shutdown drain before deinit, which refuses early free.
 Basic digest/identity/cleanup and first/second-start failure tests pass.
 [Deterministic lifecycle tests](evidence/phase-c/2026-10-27-m2a-lifecycle.md)
 cover stop/cancel before claim, saturation, handler error and independent progress.
-Noncooperative subprocess and final integrated M2a acceptance remain pending;
+The [subprocess watchdog](evidence/phase-c/2026-10-27-m2a-shutdown-watchdog.md)
+verifies stalled join and external kill/reap; final integrated M2a acceptance remains pending;
 M2b routing is not implemented. Existing `Runtime(T)` and M1 are unchanged.
 
 ## Not implemented or not established
