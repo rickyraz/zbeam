@@ -15,5 +15,6 @@ test {
     _ = @import("task_admission.zig");
     _ = @import("wire_output.zig");
     _ = @import("wire_monitor.zig");
+    _ = @import("wire_gate.zig");
     @import("std").testing.refAllDecls(@This());
 }
