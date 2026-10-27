@@ -281,6 +281,11 @@ secret handling and deployment boundaries before a production support claim.
 
 ## After M1 — M2: a small task-owning actor runtime
 
+The [M2 design/work plan](m2-task-lifecycle-plan.md) and proposed
+[ADR 0004](adr/0004-bounded-task-owned-runtime.md) split local ownership (M2a)
+from separately reviewed wire routing (M2b). Design is proposed; no task-owning
+runtime is implemented by those documents.
+
 M2 connects bounded mailboxes and the registry to runtime-owned `std.Io` tasks,
 using an API with explicit lifecycle migration notes. Start with two actors;
 prove task joining, queued-message cleanup, safe send/terminate races and

@@ -7,7 +7,7 @@
 - **Implemented milestone:** restricted MVP plus the bounded monitorable-worker M1 development profile
 - **M1 accepted into master — 2026-10-26:** owner approved `size:exception`; PR #3 merged as `2241e7f`, followed by cleanup repair PR #4 as `88db721`. [Actual repaired-master CI 40354417903](https://github.com/rickyraz/zbeam/actions/runs/40354417903) passed 9/9 jobs, including all six native OTP/mode lanes and 14 complementary recovery cases per mode. [Acceptance record](evidence/phase-b/2026-10-26-m1-integration.md); earlier failures remain preserved. M2 is not started.
 - **Broader design target:** v0.5.0 draft, not a release description
-- **Proposed next phases:** [development plan](development-plan.md); planning does not change this implementation inventory
+- **Proposed next phases:** [development plan](development-plan.md); [M2 task ownership design](m2-task-lifecycle-plan.md) proposed 2026-10-27, implementation not started. Planning does not change this inventory.
 
 This file is authoritative when code and historical specifications differ.
 

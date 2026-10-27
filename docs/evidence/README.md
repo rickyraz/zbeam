@@ -24,6 +24,10 @@ These records supersede earlier pending-matrix/demand status for the restricted 
 These records cover the bounded development profile, not a general actor
 scheduler or production release.
 
+## M2 design inputs
+
+- [2026-10-27 ownership/task API inspection](phase-a/2026-10-27-m2-design.md) — proposed ADR/work plan and unchanged-code baseline, not M2 implementation evidence.
+
 ## Compiler migration
 
 - [2026-10-26 all-branch verification and delivery ledger](phase-a/2026-10-26-zig-0.17-rollout.md) — historical 14/14 profile verification; branch handover and subsequent M1 acceptance are recorded separately.

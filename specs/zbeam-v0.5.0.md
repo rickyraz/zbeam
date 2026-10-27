@@ -402,6 +402,11 @@ pub const TransportArena = struct {
 
 ### 5.6 Actor Runtime
 
+**Proposed M2 boundary (2026-10-27):** [ADR 0004](../docs/adr/0004-bounded-task-owned-runtime.md)
+proposes additive task ownership, fixed lifetime slots and stop/join barriers;
+[M2a/M2b gates](../docs/m2-task-lifecycle-plan.md) separate local ownership from
+wire expansion. This is not implementation or a change to M1/`Runtime(T)`.
+
 #### 5.6.1–5.6.3
 
 *(Unchanged from v0.4.0)*
