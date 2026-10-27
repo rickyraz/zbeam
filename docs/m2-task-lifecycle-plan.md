@@ -1,6 +1,6 @@
 # M2 plan: own tasks before expanding wire concurrency
 
-**Status: design proposed, 2026-10-27; implementation not started.** Base:
+**Status: local M2a design approved by owner, 2026-10-27; implementation authorized, not yet delivered.** Base:
 master `cd81a21`, accepted bounded M1. Review
 [ADR 0004](adr/0004-bounded-task-owned-runtime.md) first. This plan adds no runtime
 API, changes no existing `spawn` behavior and accepts no research branch wholesale.
@@ -88,8 +88,10 @@ must fail uncertain work, never infer replay or exactly-once execution.
 
 ## Open decisions and exclusions
 
-T0 review must approve fixed slots/no replacement, nonblocking copy admission,
-completion-held tickets and stop-discard semantics. M2b still needs its wire
+Owner approval closes T0 for fixed slots/no replacement, nonblocking copy
+admission, completion-held tickets and stop-discard semantics. Implementation
+uses successive independently verified work-unit PRs to master; no new size
+exception or M2b authorization is implied. M2b still needs its wire
 schema, control-output capacity proof and disconnect-versus-service lifetime
 choice. Until those are settled, keep it disabled and do not widen M1 flags.
 

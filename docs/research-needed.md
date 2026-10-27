@@ -78,7 +78,7 @@ black-box checks. Published-node housekeeping is currently ignored when addresse
 
 ### Mailbox task ownership and lifetimes
 
-[Proposed M2a design](adr/0004-bounded-task-owned-runtime.md) uses two retained
+[Approved M2a design](adr/0004-bounded-task-owned-runtime.md) uses two retained
 slots, nonblocking copy admission and completion-held budgets. Its startup,
 stop/join, allocator and external-user quiescence proofs remain unimplemented.
 M2b additionally needs atomic shared-route reservations, output/monitor bounds
