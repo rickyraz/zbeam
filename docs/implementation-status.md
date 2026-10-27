@@ -23,7 +23,7 @@ This file is authoritative when code and historical specifications differ.
 | Runtime service | One synchronous registered echo or SHA-256 binary worker per process; repeat messages; sequential peers; fresh per-connection state | `serve`, `serve-sha256`, integration and OTP matrix |
 | Initiating request | `probe` discovers an OTP peer, authenticates identity and validates one exact SEND reply | Synthetic housekeeping/tick regression and OTP matrix |
 | Demand | One outstanding frame; atomic reservation before unbuffered read; credit restored after handler/reply; 90-second frame and five-second write budgets | Zero-read/allocation oracle, partial-frame recovery, blocked-writer and pause/resume tests |
-| Local actors | Bounded MPSC mailbox; logical consumer token; concurrent receive rejection; name registry and termination | Unit and eight-producer stress tests |
+| Local actors | Bounded MPSC mailbox; blocking delivery plus nonblocking `tryDeliver` (`WouldBlock`, no pending putter); logical consumer token; concurrent receive rejection; caller-owned registry and termination | Unit and eight-producer stress tests |
 | Process-loss boundary | Test child SIGKILL produces OTP nodedown without terminating the VM or an unrelated local process | OTP 25/26/27 black-box assertions |
 | Benchmark | Original 32-byte echo baseline retained; new 32 B/64 KiB SHA-256 versus Port comparison with exact digest checks | Reproducible scripts and raw Phase C records |
 
