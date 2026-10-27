@@ -40,6 +40,13 @@ pub fn Mailbox(comptime Message: type) type {
             try self.queue.putOne(io, message);
         }
 
+        /// Never waits for capacity or links a pending putter. On any error the
+        /// caller retains the message; success transfers one complete element.
+        /// The queue mutex can still contend and introduce cancellation.
+        pub fn tryDeliver(self: *Self, io: std.Io, message: Message) !void {
+            if (try self.queue.put(io, &.{message}, 0) == 0) return error.WouldBlock;
+        }
+
         /// Enforces one logical actor token as the mailbox consumer.
         pub fn receive(self: *Self, io: std.Io, token: Token) !Message {
             try self.claim(token);
@@ -80,6 +87,48 @@ test "mailbox enforces a single logical consumer" {
     mailbox.close(io);
     try std.testing.expectError(error.Closed, mailbox.deliver(io, 3));
     try std.testing.expectError(error.Closed, mailbox.receive(io, .init(1)));
+}
+
+test "nonblocking delivery retains rejected values and leaves no pending putter" {
+    const io = std.testing.io;
+    var storage: [1]u32 = undefined;
+    var mailbox = Mailbox(u32).init(&storage);
+    defer mailbox.close(io);
+    try mailbox.tryDeliver(io, 11);
+    try std.testing.expectError(error.WouldBlock, mailbox.tryDeliver(io, 22));
+    try std.testing.expect(mailbox.queue.type_erased.putters.first == null);
+    try std.testing.expectEqual(@as(u32, 11), try mailbox.receive(io, .init(1)));
+    try mailbox.tryDeliver(io, 33);
+    mailbox.close(io);
+    try std.testing.expectError(error.Closed, mailbox.tryDeliver(io, 44));
+    try std.testing.expectEqual(@as(u32, 33), try mailbox.receive(io, .init(1)));
+    try std.testing.expectError(error.Closed, mailbox.receive(io, .init(1)));
+    try std.testing.expect(mailbox.queue.type_erased.putters.first == null);
+}
+
+test "canceled nonblocking delivery transfers no element" {
+    const io = std.testing.io;
+    var storage: [1]u32 = undefined;
+    var mailbox = Mailbox(u32).init(&storage);
+    defer mailbox.close(io);
+    const Sender = struct {
+        started: std.Io.Event = .unset,
+        mailbox: *Mailbox(u32),
+
+        fn run(self: *@This()) !void {
+            self.started.set(std.testing.io);
+            try self.mailbox.tryDeliver(std.testing.io, 42);
+        }
+    };
+    var sender = Sender{ .mailbox = &mailbox };
+    mailbox.queue.type_erased.mutex.lockUncancelable(io);
+    defer mailbox.queue.type_erased.mutex.unlock(io);
+    var task = try io.concurrent(Sender.run, .{&sender});
+    defer _ = task.cancel(io) catch {};
+    try sender.started.wait(io);
+    try std.testing.expectError(error.Canceled, task.cancel(io));
+    try std.testing.expectEqual(@as(usize, 0), mailbox.queue.type_erased.len);
+    try std.testing.expect(mailbox.queue.type_erased.putters.first == null);
 }
 
 test "copied consumer token cannot run two receives concurrently" {

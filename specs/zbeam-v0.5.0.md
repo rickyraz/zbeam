@@ -407,6 +407,10 @@ defines additive task ownership, fixed lifetime slots and stop/join barriers;
 [M2a/M2b gates](../docs/m2-task-lifecycle-plan.md) separate local ownership from
 wire expansion. This is not implementation or a change to M1/`Runtime(T)`.
 
+**M2a prerequisite:** `Mailbox(T).tryDeliver` adds one-element nonblocking
+capacity admission with caller ownership retained on error. It does not change
+blocking `deliver`, queue-close races or caller-managed storage lifetime.
+
 #### 5.6.1–5.6.3
 
 *(Unchanged from v0.4.0)*
