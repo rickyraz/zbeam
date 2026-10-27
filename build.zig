@@ -147,6 +147,21 @@ pub fn build(b: *std.Build) void {
     const test_stress_step = b.step("test-stress", "Run mailbox and runtime stress tests");
     test_stress_step.dependOn(&b.addRunArtifact(stress_tests).step);
 
+    const lifecycle_step = b.step("test-task-lifecycle", "Verify local M2a lifetimes and Linux noncooperative shutdown boundary");
+    const lifecycle_tests = b.addTest(.{
+        .name = "m2a-lifecycle",
+        .root_module = runtime_mod,
+        .filters = &.{"lifecycle:"},
+    });
+    const run_lifecycle = b.addRunArtifact(lifecycle_tests);
+    run_lifecycle.has_side_effects = true;
+    run_lifecycle.setEnvironmentVariable("ZBEAM_M2_SPIN_PROBE", "0");
+    lifecycle_step.dependOn(&run_lifecycle.step);
+    const shutdown_probe = b.addSystemCommand(&.{"python3"});
+    shutdown_probe.addFileArg(b.path("tests/integration/task_shutdown_test.py"));
+    shutdown_probe.addArtifactArg(lifecycle_tests);
+    lifecycle_step.dependOn(&shutdown_probe.step);
+
     const test_interop_step = b.step("test-interop", "Run configured OTP 25-27 echo matrix");
     const test_interop_cmd = b.addSystemCommand(&.{"sh"});
     test_interop_cmd.addFileArg(b.path("scripts/interop/otp_matrix.sh"));
