@@ -409,7 +409,8 @@ wire expansion. The additive [TaskRuntime](../docs/task-runtime.md) implements b
 ownership and stop/join. Deterministic lifecycle/conservation tests pass;
 the noncooperative subprocess gate verifies external kill/reap after stalled
 join, not preemption. Final integrated acceptance remains pending. M1 and the
-caller-owned `Runtime(T)` remain unchanged.
+caller-owned `Runtime(T)` remain unchanged. `example-task-runtime` exercises the
+production-mode local API; it neither registers EPMD nor adds wire actor routes.
 
 **M2a prerequisite:** `Mailbox(T).tryDeliver` adds one-element nonblocking
 capacity admission with caller ownership retained on error. It does not change

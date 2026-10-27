@@ -74,6 +74,8 @@ cover stop/cancel before claim, saturation, handler error and independent progre
 The [subprocess watchdog](evidence/phase-c/2026-10-27-m2a-shutdown-watchdog.md)
 verifies stalled join and external kill/reap; final integrated M2a acceptance remains pending;
 M2b routing is not implemented. Existing `Runtime(T)` and M1 are unchanged.
+The [production-mode local example and public API stress](evidence/phase-c/2026-10-27-m2a-public-api.md)
+verify exact work and caller-side sender joins, with final master acceptance pending.
 
 ## Not implemented or not established
 
