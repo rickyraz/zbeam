@@ -2,12 +2,14 @@
 
 zbeam advances only when a milestone leaves executable evidence. The v0.5 specification is a design backlog, not a release description.
 
-## Current delivery sequence — 2026-10-26
+## Current delivery sequence — 2026-10-27
 
 **Bounded worker M1 is accepted into master**, including PID/named monitoring and
 external no-replay recovery; [acceptance evidence](docs/evidence/phase-b/2026-10-26-m1-integration.md).
-The next milestone is the [task-owning M2 lifecycle](docs/development-plan.md#after-m1--m2-a-small-task-owning-actor-runtime),
-not yet started. The compiler baseline is Zig 0.17.0; the package stays pre-alpha.
+[Local task-owning M2a is also accepted](docs/evidence/phase-c/2026-10-27-m2a-acceptance.md):
+two fixed actors, bounded copied work/results and explicit stop/join. M2b wire
+routing remains unimplemented and requires its own ADR. Zig 0.17.0 and the
+pre-alpha package status remain unchanged.
 
 The M0–M4 labels/checklists below retain the earlier scaffold roadmap. They are
 broader historical groupings, not the current worker-M1/task-ownership-M2 names;

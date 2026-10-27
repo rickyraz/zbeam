@@ -1,6 +1,6 @@
 # Research and Risk Backlog
 
-**Reviewed:** 2026-10-26. The [single-actor MVP](mvp.md) and bounded M1 profile are accepted; task-owning M2 and the full v0.5 design are not implemented. [Implementation status](implementation-status.md) distinguishes executed evidence from proposals.
+**Reviewed:** 2026-10-27. The [single-actor MVP](mvp.md), bounded M1 and [local M2a](task-runtime.md) are accepted; M2b wire expansion and the full v0.5 design are not implemented. [Implementation status](implementation-status.md) distinguishes executed evidence from proposals.
 
 The [development plan](development-plan.md) defines execution order and final release gates. The [snmalloc evaluation](snmalloc-evaluation.md) specifies the allocator experiment without changing the default build.
 
@@ -82,9 +82,10 @@ black-box checks. Published-node housekeeping is currently ignored when addresse
 slots, nonblocking copy admission and completion-held budgets. Basic local
 startup rollback and stop/join are implemented; deterministic stop/send/cancel,
 saturation and controlled-handler-error tests pass. Noncooperative subprocess
-checks verify stalled join plus external kill/reap, not preemption. Final
-acceptance remains pending; external-user quiescence is caller-owned. Caller-owned registry
-lifetimes remain unchanged; [local API](task-runtime.md).
+checks verify stalled join plus external kill/reap, not preemption.
+[Actual-master acceptance](evidence/phase-c/2026-10-27-m2a-acceptance.md) closes
+local M2a; external-user quiescence remains caller-owned. Caller-owned registry
+lifetimes stay unchanged; [local API](task-runtime.md).
 M2b additionally needs atomic shared-route reservations, output/monitor bounds
 and connection-epoch ownership before wire expansion; [gates](m2-task-lifecycle-plan.md).
 

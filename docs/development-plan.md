@@ -1,9 +1,9 @@
 # Development Plan: MVP to a Supported Native Worker Peer
 
-- **Status:** bounded M1 W0–W5 accepted into master through PR #3 and cleanup repair PR #4; broader D0–D5 gates remain incomplete. M2 is not started.
-- **Reviewed:** 2026-10-26.
+- **Status:** bounded M1 and local task-owning M2a accepted into master; M2b wire routing and broader D0–D5 gates remain incomplete.
+- **Reviewed:** 2026-10-27.
 - **Historical planning baseline:** local `master` at `11c3319`; restricted MVP introduced by `090bb60`. The compiler candidate includes live remote master's accepted labs at `497d346`.
-- **Next milestone:** M2 task ownership, shutdown and bounded multi-actor lifetimes; design and implementation remain future work.
+- **Next milestone:** separately decide M2b wire schema, shared-route reservations and connection/output lifetimes; local M2a ownership/stop/join is accepted.
 - **Allocator track:** [snmalloc evaluation](snmalloc-evaluation.md).
 - **Compiler track:** [Zig 0.17 migration](zig-0.17-migration.md) verified all 14 profiles; compiler PR #2 merged. [Consolidation executed](evidence/phase-a/2026-10-26-branch-consolidation.md): eleven local/remote branches retain the M1 checkout and all nine research topics. [M1 acceptance](evidence/phase-b/2026-10-26-m1-integration.md) is a later, separate decision.
 
@@ -71,7 +71,8 @@ passed locally in debug/safe, native OTP 25/26/27 and all complementary owner
 cases. Explicit size-exception approval preceded normal PR #3 merge `2241e7f`;
 PR #4 repaired the actual-merge Port cleanup race. Repaired master `88db721`
 passed 9/9 CI jobs, with 14 recovery cases per mode. [Review and acceptance](m1-review.md)
-are complete for this bounded profile. M2 has not started.
+are complete for this bounded profile. [Local M2a acceptance](evidence/phase-c/2026-10-27-m2a-acceptance.md)
+is a subsequent step; M2b remains gated.
 
 ## Research inputs, not completed prerequisites
 
@@ -283,8 +284,10 @@ secret handling and deployment boundaries before a production support claim.
 
 The [M2 design/work plan](m2-task-lifecycle-plan.md) and
 [ADR 0004](adr/0004-bounded-task-owned-runtime.md) split approved local ownership
-(M2a) from separately reviewed wire routing (M2b). Owner approval authorizes
-M2a implementation; these documents alone implement no task-owning runtime.
+(M2a) from separately reviewed wire routing (M2b). M2a is implemented and
+[accepted on actual master](evidence/phase-c/2026-10-27-m2a-acceptance.md): two
+fixed SHA-256 tasks with copied inputs, completion budgets and stop/join/deinit.
+Existing `Runtime(T)` stays caller-owned; M2b remains unimplemented.
 
 M2 connects bounded mailboxes and the registry to runtime-owned `std.Io` tasks,
 using an API with explicit lifecycle migration notes. Start with two actors;
@@ -318,9 +321,10 @@ not M1/M2 prerequisites. Performance work resumes only against a stable baseline
   [design-target sections](../specs/zbeam-v0.5.0.md) with each implemented
   lifecycle/protocol increment; planning alone changes no implementation status.
 
-**Next action:** implement the owner-approved local M2a ownership and stop/join
-contract in reviewable work units. M2b wire expansion, a general scheduler and
-performance comparators remain separate decisions.
+**Next action:** review a separate M2b wire-profile ADR for discovery/stop schema,
+atomic shared-route reservations, output/monitor bounds and connection epochs
+before implementation. General scheduling and performance comparators remain
+separate decisions; local acceptance does not authorize wire expansion.
 
 ## Acceptance policy
 

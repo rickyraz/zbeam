@@ -27,13 +27,15 @@ The current benchmark includes negative results. It does not establish a perform
 | Process monitors | Worker PID and discovery-name monitoring; fixed 64-slot connection table; OTP 25/26/27 evidence |
 | External recovery example | One-slot Elixir owner, no uncertain replay, bounded restarts and guarded Linux child cleanup; separately tested on Elixir 1.20.4/OTP 29 |
 | Backpressure | Demand-gated unbuffered reads; TCP saturation/resume evidence |
-| Local actor primitives | Bounded mailbox, logical receive ownership, registry and termination |
+| Local actor primitives | Bounded mailbox, logical receive ownership, caller-owned registry and termination |
+| Local M2a task owner | Two fixed SHA-256 tasks, bounded copied work/results, explicit stop/join; [API and example](docs/task-runtime.md) |
 | Process-loss isolation | SIGKILL/nodedown tests with surviving OTP VM and local process |
 | Arena-backed ownership and io_uring | Not implemented; research only |
 
 [Implementation Status](docs/implementation-status.md) is the source of truth.
 [Bounded M1 acceptance](docs/evidence/phase-b/2026-10-26-m1-integration.md) is complete
-on master; task-owning M2 and production release gates remain open. The v0.5
+on master; [local M2a is also accepted](docs/evidence/phase-c/2026-10-27-m2a-acceptance.md).
+M2b multi-actor wire routing and production release gates remain open. The v0.5
 specification describes a broader design, not shipped behavior.
 
 ## Build and verify
@@ -44,6 +46,8 @@ Requirements: Zig 0.17.0 and Git. Optimizer values use the 0.17 names (`debug`, 
 zig build
 zig build test-all                            # deterministic, no external EPMD required
 zig build test-all -Doptimize=safe
+zig build test-task-lifecycle -Doptimize=safe  # Linux/Python 3 watchdog plus local example
+zig build example-task-runtime               # two local tasks; no EPMD/network
 zig build test-interop-docker                 # all OTP 25/26/27 targets; pinned images
 ```
 
@@ -88,7 +92,7 @@ Cookies in arguments are visible in process listings. Handshake, frame and write
 | `zbeam-protocol` | Pure wire and handshake semantics | `zbeam-etf` |
 | `zbeam-transport` | EPMD, handshake and framed I/O | Protocol, ETF |
 | `zbeam-actor` | Bounded mailbox and demand primitives | None |
-| `zbeam-runtime` | Service composition and local registry | All narrower batteries |
+| `zbeam-runtime` | Service composition, caller-owned registry and fixed local task owner | All narrower batteries |
 | `zbeam` | Behavior-free convenience exports | All batteries |
 
 ```zig

@@ -21,12 +21,17 @@ These records supersede earlier pending-matrix/demand status for the restricted 
 - [2026-10-26 OTP 25 installer failure and supported CI runner pin](phase-b/2026-10-26-m1-ci-runner.md) — earlier run preserved; all six native OTP/mode lanes remain mandatory.
 - [2026-10-26 actual-merge Port cleanup race and repair](phase-b/2026-10-26-m1-port-cleanup.md) — original failure retained; 14 current recovery cases per mode, including one new cleanup regression.
 
+- [2026-10-27 guardian-oracle correction](phase-c/2026-10-27-guardian-terminal-state.md) — retained PR #13 failure, terminal procfs state parsing and no redundant post-terminal probe; production guardian unchanged.
+
 These records cover the bounded development profile, not a general actor
 scheduler or production release.
 
-## M2 design inputs
+## Local task-owning M2a
 
-- [2026-10-27 ownership/task API inspection](phase-a/2026-10-27-m2-design.md) — proposed ADR/work plan and unchanged-code baseline, not M2 implementation evidence.
+- [2026-10-27 actual-master acceptance](phase-c/2026-10-27-m2a-acceptance.md) — local T0–T4 only; M2b wire expansion remains gated.
+- [Nonblocking mailbox](phase-a/2026-10-27-m2a-nonblocking-mailbox.md) and [owned admission](phase-a/2026-10-27-m2a-owned-admission.md).
+- [Basic task owner](phase-c/2026-10-27-m2a-task-owner.md), [deterministic lifetimes](phase-c/2026-10-27-m2a-lifecycle.md), [shutdown watchdog](phase-c/2026-10-27-m2a-shutdown-watchdog.md) and [public API regression candidate](phase-c/2026-10-27-m2a-public-api.md).
+- [Initial design inspection](phase-a/2026-10-27-m2-design.md) — historical proposed-design/unchanged-code checkpoint, not implementation evidence.
 
 ## Compiler migration
 
