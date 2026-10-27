@@ -12,6 +12,18 @@ comptime {
     _ = @import("peer_integration.zig");
 }
 
+test "integration: additive task owner works through independent runtime import" {
+    const tasks = try runtime.TaskRuntime.create(std.testing.allocator, std.testing.io, .{ "left", "right" });
+    defer tasks.deinit() catch unreachable;
+    defer _ = tasks.shutdown();
+    const id = tasks.whereis("right").?;
+    const request = try tasks.trySend(id, "owned work");
+    const result = (try tasks.nextResult()).?;
+    try std.testing.expectEqual(id, result.actor_id);
+    try std.testing.expectEqual(request, result.request_id);
+    try std.testing.expect(result.outcome == .digest);
+}
+
 test "integration: umbrella and independent battery imports compile" {
     std.testing.refAllDecls(zbeam);
     std.testing.refAllDecls(etf);

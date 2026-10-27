@@ -1,0 +1,34 @@
+# Local task-owning runtime
+
+`@import("zbeam-runtime").TaskRuntime` owns two fixed SHA-256 tasks and their
+mailbox/input/result storage. It is additive: `Runtime(T)` remains a caller-owned
+mailbox registry, and all M1 network services remain synchronous and unchanged.
+M2a lifecycle acceptance is still in progress; this is not multi-actor OTP routing.
+
+```zig
+const tasks = try runtime.TaskRuntime.create(allocator, io, .{ "left", "right" });
+defer tasks.deinit() catch unreachable;
+defer _ = tasks.shutdown();
+const request = try tasks.trySend(tasks.whereis("left").?, "abc");
+const result = (try tasks.nextResult()).?;
+// Correlate result.request_id with request; inspect result.outcome.
+```
+
+Names are copied, distinct and 1–64 bytes. Local actor IDs are 1/2, meaningful only
+with this live instance, never wire PIDs. `trySend` copies up to 1 MiB and returns
+`WouldBlock` at four queued or five outstanding requests per actor; completed
+results hold admission tickets until collected. No capacity-waiting sender task
+or dynamic slot replacement is created. Payload copies total at most 10 MiB;
+metadata, provider/task resources and caller-owned buffers are additional.
+
+One collector calls `nextResult`, returning inline digest/stopped/canceled
+outcomes; null means all tasks joined and results exhausted. `requestStop` is
+thread-safe with send while the owner keeps storage alive. The single lifecycle
+owner uses `stopAndJoin` for one actor or `shutdown` for both. Stop prevents new
+handler claims, not effects of already accepted work; digest can win a stop race.
+Shutdown closes both admissions before joining either and drains queued payloads.
+`deinit` refuses `NotJoined`; callers must also join **their own API users** before
+actual destruction. A future's cooperative cancel is a join, not CPU preemption.
+No hard shutdown deadline, actor-local panic isolation or replay is promised.
+See [ADR 0004](adr/0004-bounded-task-owned-runtime.md) and the
+[M2 verification plan](m2-task-lifecycle-plan.md) for the remaining acceptance gates.
