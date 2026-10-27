@@ -162,6 +162,20 @@ pub fn build(b: *std.Build) void {
     shutdown_probe.addArtifactArg(lifecycle_tests);
     lifecycle_step.dependOn(&shutdown_probe.step);
 
+    const local_example = b.addExecutable(.{
+        .name = "zbeam-local-actors",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("examples/task_runtime.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{.{ .name = "zbeam-runtime", .module = runtime_mod }},
+        }),
+    });
+    const run_local_example = b.addRunArtifact(local_example);
+    run_local_example.has_side_effects = true;
+    b.step("example-task-runtime", "Run two local owned actor tasks without changing M1 wire services").dependOn(&run_local_example.step);
+    lifecycle_step.dependOn(&run_local_example.step);
+
     const test_interop_step = b.step("test-interop", "Run configured OTP 25-27 echo matrix");
     const test_interop_cmd = b.addSystemCommand(&.{"sh"});
     test_interop_cmd.addFileArg(b.path("scripts/interop/otp_matrix.sh"));
