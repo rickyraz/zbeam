@@ -69,12 +69,13 @@ teardown. A control blocked behind zero demand is intentionally unread, includin
 ticks and demonitor. Head-of-line blocking and possible heartbeat disconnection
 are explicit consequences, not fairness or liveness guarantees.
 
-**Implementation gap:** M2a currently reserves only inside `trySend` while
-copying; neither a pre-read multi-slot reservation nor a reservation-transfer API
-exists. Completion collection in `nextResult` releases its ticket immediately.
-An adapter must add tested shared reservation and output ownership rules; a
-separate unlocked capacity check or an adapter-private counter cannot enforce
-these invariants against local sends.
+**Implementation gap:** local `trySend` reserves while copying. An internal
+shared-route lease now reserves all running slots under the same gate and transfers
+one on insertion, but it does not authorize a socket read or reserve output.
+Completion collection in `nextResult` releases its ticket immediately. The future
+adapter must add and test output ownership and actual read gating; a separate
+unlocked capacity check or adapter-private counter cannot enforce these invariants
+against local sends.
 
 ## Memory, writer and connection epoch
 

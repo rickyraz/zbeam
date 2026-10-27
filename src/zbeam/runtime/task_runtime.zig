@@ -30,6 +30,7 @@ start: std.Io.Event = .unset,
 slots: [2]Slot = undefined,
 next_id: u64 = 1,
 joined: bool = false,
+wire_reservation_active: bool = false,
 control: if (builtin.is_test) ?*@import("task_runtime_test.zig").Control else void = if (builtin.is_test) null else {},
 
 /// Allocates stable storage and publishes neither identity until both tasks are
@@ -137,6 +138,9 @@ fn index(id: u64) !usize {
 fn stopLocked(self: *Self, i: usize) void {
     const slot = &self.slots[i];
     if (slot.state == .starting or slot.state == .running) slot.state = .stopping;
+    for (&slot.ledger.records, 0..) |*record, ticket| {
+        if (record.stage == .reserved) slot.ledger.release(ticket);
+    }
     slot.mailbox.close(self.io);
     if (builtin.is_test) {
         if (self.control) |control| if (control.actor == i) control.release.set(self.io);
@@ -234,6 +238,7 @@ fn joinSlot(self: *Self, i: usize) void {
 
 test {
     _ = @import("task_runtime_test.zig");
+    _ = @import("wire_admission.zig");
 }
 
 test "task owner copies names, hashes on both actors, stops and joins idempotently" {
