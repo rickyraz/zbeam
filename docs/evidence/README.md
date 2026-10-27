@@ -33,7 +33,7 @@ scheduler or production release.
 - [Basic task owner](phase-c/2026-10-27-m2a-task-owner.md), [deterministic lifetimes](phase-c/2026-10-27-m2a-lifecycle.md), [shutdown watchdog](phase-c/2026-10-27-m2a-shutdown-watchdog.md) and [public API regression candidate](phase-c/2026-10-27-m2a-public-api.md).
 - [Initial design inspection](phase-a/2026-10-27-m2-design.md) — historical proposed-design/unchanged-code checkpoint, not implementation evidence.
 - [Proposed M2b wire-design baseline](phase-a/2026-10-27-m2b-wire-design.md) — source inspection and existing-profile checks only, not M2b wire evidence.
-- [Internal reservation primitive](phase-a/2026-10-27-m2b-ledger-reservation.md), [shared-route lease](phase-a/2026-10-27-m2b-shared-reservation.md), [reply credits](phase-a/2026-10-27-m2b-output-credit.md), [monitor table](phase-a/2026-10-27-m2b-monitor-table.md), [pre-read gate](phase-a/2026-10-27-m2b-read-gate.md) [bounded encoder](phase-a/2026-10-27-m2b-bounded-encoding.md) and [request decoder](phase-a/2026-10-27-m2b-route-decoder.md) — local tests only; no network service is enabled.
+- [Internal reservation primitive](phase-a/2026-10-27-m2b-ledger-reservation.md), [shared-route lease](phase-a/2026-10-27-m2b-shared-reservation.md), [reply credits](phase-a/2026-10-27-m2b-output-credit.md), [monitor table](phase-a/2026-10-27-m2b-monitor-table.md), [pre-read gate](phase-a/2026-10-27-m2b-read-gate.md) [bounded encoder](phase-a/2026-10-27-m2b-bounded-encoding.md) [request decoder](phase-a/2026-10-27-m2b-route-decoder.md) and [session dispatcher](phase-a/2026-10-27-m2b-session-dispatch.md) — local tests only; no network service is enabled.
 
 ## Compiler migration
 
