@@ -1,6 +1,7 @@
 //! Two fixed local SHA-256 actors. The owner must join API users before deinit;
 //! stop/cancel joins cooperatively, never preempts CPU code or isolates a panic.
 const std = @import("std");
+const builtin = @import("builtin");
 const actor = @import("zbeam-actor");
 const admission = @import("task_admission.zig");
 const Self = @This();
@@ -29,6 +30,7 @@ start: std.Io.Event = .unset,
 slots: [2]Slot = undefined,
 next_id: u64 = 1,
 joined: bool = false,
+control: if (builtin.is_test) ?*@import("task_runtime_test.zig").Control else void = if (builtin.is_test) null else {},
 
 /// Allocates stable storage and publishes neither identity until both tasks are
 /// ready. Allocator and I/O provider must outlive the joined runtime and support
@@ -136,6 +138,9 @@ fn stopLocked(self: *Self, i: usize) void {
     const slot = &self.slots[i];
     if (slot.state == .starting or slot.state == .running) slot.state = .stopping;
     slot.mailbox.close(self.io);
+    if (builtin.is_test) {
+        if (self.control) |control| if (control.actor == i) control.release.set(self.io);
+    }
 }
 
 fn run(self: *Self, i: usize) void {
@@ -143,7 +148,7 @@ fn run(self: *Self, i: usize) void {
     slot.ready.set(self.io);
     const exit: Exit = if (self.work(i)) |_| .stopped else |err| switch (err) {
         error.Canceled => .canceled,
-        else => unreachable,
+        error.HandlerFailed => .handler_failed,
     };
     self.mutex.lockUncancelable(self.io);
     defer self.mutex.unlock(self.io);
@@ -153,7 +158,7 @@ fn run(self: *Self, i: usize) void {
     self.changed.broadcast(self.io);
 }
 
-fn work(self: *Self, i: usize) !void {
+fn work(self: *Self, i: usize) error{ Canceled, HandlerFailed }!void {
     try self.start.wait(self.io);
     while (true) {
         try self.io.checkCancel();
@@ -168,12 +173,26 @@ fn work(self: *Self, i: usize) !void {
 
 fn process(self: *Self, i: usize, message: admission.Message) !void {
     var outcome: Outcome = .stopped;
-    defer self.complete(i, message, outcome);
+    var claimed = false;
+    defer self.complete(i, message, outcome, claimed);
+    if (builtin.is_test) {
+        if (self.control) |control| control.checkpoint(self.io, i, .before_claim) catch |err| {
+            outcome = if (err == error.Canceled) .canceled else .handler_failed;
+            return err;
+        };
+    }
     self.mutex.lockUncancelable(self.io);
     self.slots[i].ledger.claim(message);
+    claimed = true;
     const running = self.slots[i].state == .running;
     self.mutex.unlock(self.io);
     if (!running) return;
+    if (builtin.is_test) {
+        if (self.control) |control| control.checkpoint(self.io, i, .active) catch |err| {
+            outcome = if (err == error.Canceled) .canceled else .handler_failed;
+            return err;
+        };
+    }
     self.io.checkCancel() catch |err| {
         outcome = .canceled;
         return err;
@@ -183,9 +202,10 @@ fn process(self: *Self, i: usize, message: admission.Message) !void {
     outcome = .{ .digest = digest };
 }
 
-fn complete(self: *Self, i: usize, message: admission.Message, outcome: Outcome) void {
+fn complete(self: *Self, i: usize, message: admission.Message, outcome: Outcome, claimed: bool) void {
     self.mutex.lockUncancelable(self.io);
     defer self.mutex.unlock(self.io);
+    if (!claimed) self.slots[i].ledger.claim(message);
     self.slots[i].ledger.finish(message, outcome);
     self.changed.broadcast(self.io);
 }
@@ -203,13 +223,17 @@ fn joinSlot(self: *Self, i: usize) void {
         self.mutex.lockUncancelable(self.io);
         slot.ledger.claim(message);
         self.mutex.unlock(self.io);
-        self.complete(i, message, .stopped);
+        self.complete(i, message, .stopped, true);
     }
     self.mutex.lockUncancelable(self.io);
     defer self.mutex.unlock(self.io);
     slot.state = .joined;
     self.joined = self.slots[0].state == .joined and self.slots[1].state == .joined;
     self.changed.broadcast(self.io);
+}
+
+test {
+    _ = @import("task_runtime_test.zig");
 }
 
 test "task owner copies names, hashes on both actors, stops and joins idempotently" {

@@ -68,8 +68,10 @@ verified on OTP 25/26/27. This is not a production deployment certification.
 [TaskRuntime](task-runtime.md) now owns two fixed SHA-256 tasks, copied inputs,
 completion-held admission and stable mailbox storage. Startup rollback joins all
 started tasks; stop/join/shutdown drain before deinit, which refuses early free.
-Basic digest/identity/cleanup and first/second-start failure tests pass. The
-full deterministic lifecycle/fault matrix and M2a acceptance remain pending;
+Basic digest/identity/cleanup and first/second-start failure tests pass.
+[Deterministic lifecycle tests](evidence/phase-c/2026-10-27-m2a-lifecycle.md)
+cover stop/cancel before claim, saturation, handler error and independent progress.
+Noncooperative subprocess and final integrated M2a acceptance remain pending;
 M2b routing is not implemented. Existing `Runtime(T)` and M1 are unchanged.
 
 ## Not implemented or not established
