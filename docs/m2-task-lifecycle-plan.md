@@ -63,10 +63,12 @@ variants; account for setup/provider allocations separately from request storage
 | M2b zero credit, unknown destination, local-send race | No read/allocation until all required destination reservations succeed atomically; no summed-credit shortcut or hidden route buffer |
 | M2b disconnect/reconnect and stop/monitor race | Old-epoch results never reach new peers; join/drop before peer free; actual OTP verifies PID/reference/reason and no duplicates |
 
-Conservation oracle at quiescence: accepted requests = delivered terminal results
-+ retained terminal results; every accepted payload is destroyed once, rejected
-copies never enter the queue, all reservations return on failure. After deinit:
-zero retained payloads/results and no joined task still accessing runtime state.
+Conservation oracle on controlled paths at quiescence: accepted requests =
+delivered + retained + explicitly discarded terminal results; every accepted
+payload is destroyed once, rejected copies never enter the queue, all reservations
+return on failure. After deinit: zero retained payloads/results and no task still
+accessing runtime state. Process kill/panic may lose results; external callers
+must fail uncertain work, never infer replay or exactly-once execution.
 
 ## Verification and documentation
 

@@ -120,8 +120,8 @@ closing -> joined`. Stop/join are idempotent once their outcome is recorded.
    destroys remaining queued payloads, publishing one `Stopped` completion per
    discarded request. Dequeued-request cleanup stays with the worker's defer;
    bounded cleanup cannot be skipped by cancellation and performs no new allocation.
-4. Each accepted request has exactly one terminal record: digest, handler error
-   or stopped/canceled outcome. A digest produced before cancellation can win;
+4. On controlled paths in a live runtime, each accepted request has exactly one
+   terminal record: digest, handler error or stopped/canceled outcome. A digest produced before cancellation can win;
    stop never promises that previously accepted work had no effect. No replay.
    Tickets reserve completion capacity, so cleanup never blocks on a full result
    queue. Assert conservation; do not silently drop an accounting overflow.
