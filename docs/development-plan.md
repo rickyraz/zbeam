@@ -281,6 +281,11 @@ secret handling and deployment boundaries before a production support claim.
 
 ## After M1 — M2: a small task-owning actor runtime
 
+The [M2 design/work plan](m2-task-lifecycle-plan.md) and
+[ADR 0004](adr/0004-bounded-task-owned-runtime.md) split approved local ownership
+(M2a) from separately reviewed wire routing (M2b). Owner approval authorizes
+M2a implementation; these documents alone implement no task-owning runtime.
+
 M2 connects bounded mailboxes and the registry to runtime-owned `std.Io` tasks,
 using an API with explicit lifecycle migration notes. Start with two actors;
 prove task joining, queued-message cleanup, safe send/terminate races and
@@ -313,9 +318,9 @@ not M1/M2 prerequisites. Performance work resumes only against a stable baseline
   [design-target sections](../specs/zbeam-v0.5.0.md) with each implemented
   lifecycle/protocol increment; planning alone changes no implementation status.
 
-**Next action:** a separate M2 lifecycle ADR and ownership design for task join,
-shutdown and bounded two-actor admission. M1 acceptance does not authorize or
-implement that work, a general scheduler or another performance comparator.
+**Next action:** implement the owner-approved local M2a ownership and stop/join
+contract in reviewable work units. M2b wire expansion, a general scheduler and
+performance comparators remain separate decisions.
 
 ## Acceptance policy
 

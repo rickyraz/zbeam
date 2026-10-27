@@ -78,6 +78,12 @@ black-box checks. Published-node housekeeping is currently ignored when addresse
 
 ### Mailbox task ownership and lifetimes
 
+[Approved M2a design](adr/0004-bounded-task-owned-runtime.md) uses two retained
+slots, nonblocking copy admission and completion-held budgets. Its startup,
+stop/join, allocator and external-user quiescence proofs remain unimplemented.
+M2b additionally needs atomic shared-route reservations, output/monitor bounds
+and connection-epoch ownership before wire expansion; [gates](m2-task-lifecycle-plan.md).
+
 Bounded queue operations, logical token ownership, concurrent-receive exclusion, duplicate mailbox registration and close/drain behavior are implemented. Tokens remain copyable and publicly constructible. Callers must join all operations before destroying mailbox storage or the registry, including sends that resolved a mailbox before termination.
 
 **Required evidence for expansion:** task-bound identity or a documented capability alternative, register/terminate/send races with a stronger lifetime strategy, shutdown wakeup coverage, and sanitizer runs where supported. Registry locking alone does not extend external pointer lifetimes.
