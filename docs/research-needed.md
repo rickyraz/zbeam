@@ -131,8 +131,9 @@ The MVP rejects cached/fragmented headers, checks wire lengths before allocation
 [Proposed ADR 0005](adr/0005-two-worker-wire-profile.md) records unresolved wire
 schema, atomic pre-read reservation, bounded reply/control output, connection
 epoch and stop/monitor ordering gates. An internal shared-route lease now reserves
-actor capacity before a potential read, but output-held tickets, actual read gating
-and connection teardown remain unimplemented; no M2b profile is enabled.
+actor capacity before a potential read. A separate internal table models output-held
+credits, but actual read/write gating, encoded-byte bounds and connection teardown
+remain unimplemented; no M2b profile is enabled.
 
 ### Actor failure blast radius
 

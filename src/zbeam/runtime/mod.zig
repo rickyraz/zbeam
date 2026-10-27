@@ -13,5 +13,6 @@ pub const TaskRuntime = @import("task_runtime.zig");
 
 test {
     _ = @import("task_admission.zig");
+    _ = @import("wire_output.zig");
     @import("std").testing.refAllDecls(@This());
 }
