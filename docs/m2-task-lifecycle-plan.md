@@ -23,7 +23,9 @@ A canceled/noncooperative task does not authorize early free.
 ## Reviewable work units
 
 T0–T4 are executed through PR #6–#12, with actual-master acceptance at `221a48d`.
-The table preserves review/rollback boundaries; T5–T6 remain unstarted.
+T5 has a [proposed wire-profile ADR](adr/0005-two-worker-wire-profile.md); its
+numbered gates remain open. T6 has not started. The table preserves review and
+rollback boundaries.
 
 Each row is an intended independently reviewable change with tests/docs/evidence,
 not a promise that an entire stage fits one PR. Target <=400 added+removed lines;

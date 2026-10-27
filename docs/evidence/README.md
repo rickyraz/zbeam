@@ -32,6 +32,7 @@ scheduler or production release.
 - [Nonblocking mailbox](phase-a/2026-10-27-m2a-nonblocking-mailbox.md) and [owned admission](phase-a/2026-10-27-m2a-owned-admission.md).
 - [Basic task owner](phase-c/2026-10-27-m2a-task-owner.md), [deterministic lifetimes](phase-c/2026-10-27-m2a-lifecycle.md), [shutdown watchdog](phase-c/2026-10-27-m2a-shutdown-watchdog.md) and [public API regression candidate](phase-c/2026-10-27-m2a-public-api.md).
 - [Initial design inspection](phase-a/2026-10-27-m2-design.md) — historical proposed-design/unchanged-code checkpoint, not implementation evidence.
+- [Proposed M2b wire-design baseline](phase-a/2026-10-27-m2b-wire-design.md) — source inspection and existing-profile checks only, not M2b wire evidence.
 
 ## Compiler migration
 

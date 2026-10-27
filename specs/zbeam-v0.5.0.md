@@ -409,7 +409,8 @@ wire expansion. The additive [TaskRuntime](../docs/task-runtime.md) implements b
 ownership and stop/join. Deterministic lifecycle/conservation tests pass;
 the noncooperative subprocess gate verifies external kill/reap after stalled
 join, not preemption. [Actual-master acceptance](../docs/evidence/phase-c/2026-10-27-m2a-acceptance.md)
-closes local M2a only; M2b wire routes remain unimplemented. M1 and the
+closes local M2a only; [proposed M2b ADR 0005](../docs/adr/0005-two-worker-wire-profile.md)
+does not approve or implement wire routes. M1 and the
 caller-owned `Runtime(T)` remain unchanged. `example-task-runtime` exercises the
 production-mode local API; it neither registers EPMD nor adds wire actor routes.
 
