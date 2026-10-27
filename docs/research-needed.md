@@ -126,6 +126,13 @@ The MVP rejects cached/fragmented headers, checks wire lengths before allocation
 
 **Required evidence for fragments:** message-size, fragment-count, assembly-count, total memory and timeout bounds, with interruption/reconnect tests before advertising fragment support.
 
+### M2b shared-wire capacity and ownership
+
+[Proposed ADR 0005](adr/0005-two-worker-wire-profile.md) records unresolved wire
+schema, atomic pre-read reservation, bounded reply/control output, connection
+epoch and stop/monitor ordering gates. The current M2a API does not yet provide
+pre-read multi-slot reservations or output-held tickets; no M2b profile is enabled.
+
 ### Actor failure blast radius
 
 [Guardian-oracle follow-up](evidence/phase-c/2026-10-27-guardian-terminal-state.md):
