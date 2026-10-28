@@ -9,7 +9,7 @@ const monitor = protocol.monitor;
 pub const scratch_bytes = 16 * 1024;
 pub const ErrorAtom = enum { bad_request, noproc, stopped, canceled, handler_failed };
 pub const Result = union(enum) { pid: etf.Pid, digest: [32]u8, ok, failure: ErrorAtom };
-pub const Reason = enum { normal, noproc };
+pub const Reason = enum { normal, noproc, handler_failed };
 
 /// Uses only caller-owned bounded storage, including ETF encoder temporaries.
 pub fn reply(scratch: *[scratch_bytes]u8, to: etf.Pid, reference: etf.Reference, result: Result) ![]const u8 {
@@ -90,7 +90,7 @@ test "monitor exit and all bounded reply forms fit for maximum node atoms" {
         }
     }
     for ([_]monitor.Target{ .{ .pid = pid }, .{ .name = &name } }) |target| {
-        for ([_]Reason{ .normal, .noproc }) |reason| {
+        for ([_]Reason{ .normal, .noproc, .handler_failed }) |reason| {
             const bytes = try monitorExit(&scratch, target, pid, ref, reason);
             var packet = try dist.decodePacket(testing.allocator, bytes, .{});
             defer packet.deinit(testing.allocator);
