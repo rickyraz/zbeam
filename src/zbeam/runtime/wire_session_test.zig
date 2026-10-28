@@ -158,3 +158,81 @@ test "output failure drops the claimed reply credit and unknown result fails clo
     try testing.expectError(error.WouldBlock, session.outputs.reserve());
     session.outputs.discard();
 }
+
+test "stop sends 64 bounded monitor exits while sibling work remains pending" {
+    var control = @import("task_runtime_test.zig").Control{ .actor = 1 };
+    const tasks = try Runtime.create(testing.allocator, io, .{ "a", "b" });
+    defer tasks.deinit() catch unreachable;
+    defer _ = tasks.shutdown();
+    defer control.release.set(io);
+    tasks.control = &control;
+    var session = Session.init(tasks, &peer, pids, 1);
+    var buffer: [16384]u8 = undefined;
+    var writer = std.Io.Writer.fixed(&buffer);
+    for (0..64) |i| {
+        var ref = reference;
+        ref.ids[0] = @intCast(i + 1);
+        var fields = [_]etf.Term{ .{ .integer = protocol.monitor.monitor_p }, .{ .pid = from }, .{ .pid = pids[0] }, .{ .reference = ref } };
+        try deliver(&session, &.{ .tuple = &fields }, null, &writer);
+    }
+    try testing.expectEqual(@as(usize, 0), writer.buffered().len);
+    var hash = [_]etf.Term{ .{ .atom = "hash" }, .{ .binary = "abc" } };
+    try request(&session, pids[1], .{ .tuple = &hash }, &writer);
+    try control.entered.waitTimeout(io, .{ .duration = .{ .raw = .fromSeconds(5), .clock = .awake } });
+    try request(&session, pids[0], .{ .atom = "stop" }, &writer);
+    const frames = writer.buffered();
+    const first_len = std.mem.readInt(u32, frames[0..4], .big) + 4;
+    var stopped = try decodeReply(frames[0..first_len]);
+    defer stopped.deinit(testing.allocator);
+    try testing.expectEqualStrings("ok", stopped.tuple[1].atom);
+    var offset: usize = first_len;
+    var seen: [64]bool = @splat(false);
+    while (offset < frames.len) {
+        const len = std.mem.readInt(u32, frames[offset..][0..4], .big) + 4;
+        var packet = try dist.decodePacket(testing.allocator, frames[offset..][0..len], worker.limits);
+        defer packet.deinit(testing.allocator);
+        const exit = try protocol.monitor.parse(&packet.message.control);
+        try testing.expect(exit.target.pid.eql(pids[0]));
+        try testing.expectEqualStrings("normal", exit.reason.?.atom);
+        const id = exit.reference.ids[0];
+        try testing.expect(id >= 1 and id <= 64 and !seen[id - 1]);
+        seen[id - 1] = true;
+        offset += len;
+    }
+    for (seen) |received| try testing.expect(received);
+    try testing.expect(session.monitors.takeExit(pids[0]) == null);
+    control.release.set(io);
+    writer = .fixed(&buffer);
+    try session.result((try tasks.nextResult()).?, &writer);
+    var reply = try decodeReply(writer.buffered());
+    defer reply.deinit(testing.allocator);
+    try testing.expectEqualStrings("ok", reply.tuple[1].tuple[0].atom);
+    try testing.expectEqualStrings("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad", &std.fmt.bytesToHex(reply.tuple[1].tuple[1].binary[0..32].*, .lower));
+    session.outputs.discard();
+}
+
+test "failed monitor output does not undo actor stop or replay subscriptions" {
+    const tasks = try Runtime.create(testing.allocator, io, .{ "a", "b" });
+    defer tasks.deinit() catch unreachable;
+    defer _ = tasks.shutdown();
+    var session = Session.init(tasks, &peer, pids, 1);
+    var scratch: [16384]u8 = undefined;
+    var sink: [16384]u8 = undefined;
+    var writer = std.Io.Writer.fixed(&sink);
+    for (0..3) |i| {
+        var ref = reference;
+        ref.ids[0] = @intCast(i + 1);
+        var fields = [_]etf.Term{ .{ .integer = protocol.monitor.monitor_p }, .{ .pid = from }, .{ .pid = pids[0] }, .{ .reference = ref } };
+        try deliver(&session, &.{ .tuple = &fields }, null, &writer);
+    }
+    const stop_reply = try @import("wire_encode.zig").reply(&scratch, from, reference, .ok);
+    writer = .fixed(sink[0..stop_reply.len]);
+    try testing.expectError(error.WriteFailed, request(&session, pids[0], .{ .atom = "stop" }, &writer));
+    try testing.expectEqualSlices(u8, stop_reply, writer.buffered());
+    try testing.expect(tasks.whereis("a") == null and tasks.whereis("b") != null);
+    session.monitors.clear();
+    session.outputs.discard();
+    var fresh = Session.init(tasks, &peer, pids, 2);
+    try testing.expect(fresh.monitors.takeExit(pids[0]) == null);
+    fresh.outputs.discard();
+}

@@ -37,6 +37,10 @@ timeout 45 "$erl_bin" +S 2:2 -noshell -name "wcs_${label}_$$@127.0.0.1" -setcook
      D=crypto:hash(sha256,Data),{ok,D}=Call(P,{hash,Data}) end,
      [<<>>,<<97,98,99>>,binary:copy(<<90>>,1048576)]) end,[A,B]),
    {error,bad_request}=Call(A,{hash,42}),
+   Batch=lists:map(fun(I)->R=make_ref(),Data=integer_to_binary(I),
+     P=case I rem 2 of 0->A;1->B end,P!{self(),R,{hash,Data}},
+     {R,crypto:hash(sha256,Data)} end,lists:seq(1,40)),
+   lists:foreach(fun({R,D})->receive {R,{ok,D}}->ok after 5000->error(batch_timeout) end end,Batch),
    <<131,88,119,L,NB:L/binary,ID:32,S:32,C:32>>=term_to_binary(A,[{minor_version,2}]),
    Old=binary_to_term(<<131,88,119,L,NB/binary,(ID bxor 1):32,S:32,C:32>>),
    Stale=make_ref(),Old!{self(),Stale,{hash,<<1>>}},
@@ -49,8 +53,11 @@ timeout 45 "$erl_bin" +S 2:2 -noshell -name "wcs_${label}_$$@127.0.0.1" -setcook
    receive {'DOWN',LostName,process,Endpoint,noconnection}->ok after 5000->error(no_name_disconnect) end,
    true=net_kernel:connect_node(N),{ok,A}=Call(Endpoint,{discover,a}),{ok,B}=Call(Endpoint,{discover,b}),
    Cancelled=erlang:monitor(process,A),true=erlang:demonitor(Cancelled,[flush]),
-   Named=erlang:monitor(process,Endpoint),MA=erlang:monitor(process,A),MB=erlang:monitor(process,B),
-   ok=Call(A,stop),receive {'DOWN',MA,process,A,normal}->ok after 5000->error(no_a_down) end,
+   Named=erlang:monitor(process,Endpoint),MB=erlang:monitor(process,B),
+   Monitors=[erlang:monitor(process,A) || _ <- lists:seq(1,62)],
+   {ok,A}=Call(Endpoint,{discover,a}),
+   ok=Call(A,stop),lists:foreach(fun(M)->
+     receive {'DOWN',M,process,A,normal}->ok after 5000->error(no_a_down) end end,Monitors),
    {error,noproc}=Call(Endpoint,{discover,a}),{ok,B}=Call(Endpoint,{discover,b}),
    D2=crypto:hash(sha256,<<1,2,3>>),{ok,D2}=Call(B,{hash,<<1,2,3>>}),
    receive {'DOWN',Cancelled,_,_,_}->error(cancelled_down);{'DOWN',MB,_,_,_}->error(sibling_down);{'DOWN',Named,_,_,_}->error(name_down) after 0->ok end,
@@ -58,6 +65,6 @@ timeout 45 "$erl_bin" +S 2:2 -noshell -name "wcs_${label}_$$@127.0.0.1" -setcook
    ok=Call(B,stop),receive {'DOWN',MB,process,B,normal}->ok after 5000->error(no_b_down) end,
    {error,noproc}=Call(Endpoint,{discover,b}),true=erlang:demonitor(Named,[flush]),
    true=lists:member(N,nodes()),
-   io:format(\"PASS two-worker discovery hash reconnect independent-stop pid-name-monitor stale-route~n\"),halt()."
+   io:format(\"PASS two-worker discovery hash batch40 reconnect independent-stop monitors64 stale-route~n\"),halt()."
 kill -0 "$pid"
 echo "PASS $label two-worker profile"
