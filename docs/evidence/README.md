@@ -35,7 +35,7 @@ scheduler or production release.
 - [M2b wire-design baseline](phase-a/2026-10-27-m2b-wire-design.md) and [finalized contract decision](phase-a/2026-10-28-m2b-contract.md) — design and existing-profile checks only, not M2b wire acceptance.
 - [Internal reservation primitive](phase-a/2026-10-27-m2b-ledger-reservation.md), [shared-route lease](phase-a/2026-10-27-m2b-shared-reservation.md), [reply credits](phase-a/2026-10-27-m2b-output-credit.md), [monitor table](phase-a/2026-10-27-m2b-monitor-table.md), [pre-read gate](phase-a/2026-10-27-m2b-read-gate.md) [bounded encoder](phase-a/2026-10-27-m2b-bounded-encoding.md) [request decoder](phase-a/2026-10-27-m2b-route-decoder.md) and [session dispatcher](phase-a/2026-10-27-m2b-session-dispatch.md) — local tests only; no network service is enabled.
 - [Internal connection lifetime](phase-a/2026-10-28-m2b-connection.md), [fault checks](phase-a/2026-10-28-m2b-connection-faults.md) and [service owner](phase-a/2026-10-28-m2b-service-owner.md) — loopback connections and zbeam handshakes.
-- [Two-worker CLI OTP smoke](phase-b/2026-10-28-m2b-cli.md), [independent OTP vectors](phase-b/2026-10-28-m2b-vectors.md), [process-loss recovery](phase-c/2026-10-28-m2b-process-recovery.md) and [bounded controls](phase-c/2026-10-28-m2b-control-ordering.md) — full M2b acceptance remains open.
+- [Two-worker CLI OTP smoke](phase-b/2026-10-28-m2b-cli.md), [independent OTP vectors](phase-b/2026-10-28-m2b-vectors.md), [process-loss recovery](phase-c/2026-10-28-m2b-process-recovery.md), [bounded controls](phase-c/2026-10-28-m2b-control-ordering.md) and [error policy](phase-a/2026-10-28-m2b-error-policy.md) — full M2b acceptance remains open.
 
 ## Compiler migration
 

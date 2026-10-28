@@ -63,13 +63,37 @@ pub fn serve(io: std.Io, allocator: std.mem.Allocator, server: *std.Io.net.Serve
             // Recover only at the connection boundary; resource exhaustion and
             // cancellation remain visible to the caller/supervisor.
             if (err == error.EndOfStream) continue;
-            if (err == error.Canceled or err == error.OutOfMemory or err == error.ConcurrencyUnavailable or
-                err == error.EpochExhausted or err == error.UnknownCompletion or err == error.MissingCompletion or
-                err == error.NoProgress or config.max_connections == 1) return err;
+            if (fatalConnectionError(err, config)) return err;
             if (err != error.ConnectionResetByPeer)
                 std.log.warn("peer disconnected: {s}", .{@errorName(err)});
         };
     }
+}
+
+fn fatalConnectionError(err: anyerror, config: Config) bool {
+    if (err == error.Canceled or err == error.OutOfMemory or config.max_connections == 1) return true;
+    return config.service == .workers and (err == error.ConcurrencyUnavailable or err == error.EpochExhausted or
+        err == error.RequestIdExhausted or err == error.UnknownCompletion or err == error.MissingCompletion or
+        err == error.NoProgress or err == error.ReservationOutstanding);
+}
+
+test "two-worker internal failures stop service without changing M1 error policy" {
+    const base = Config{ .node_name = "node@host", .cookie = "cookie", .creation = 1, .max_connections = 0 };
+    var m1 = base;
+    m1.service = .worker;
+    var m2 = base;
+    m2.service = .workers;
+    for ([_]anyerror{ error.ConcurrencyUnavailable, error.EpochExhausted, error.RequestIdExhausted, error.UnknownCompletion, error.MissingCompletion, error.NoProgress, error.ReservationOutstanding }) |err| {
+        try std.testing.expect(!fatalConnectionError(err, m1));
+        try std.testing.expect(fatalConnectionError(err, m2));
+    }
+    for ([_]anyerror{ error.Canceled, error.OutOfMemory }) |err| {
+        try std.testing.expect(fatalConnectionError(err, m1) and fatalConnectionError(err, m2));
+    }
+    try std.testing.expect(!fatalConnectionError(error.InvalidControl, m1));
+    try std.testing.expect(!fatalConnectionError(error.InvalidControl, m2));
+    m1.max_connections = 1;
+    try std.testing.expect(fatalConnectionError(error.InvalidControl, m1));
 }
 
 /// Initiating-role smoke request to an OTP actor implementing {From, Value}.
