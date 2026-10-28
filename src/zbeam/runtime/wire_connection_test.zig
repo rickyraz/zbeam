@@ -124,3 +124,165 @@ test "disconnect drains accepted old-epoch work before a new peer" {
     second_open = false;
     try expectDisconnect(fresh.await(io));
 }
+
+const FaultIo = struct {
+    var calls: std.atomic.Value(usize) = .init(0);
+    var reject: usize = 0;
+    var block_write: bool = false;
+    var fail_write: bool = false;
+    var collector_started: std.Io.Event = .unset;
+    var group_joined: std.Io.Event = .unset;
+    var write_entered: std.Io.Event = .unset;
+
+    fn reset() void {
+        calls.store(0, .monotonic);
+        reject = 0;
+        block_write = false;
+        fail_write = false;
+        collector_started = .unset;
+        group_joined = .unset;
+        write_entered = .unset;
+    }
+
+    fn concurrent(userdata: ?*anyopaque, group: *std.Io.Group, context: []const u8, alignment: std.mem.Alignment, start: *const fn (*const anyopaque) void) std.Io.ConcurrentError!void {
+        const n = calls.fetchAdd(1, .monotonic) + 1;
+        if (n == reject) return error.ConcurrencyUnavailable;
+        try io.vtable.groupConcurrent(userdata, group, context, alignment, start);
+        if (n == 3) collector_started.set(io);
+    }
+
+    fn cancel(userdata: ?*anyopaque, group: *std.Io.Group, token: *anyopaque) void {
+        io.vtable.groupCancel(userdata, group, token);
+        group_joined.set(io);
+    }
+
+    fn operate(userdata: ?*anyopaque, operation: std.Io.Operation) std.Io.Cancelable!std.Io.Operation.Result {
+        if (operation == .net_write) {
+            write_entered.set(io);
+            if (block_write) try io.sleep(.fromSeconds(60), .awake);
+            if (fail_write) return .{ .net_write = error.ConnectionResetByPeer };
+        }
+        return io.vtable.operate(userdata, operation);
+    }
+
+    fn vtable() std.Io.VTable {
+        var result = io.vtable.*;
+        result.groupConcurrent = concurrent;
+        result.groupCancel = cancel;
+        result.operate = operate;
+        return result;
+    }
+};
+
+fn expectDrained(tasks: *Runtime) !void {
+    tasks.mutex.lockUncancelable(io);
+    defer tasks.mutex.unlock(io);
+    try testing.expect(!tasks.wire_reservation_active);
+    for (tasks.slots) |slot| for (slot.ledger.records) |record| {
+        try testing.expect(record.stage == .free);
+    };
+}
+
+test "connection rejects reader and collector launches without stranded work" {
+    for (1..4) |reject| {
+        FaultIo.reset();
+        FaultIo.reject = reject;
+        var vtable = FaultIo.vtable();
+        const context = std.Io{ .userdata = io.userdata, .vtable = &vtable };
+        const tasks = try Runtime.create(testing.allocator, io, .{ "a", "b" });
+        defer tasks.deinit() catch unreachable;
+        defer _ = tasks.shutdown();
+        const streams = try pair();
+        defer streams[0].close(io);
+        defer streams[1].close(io);
+        var writer = streams[0].writer(io, &.{});
+        try send(&writer.interface, pids[0], 1, "abc");
+        try testing.expectError(error.ConcurrencyUnavailable, connection.serve(context, testing.allocator, streams[1], &peer, tasks, pids, 1, .{ .frame_timeout = null, .write_timeout = null }));
+        try testing.expectEqual(reject, FaultIo.calls.load(.monotonic));
+        try expectDrained(tasks);
+    }
+}
+
+test "partial frame deadlines and decoder failure release all reservations" {
+    const cases = [_][]const u8{ &.{}, &.{ 0, 0 }, &.{ 0, 0, 0, 2, 112 }, &.{ 0, 0, 0, 1, 0 } };
+    for (cases, 0..) |bytes, index| {
+        const tasks = try Runtime.create(testing.allocator, io, .{ "a", "b" });
+        defer tasks.deinit() catch unreachable;
+        defer _ = tasks.shutdown();
+        const streams = try pair();
+        defer streams[0].close(io);
+        defer streams[1].close(io);
+        var writer = streams[0].writer(io, &.{});
+        try writer.interface.writeAll(bytes);
+        const result = connection.serve(io, testing.allocator, streams[1], &peer, tasks, pids, 1, .{ .frame_timeout = .fromMilliseconds(10) });
+        if (index < 3) {
+            try testing.expectError(error.Timeout, result);
+        } else if (result) |_| return error.TestUnexpectedResult else |err| {
+            try testing.expect(err != error.Timeout);
+        }
+        try expectDrained(tasks);
+    }
+}
+
+test "failed and blocked writers drop collected results and join their reader" {
+    for ([_]bool{ false, true }) |blocked| {
+        FaultIo.reset();
+        FaultIo.block_write = blocked;
+        FaultIo.fail_write = !blocked;
+        var vtable = FaultIo.vtable();
+        const context = std.Io{ .userdata = io.userdata, .vtable = &vtable };
+        const tasks = try Runtime.create(testing.allocator, io, .{ "a", "b" });
+        defer tasks.deinit() catch unreachable;
+        defer _ = tasks.shutdown();
+        const streams = try pair();
+        defer streams[0].close(io);
+        defer streams[1].close(io);
+        var writer = streams[0].writer(io, &.{});
+        try send(&writer.interface, pids[0], 1, "abc");
+        const result = connection.serve(context, testing.allocator, streams[1], &peer, tasks, pids, 1, .{ .frame_timeout = null, .write_timeout = .fromMilliseconds(20) });
+        try testing.expectError(if (blocked) error.Timeout else error.WriteFailed, result);
+        try testing.expect(FaultIo.write_entered.isSet());
+        try expectDrained(tasks);
+    }
+}
+
+test "cancellation joins read and collector before waiting for accepted work" {
+    FaultIo.reset();
+    var vtable = FaultIo.vtable();
+    const context = std.Io{ .userdata = io.userdata, .vtable = &vtable };
+    var control = @import("task_runtime_test.zig").Control{};
+    const tasks = try Runtime.create(testing.allocator, io, .{ "a", "b" });
+    defer tasks.deinit() catch unreachable;
+    defer _ = tasks.shutdown();
+    tasks.control = &control;
+    const streams = try pair();
+    defer streams[0].close(io);
+    defer streams[1].close(io);
+    var server = try io.concurrent(connection.serve, .{ context, testing.allocator, streams[1], &peer, tasks, pids, 1, connection.Config{ .frame_timeout = null, .write_timeout = null } });
+    defer {
+        control.release.set(io);
+        _ = server.cancel(io) catch {};
+    }
+    var writer = streams[0].writer(io, &.{});
+    try send(&writer.interface, pids[0], 1, "held");
+    const timeout: std.Io.Timeout = .{ .duration = .{ .raw = .fromSeconds(5), .clock = .awake } };
+    try control.entered.waitTimeout(io, timeout);
+    try FaultIo.collector_started.waitTimeout(io, timeout);
+    const Cancel = struct {
+        fn run(future: *@TypeOf(server), done: *std.Io.Event) anyerror!void {
+            defer done.set(io);
+            return future.cancel(io);
+        }
+    };
+    var done: std.Io.Event = .unset;
+    var cancel = try io.concurrent(Cancel.run, .{ &server, &done });
+    defer {
+        control.release.set(io);
+        _ = cancel.await(io) catch {};
+    }
+    try FaultIo.group_joined.waitTimeout(io, timeout);
+    try testing.expect(!done.isSet());
+    control.release.set(io);
+    try testing.expectError(error.Canceled, cancel.await(io));
+    try expectDrained(tasks);
+}
