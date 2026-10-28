@@ -15,8 +15,8 @@ a production deployment or a general native actor API.
   with `busy` before its payload reaches the owner mailbox. Validate the 1 MiB
   input limit first. This bounds admitted API requests, not arbitrary BEAM
   messages, retained caller binaries, or total VM/process RSS.
-- A fixed caller-supplied peer node atom and bounded registration cleanup avoid
-  generating new BEAM atoms on each restart. Initial name collisions reject
+- A fixed caller-supplied peer node atom and bounded connection/registration
+  cleanup avoid generating new BEAM atoms on each restart. Initial name collisions reject
   startup without deliberately connecting to or killing the existing service.
   The owner requires exclusive use of that name and connection; malicious local
   races are outside the cookie's node-wide trust boundary.

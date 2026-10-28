@@ -54,7 +54,7 @@ defmodule TwoWorkerLaunchTest do
       assert live?(guard) and live?(native)
       assert Node.connect(@peer)
       assert is_pid(discover(:a))
-      assert {:error, :not_ready} = TwoWorkerLaunch.start(@peer, @bin, 200)
+      assert {:error, :name_taken} = TwoWorkerLaunch.start(@peer, @bin, 200)
       assert live?(native)
     after
       Node.disconnect(@peer)
@@ -62,6 +62,51 @@ defmodule TwoWorkerLaunchTest do
     end
 
     await(fn -> not live?(guard) and not live?(native) end)
+  end
+
+  test "restart waits for an existing connection and registration to disappear" do
+    assert {:ok, first} = TwoWorkerLaunch.start(@peer, @bin, 3_000)
+    {guard, native} = child_pids(first)
+    assert Node.connect(@peer)
+    parent = self()
+
+    starter =
+      Task.async(fn ->
+        send(parent, :starting)
+
+        case TwoWorkerLaunch.start(@peer, @bin, 3_000) do
+          {:ok, port} ->
+            true = Port.connect(port, parent)
+            {:ok, port}
+
+          error ->
+            error
+        end
+      end)
+
+    try do
+      assert_receive :starting, 1_000
+      assert Task.yield(starter, 100) == nil
+      assert live?(native)
+      Node.disconnect(@peer)
+      TwoWorkerLaunch.close(first)
+      await(fn -> not live?(guard) and not live?(native) end)
+      assert {:ok, next} = Task.await(starter, 4_000)
+      {next_guard, next_native} = child_pids(next)
+
+      try do
+        assert Node.connect(@peer)
+        assert is_pid(discover(:a))
+      after
+        Node.disconnect(@peer)
+        TwoWorkerLaunch.close(next)
+      end
+
+      await(fn -> not live?(next_guard) and not live?(next_native) end)
+    after
+      if Port.info(first) != nil, do: TwoWorkerLaunch.close(first)
+      Task.shutdown(starter, :brutal_kill)
+    end
   end
 
   test "failed registration and invalid configuration do not publish a child" do
