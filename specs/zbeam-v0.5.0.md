@@ -414,8 +414,12 @@ implements [ADR 0005](../docs/adr/0005-two-worker-wire-profile.md): two fixed
 wire PIDs, atomic pre-read reservations, bounded monitor/output storage and
 joined old-epoch drainage. [Acceptance](../docs/evidence/phase-c/2026-10-28-m2b-acceptance.md)
 records the supported OTP subset and external no-replay recovery, not the full
-runtime below. M1 and the caller-owned `Runtime(T)` retain their contracts.
-`example-task-runtime` exercises the local API, not wire actor routes.
+runtime below. The [M2c Linux Elixir owner](../docs/two-worker-wire.md#supervised-elixir-owner)
+adds bounded external supervision and no-replay failure fencing for that fixed
+profile; it does not add native scheduling, arbitrary handlers or production
+certification. [Evidence](../docs/evidence/phase-c/2026-10-28-m2c-acceptance.md)
+records the verified scope. M1 and the caller-owned `Runtime(T)` retain their
+contracts. `example-task-runtime` exercises the local API, not wire actor routes.
 
 **M2a prerequisite:** `Mailbox(T).tryDeliver` adds one-element nonblocking
 capacity admission with caller ownership retained on error. It does not change

@@ -63,10 +63,13 @@ Supervisor.stop(supervisor)
 The owner starts its own child; do not start another service using that name.
 Only one call per actor is admitted before the owner mailbox; excess calls return
 `{:error, :busy}`. Input is limited to 1 MiB. A timeout, caller death or loss of
-connection/process can fail **both** pending calls and restart the child. Work
-with uncertain outcome is never replayed. The owner requires exclusive control
-of its peer connection and assumes trusted local processes. This development
-example is not production certification; M2c acceptance is still in progress.
+connection/process can fail **both** pending calls and restart the child. A
+non-suspending distribution send that cannot proceed also fails the owner
+closed. Work with uncertain outcome is never replayed. The owner requires exclusive control
+of its peer connection and assumes trusted local processes. Its public API is
+limited to hash requests; controlled stop is available on the separate wire
+profile, not through an owner stop function. The [M2c acceptance record](evidence/phase-c/2026-10-28-m2c-acceptance.md)
+covers this restricted development example, not production certification.
 
 ## Contract and limits
 

@@ -1,7 +1,9 @@
 # M2c plan: a bounded owner for the two-worker profile
 
-**Status: authorized work plan, not implementation evidence.** The accepted
-[M2b profile](two-worker-wire.md) owns two fixed SHA-256 tasks in one native
+**Status: implemented and verified as a restricted Linux development example.**
+[Acceptance evidence](evidence/phase-c/2026-10-28-m2c-acceptance.md) records the
+actual implementation-master checks. The accepted [M2b profile](two-worker-wire.md)
+owns two fixed SHA-256 tasks in one native
 process. M2c makes that existing profile usable from Elixir without changing
 its wire protocol or the M1 owner. It remains a Linux development example, not
 a production deployment or a general native actor API.
