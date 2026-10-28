@@ -32,7 +32,7 @@ scheduler or production release.
 - [Nonblocking mailbox](phase-a/2026-10-27-m2a-nonblocking-mailbox.md) and [owned admission](phase-a/2026-10-27-m2a-owned-admission.md).
 - [Basic task owner](phase-c/2026-10-27-m2a-task-owner.md), [deterministic lifetimes](phase-c/2026-10-27-m2a-lifecycle.md), [shutdown watchdog](phase-c/2026-10-27-m2a-shutdown-watchdog.md) and [public API regression candidate](phase-c/2026-10-27-m2a-public-api.md).
 - [Initial design inspection](phase-a/2026-10-27-m2-design.md) — historical proposed-design/unchanged-code checkpoint, not implementation evidence.
-- [Proposed M2b wire-design baseline](phase-a/2026-10-27-m2b-wire-design.md) — source inspection and existing-profile checks only, not M2b wire evidence.
+- [M2b wire-design baseline](phase-a/2026-10-27-m2b-wire-design.md) and [finalized contract decision](phase-a/2026-10-28-m2b-contract.md) — design and existing-profile checks only, not M2b wire acceptance.
 - [Internal reservation primitive](phase-a/2026-10-27-m2b-ledger-reservation.md), [shared-route lease](phase-a/2026-10-27-m2b-shared-reservation.md), [reply credits](phase-a/2026-10-27-m2b-output-credit.md), [monitor table](phase-a/2026-10-27-m2b-monitor-table.md), [pre-read gate](phase-a/2026-10-27-m2b-read-gate.md) [bounded encoder](phase-a/2026-10-27-m2b-bounded-encoding.md) [request decoder](phase-a/2026-10-27-m2b-route-decoder.md) and [session dispatcher](phase-a/2026-10-27-m2b-session-dispatch.md) — local tests only; no network service is enabled.
 - [Internal connection lifetime](phase-a/2026-10-28-m2b-connection.md) and [fault checks](phase-a/2026-10-28-m2b-connection-faults.md) — loopback streams, joined connection tasks, old-epoch drainage and timeout reporting; not OTP acceptance.
 

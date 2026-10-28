@@ -409,7 +409,7 @@ wire expansion. The additive [TaskRuntime](../docs/task-runtime.md) implements b
 ownership and stop/join. Deterministic lifecycle/conservation tests pass;
 the noncooperative subprocess gate verifies external kill/reap after stalled
 join, not preemption. [Actual-master acceptance](../docs/evidence/phase-c/2026-10-27-m2a-acceptance.md)
-closes local M2a only; [proposed M2b ADR 0005](../docs/adr/0005-two-worker-wire-profile.md)
+closes local M2a only; [accepted M2b design ADR 0005](../docs/adr/0005-two-worker-wire-profile.md)
 does not enable a public wire service. The internal connection candidate joins
 readers/collectors and drains old-epoch results before peer release; its
 [loopback evidence](../docs/evidence/phase-a/2026-10-28-m2b-connection.md) is not OTP acceptance.
