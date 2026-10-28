@@ -1,7 +1,7 @@
 //! Test-only startup faults; no production wire command can select them.
 const std = @import("std");
 const z = @import("zbeam");
-const Fault = enum { none, panic, oom, spin, pause };
+const Fault = enum { none, panic, oom, spin, pause, workers };
 
 fn serve(io: std.Io, allocator: std.mem.Allocator, server: *std.Io.net.Server, config: z.runtime.node.Config, fault: Fault) !void {
     var worker = z.runtime.worker.Worker{ .pid = .{ .node = config.node_name, .creation = config.creation, .id = 1, .serial = 0 } };
@@ -43,6 +43,7 @@ fn serve(io: std.Io, allocator: std.mem.Allocator, server: *std.Io.net.Server, c
                     },
                     .spin => while (true) std.atomic.spinLoopHint(),
                     .pause => try io.sleep(.fromSeconds(2), .awake),
+                    .workers => unreachable,
                 }
             }
             try worker.handle(allocator, bytes, &peer, &writer.interface);
@@ -69,12 +70,15 @@ pub fn main(init: std.process.Init) !void {
     const epmd = z.transport.epmd_client.Client{ .io = init.io, .address = .{ .ip4 = .loopback(epmd_port) } };
     var registration = try epmd.register(init.gpa, .{ .port = server.socket.address.getPort(), .node_name = name });
     defer registration.close(init.io);
-    const config = z.runtime.node.Config{ .node_name = full, .cookie = cookie, .creation = registration.creation, .flags = z.protocol.flags.m1 | z.runtime.worker.monitor_flags };
+    const config = z.runtime.node.Config{ .node_name = full, .cookie = cookie, .creation = registration.creation, .flags = z.protocol.flags.m1 | z.runtime.worker.monitor_flags, .service = if (fault == .workers) .workers else .echo, .max_connections = if (fault == .workers) 0 else 1 };
     const Result = union(enum) { service: anyerror!void, registration: anyerror!void };
     var storage: [2]Result = undefined;
     var tasks = std.Io.Select(Result).init(init.io, &storage);
     defer tasks.cancelDiscard();
-    try tasks.concurrent(.service, serve, .{ init.io, init.gpa, &server, config, fault });
+    if (fault == .workers)
+        try tasks.concurrent(.service, z.runtime.node.serve, .{ init.io, init.gpa, &server, config })
+    else
+        try tasks.concurrent(.service, serve, .{ init.io, init.gpa, &server, config, fault });
     try tasks.concurrent(.registration, z.transport.epmd_client.Registration.waitLost, .{ &registration, init.io });
     switch (try tasks.await()) {
         .service => |result| try result,
