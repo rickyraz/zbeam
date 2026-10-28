@@ -31,6 +31,24 @@ defmodule M2cTestSupport do
     end
   end
 
+  def await_dead(pids, timeout \\ 5_000, probe \\ &live?/1) do
+    deadline = System.monotonic_time(:millisecond) + timeout
+
+    loop = fn loop, remaining ->
+      case Enum.filter(remaining, probe) do
+        [] ->
+          :ok
+
+        alive ->
+          assert System.monotonic_time(:millisecond) < deadline, "owned process still live"
+          Process.sleep(10)
+          loop.(loop, alive)
+      end
+    end
+
+    loop.(loop, pids)
+  end
+
   def child_pids(port) do
     {:os_pid, guard} = Port.info(port, :os_pid)
     path = "/proc/#{guard}/task/#{guard}/children"

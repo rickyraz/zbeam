@@ -29,10 +29,13 @@ defmodule TwoWorkerOwnerTest do
     Process.unlink(sup)
     owner = Process.whereis(@name)
     {state, guard, native} = owned(owner)
+    old_checked = :atomics.new(1, [])
+    Process.put(:old_checked, old_checked)
+    Process.put(:old_guard, guard)
 
     on_exit(fn ->
       if Process.alive?(sup), do: Supervisor.stop(sup)
-      await(fn -> not live?(guard) and not live?(native) end)
+      if :atomics.get(old_checked, 1) == 0, do: await_dead([guard, native])
     end)
 
     {sup, owner, state, native}
@@ -48,13 +51,14 @@ defmodule TwoWorkerOwnerTest do
     {state, guard, child} = owned(replacement)
     assert elem(state.actors.a, 0) != elem(old.actors.a, 0)
     assert elem(state.actors.b, 0) != elem(old.actors.b, 0)
-    await(fn -> not live?(native) end)
+    await_dead([Process.get(:old_guard), native])
+    :atomics.put(Process.get(:old_checked), 1, 1)
     {replacement, state, guard, child}
   end
 
   defp stop_and_check(sup, guard, native) do
     Supervisor.stop(sup)
-    await(fn -> not live?(guard) and not live?(native) end)
+    await_dead([guard, native])
   end
 
   test "exact hashes, per-actor admission and input bounds" do
@@ -82,6 +86,32 @@ defmodule TwoWorkerOwnerTest do
       assert Task.await(b, 2_000) == {:ok, :crypto.hash(:sha256, "second")}
     after
       if not Process.get(:native_resumed, false) and live?(native), do: kill(native, "CONT")
+    end
+  end
+
+  test "simultaneous callers admit only one payload per actor" do
+    {_, owner, _, native} = start()
+    payload = :binary.copy(<<23>>, 256)
+    kill(native, "STOP")
+
+    try do
+      tasks =
+        for actor <- [:a, :b], _ <- 1..40 do
+          Task.async(fn -> TwoWorkerOwner.hash(@name, actor, payload) end)
+        end
+
+      await(fn -> map_size(:sys.get_state(owner).pending) == 2 end)
+      results = Task.yield_many(tasks, 2_000)
+      assert Enum.count(results, fn {_, result} -> result == {:ok, {:error, :busy}} end) == 78
+      waiting = for {task, nil} <- results, do: task
+      assert length(waiting) == 2
+      assert :ets.info(@name, :size) == 2
+      kill(native, "CONT")
+      Process.put(:load_resumed, true)
+      expected = {:ok, :crypto.hash(:sha256, payload)}
+      assert Enum.all?(waiting, &(Task.await(&1, 2_000) == expected))
+    after
+      if not Process.get(:load_resumed, false) and live?(native), do: kill(native, "CONT")
     end
   end
 
@@ -195,6 +225,6 @@ defmodule TwoWorkerOwnerTest do
     assert TwoWorkerOwner.hash(@name, :b, "fresh") == {:ok, :crypto.hash(:sha256, "fresh")}
     assert Process.alive?(sup)
     Supervisor.stop(sup)
-    await(fn -> not live?(new_guard) and not live?(new_native) end)
+    await_dead([new_guard, new_native])
   end
 end
