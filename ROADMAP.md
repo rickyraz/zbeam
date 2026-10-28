@@ -9,7 +9,8 @@ external no-replay recovery; [acceptance evidence](docs/evidence/phase-b/2026-10
 [Local task-owning M2a is also accepted](docs/evidence/phase-c/2026-10-27-m2a-acceptance.md):
 two fixed actors, bounded copied work/results and explicit stop/join. The separate
 [M2b wire profile](docs/evidence/phase-c/2026-10-28-m2b-acceptance.md) is accepted
-for two fixed workers and one peer, with external no-replay recovery. Broader
+for two fixed workers and one peer. [M2c](docs/evidence/phase-c/2026-10-28-m2c-acceptance.md)
+adds a bounded Linux Elixir owner with external no-replay supervision. Broader
 scheduling and production certification remain open. Zig 0.17.0 and pre-alpha
 package status remain unchanged.
 

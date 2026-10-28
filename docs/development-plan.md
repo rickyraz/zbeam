@@ -1,9 +1,9 @@
 # Development Plan: MVP to a Supported Native Worker Peer
 
-- **Status:** bounded M1 and local task-owning M2a accepted into master; M2b wire routing and broader D0–D5 gates remain incomplete.
-- **Reviewed:** 2026-10-27.
+- **Status:** bounded M1, local M2a, restricted M2b wire profile and M2c Linux owner example are accepted; broader D0–D5 gates remain incomplete.
+- **Reviewed:** 2026-10-28.
 - **Historical planning baseline:** local `master` at `11c3319`; restricted MVP introduced by `090bb60`. The compiler candidate includes live remote master's accepted labs at `497d346`.
-- **Next milestone:** separately decide M2b wire schema, shared-route reservations and connection/output lifetimes; local M2a ownership/stop/join is accepted.
+- **Next milestone:** validate broader worker functions, ownership and deployment in separately scoped work; M2c remains a fixed-workload development owner.
 - **Allocator track:** [snmalloc evaluation](snmalloc-evaluation.md).
 - **Compiler track:** [Zig 0.17 migration](zig-0.17-migration.md) verified all 14 profiles; compiler PR #2 merged. [Consolidation executed](evidence/phase-a/2026-10-26-branch-consolidation.md): eleven local/remote branches retain the M1 checkout and all nine research topics. [M1 acceptance](evidence/phase-b/2026-10-26-m1-integration.md) is a later, separate decision.
 
@@ -71,8 +71,9 @@ passed locally in debug/safe, native OTP 25/26/27 and all complementary owner
 cases. Explicit size-exception approval preceded normal PR #3 merge `2241e7f`;
 PR #4 repaired the actual-merge Port cleanup race. Repaired master `88db721`
 passed 9/9 CI jobs, with 14 recovery cases per mode. [Review and acceptance](m1-review.md)
-are complete for this bounded profile. [Local M2a acceptance](evidence/phase-c/2026-10-27-m2a-acceptance.md)
-is a subsequent step; M2b remains gated.
+are complete for this bounded profile. [Local M2a](evidence/phase-c/2026-10-27-m2a-acceptance.md)
+and the restricted [M2b profile](evidence/phase-c/2026-10-28-m2b-acceptance.md)
+were subsequently accepted.
 
 ## Research inputs, not completed prerequisites
 

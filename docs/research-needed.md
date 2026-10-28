@@ -95,7 +95,7 @@ Bounded queue operations, logical token ownership, concurrent-receive exclusion,
 
 ### Observable BEAM-side backpressure
 
-A real TCP sender is stopped during a paused handler and completes after progress resumes. This establishes transport backpressure, not how a BEAM distribution sender, port queue or process scheduler behaves under saturation.
+A real TCP sender is stopped during a paused handler and completes after progress resumes. This establishes transport backpressure, not how a BEAM distribution sender, port queue or process scheduler behaves under saturation. The M2c owner uses non-suspending sends and fails the process closed if a send cannot proceed; under pressure this can also fail the sibling's in-flight work. Admission and the 1 MiB input limit do not guarantee successful delivery.
 
 **Required evidence:** a fast OTP sender, a slow actor, distribution queue/memory measurements, bounded pause windows and externally observed sender throttling. Report normal pauses separately from actor failures.
 
@@ -111,9 +111,9 @@ identity allocator or general in-process actor replacement is implemented.
 verifies Port/owner/VM cleanup and bounded work admission, not arbitrary forking
 process trees, TLS or secret delivery. Its finite run uses fresh node names;
 indefinite deployments require bounded atom/name allocation or a stable-name
-cleanup barrier. Owner checks currently use Elixir 1.20.4/OTP 29 separately from
-wire checks on OTP 25/26/27. Production Elixir/OTP pairings remain to be verified.
-OS OOM and memory corruption are not covered by deterministic allocator-failure
+cleanup barrier. The M2c example reuses one supplied peer atom and tests Elixir
+1.17.3 with OTP 25/26/27 in safe mode and Elixir 1.20.4/OTP 29 in both modes;
+this is not production certification. OS OOM and memory corruption are not covered by deterministic allocator-failure
 and panic fixtures; noncooperative CPU work still requires external termination.
 
 Current behavior discards all per-connection packets/demand and generates a fresh challenge on sequential reconnect. The running node retains its EPMD creation; restarted nodes register anew. There is no outbound backoff or replay.
@@ -133,8 +133,10 @@ profile. Atomic pre-read reservations, output credits, 64 monitor slots, joined
 epoch drainage and bounded 16 KiB encoding scratch have focused tests. Pinned OTP
 25/26/27 and independent vectors cover the supported subset; actual registration
 loss is exercised in isolated containers. [Acceptance](evidence/phase-c/2026-10-28-m2b-acceptance.md)
-does not imply an RSS bound, fairness, a reusable M2b supervisor or production
-readiness. Heartbeats can be blocked by pressure and CPU spin needs an external kill.
+does not imply an RSS bound, fairness or production readiness. The separate
+M2c Elixir example supervises this restricted profile; it does not provide a
+native supervision tree. Heartbeats can be blocked by pressure and CPU spin
+needs an external kill.
 
 ### Actor failure blast radius
 

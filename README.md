@@ -25,7 +25,7 @@ The current benchmark includes negative results. It does not establish a perform
 | Distribution | Pass-through framing, tick echo, REG_SEND/SEND subset |
 | Service lifecycle | M1 single worker and separate M2b two-task profile; one peer at a time, bounded admission and cooperative stop/join |
 | Process monitors | Worker PID and discovery-name monitoring; fixed 64-slot connection table; OTP 25/26/27 evidence |
-| External recovery | M1 has a reusable one-slot Elixir owner; M2b has a bounded no-replay process-loss test, not a reusable supervisor |
+| External recovery | Separate M1 and M2c supervised Elixir owners; M2c admits one call per fixed worker and never replays uncertain work |
 | Backpressure | Demand-gated unbuffered reads; TCP saturation/resume evidence |
 | Local actor primitives | Bounded mailbox, logical receive ownership, caller-owned registry and termination |
 | Local M2a task owner | Two fixed SHA-256 tasks, bounded copied work/results, explicit stop/join; [API and example](docs/task-runtime.md) |
@@ -36,9 +36,11 @@ The current benchmark includes negative results. It does not establish a perform
 [Bounded M1 acceptance](docs/evidence/phase-b/2026-10-26-m1-integration.md) is complete
 on master; [local M2a](docs/evidence/phase-c/2026-10-27-m2a-acceptance.md)
 and the [bounded M2b wire profile](docs/evidence/phase-c/2026-10-28-m2b-acceptance.md)
-are also accepted. M2b process replacement is externally orchestrated; uncertain
-work is not replayed. The v0.5 specification describes a broader design, not
-shipped behavior.
+are also accepted. The [M2c Linux Elixir owner](docs/two-worker-wire.md#supervised-elixir-owner)
+provides bounded admission and externally supervised recovery without replay;
+[acceptance](docs/evidence/phase-c/2026-10-28-m2c-acceptance.md) is limited to
+the fixed-worker development profile. The v0.5 specification describes a
+broader design, not shipped behavior.
 
 ## Build and verify
 
@@ -49,6 +51,7 @@ zig build
 zig build test-all                            # deterministic, no external EPMD required
 zig build test-all -Doptimize=safe
 zig build test-task-lifecycle -Doptimize=safe  # Linux/Python 3 watchdog plus local example
+zig build test-worker-recovery -Doptimize=safe # Linux, Python 3, Elixir and EPMD
 zig build example-task-runtime               # two local tasks; no EPMD/network
 zig build test-interop-docker                 # all OTP 25/26/27 targets; pinned images
 ```
@@ -88,8 +91,9 @@ opt-in failure campaign. The native executable itself does not require Python.
 
 `serve-workers` provides two distinct PID-addressable SHA-256 tasks and the
 `zbeam_workers` discovery endpoint. See the [two-worker guide](docs/two-worker-wire.md)
-for commands, monitor semantics, bounded demand and reconnect limitations. It is
-separate from M1 and is not a general scheduler.
+for commands, monitor semantics, bounded demand and reconnect limitations. A
+[supervised Elixir example](examples/supervised_two_workers.exs) wraps this
+profile. It is separate from M1 and is not a general scheduler.
 
 Cookies in arguments are visible in process listings. Handshake, frame and write waits have bounded defaults, but CPU-bound handlers are not preempted. There is no TLS integration; do not expose this development service to untrusted peers.
 

@@ -4,12 +4,12 @@
 - **Compiler migration:** Zig 0.17.0 verified 2026-10-25; M1 runtime scope unchanged
 - **All-branch verification:** [14/14 profiles](evidence/phase-a/2026-10-26-zig-0.17-rollout.md) verified and archived; [consolidation executed](evidence/phase-a/2026-10-26-branch-consolidation.md), 28 to 11 local/remote names. Compiler PR #2 and M1 PR #3 are merged; nine protected research topics remain independent.
 - **Package version:** 0.0.1 pre-alpha (no release tag created)
-- **Implemented milestone:** restricted MVP, bounded monitorable-worker M1, local fixed-task M2a and the bounded two-worker M2b development profile
+- **Implemented milestone:** restricted MVP, bounded monitorable-worker M1, local fixed-task M2a, two-worker M2b wire profile and the Linux M2c Elixir owner example
 - **M1 accepted into master — 2026-10-26:** owner approved `size:exception`; PR #3 merged as `2241e7f`, followed by cleanup repair PR #4 as `88db721`. [Actual repaired-master CI 40354417903](https://github.com/rickyraz/zbeam/actions/runs/40354417903) passed 9/9 jobs, including all six native OTP/mode lanes and 14 complementary recovery cases per mode. [Acceptance record](evidence/phase-b/2026-10-26-m1-integration.md); earlier failures remain preserved. Local M2a and the separate M2b profile were subsequently accepted.
 - **Broader design target:** v0.5.0 draft, not a release description
 - **M2a accepted — 2026-10-27:** local task ownership at `221a48d`; [actual-master CI 40468839059](https://github.com/rickyraz/zbeam/actions/runs/40468839059) passed 9/9 jobs. [Acceptance evidence](evidence/phase-c/2026-10-27-m2a-acceptance.md) separates local implementation from unchanged M1 wire regressions.
 - **M2b accepted — 2026-10-28:** the separate [`serve-workers` profile](two-worker-wire.md) implements [ADR 0005](adr/0005-two-worker-wire-profile.md): two fixed task-owned PIDs, one peer, bounded shared-stream admission and joined epoch drainage. [Acceptance evidence](evidence/phase-c/2026-10-28-m2b-acceptance.md) distinguishes actual OTP, conformance and externally orchestrated recovery from production certification. Full M2 remains broader.
-- **M2c in progress:** [a bounded Elixir owner](two-worker-wire.md) composes supervised two-worker use; [fault and acceptance gates](m2c-owner-plan.md) remain open.
+- **M2c accepted — 2026-10-28 UTC:** [the Linux Elixir owner](two-worker-wire.md#supervised-elixir-owner) composes bounded two-worker admission and external no-replay supervision. [Actual implementation-master CI 40693887236](https://github.com/rickyraz/zbeam/actions/runs/40693887236) passed 12/12; [acceptance evidence](evidence/phase-c/2026-10-28-m2c-acceptance.md) records the limits and failure traces.
 
 This file is authoritative when code and historical specifications differ.
 
@@ -27,6 +27,7 @@ This file is authoritative when code and historical specifications differ.
 | Demand | One outstanding frame; atomic reservation before unbuffered read; credit restored after handler/reply; 90-second frame and five-second write budgets | Zero-read/allocation oracle, partial-frame recovery, blocked-writer and pause/resume tests |
 | Local actors | Bounded MPSC mailbox; blocking delivery plus nonblocking `tryDeliver` (`WouldBlock`, no pending putter); logical consumer token; concurrent receive rejection; caller-owned registry and termination | Unit and eight-producer stress tests |
 | Process-loss boundary | Test child SIGKILL produces OTP nodedown without terminating the VM or an unrelated local process | OTP 25/26/27 black-box assertions |
+| M2c external owner | Linux Elixir example, one admitted call per fixed actor; supervised child cleanup, no replay and process-wide failure fencing | Elixir 1.17.3/OTP 25–27 safe and 1.20.4/OTP 29 debug/safe |
 | Benchmark | Original 32-byte echo baseline retained; new 32 B/64 KiB SHA-256 versus Port comparison with exact digest checks | Reproducible scripts and raw Phase C records |
 
 The [handshake deadline record](evidence/phase-b/2026-09-28-handshake-deadline.md), [connection-liveness record](evidence/phase-c/2026-09-28-connection-liveness.md), and [SHA-256 worker record](evidence/phase-c/2026-09-28-sha256-worker.md) cover the extensions. Details and commands for the original MVP are in [mvp.md](mvp.md). Verification records are [Phase B](evidence/phase-b/2026-09-26-mvp.md) and [Phase C](evidence/phase-c/2026-09-26-mvp-runtime.md).
