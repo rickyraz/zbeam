@@ -1,3 +1,5 @@
+pub const m2b_vectors = @embedFile("m2b.tsv");
+
 pub const new_name = [_]u8{
     0x00, 0x12, 'N',
     0x11, 0x22, 0x33,
