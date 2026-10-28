@@ -19,5 +19,6 @@ test {
     _ = @import("wire_encode.zig");
     _ = @import("wire_route.zig");
     _ = @import("wire_session.zig");
+    _ = @import("wire_connection.zig");
     @import("std").testing.refAllDecls(@This());
 }
