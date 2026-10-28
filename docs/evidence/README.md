@@ -34,7 +34,8 @@ scheduler or production release.
 - [Initial design inspection](phase-a/2026-10-27-m2-design.md) — historical proposed-design/unchanged-code checkpoint, not implementation evidence.
 - [M2b wire-design baseline](phase-a/2026-10-27-m2b-wire-design.md) and [finalized contract decision](phase-a/2026-10-28-m2b-contract.md) — design and existing-profile checks only, not M2b wire acceptance.
 - [Internal reservation primitive](phase-a/2026-10-27-m2b-ledger-reservation.md), [shared-route lease](phase-a/2026-10-27-m2b-shared-reservation.md), [reply credits](phase-a/2026-10-27-m2b-output-credit.md), [monitor table](phase-a/2026-10-27-m2b-monitor-table.md), [pre-read gate](phase-a/2026-10-27-m2b-read-gate.md) [bounded encoder](phase-a/2026-10-27-m2b-bounded-encoding.md) [request decoder](phase-a/2026-10-27-m2b-route-decoder.md) and [session dispatcher](phase-a/2026-10-27-m2b-session-dispatch.md) — local tests only; no network service is enabled.
-- [Internal connection lifetime](phase-a/2026-10-28-m2b-connection.md), [fault checks](phase-a/2026-10-28-m2b-connection-faults.md) and [service owner](phase-a/2026-10-28-m2b-service-owner.md) — loopback connections and zbeam handshakes; not OTP acceptance.
+- [Internal connection lifetime](phase-a/2026-10-28-m2b-connection.md), [fault checks](phase-a/2026-10-28-m2b-connection-faults.md) and [service owner](phase-a/2026-10-28-m2b-service-owner.md) — loopback connections and zbeam handshakes.
+- [Two-worker CLI OTP smoke](phase-b/2026-10-28-m2b-cli.md) — OTP 25/26/27 in both modes; full M2b acceptance remains open.
 
 ## Compiler migration
 

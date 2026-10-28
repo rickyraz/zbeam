@@ -3,9 +3,9 @@
 [![CI](https://github.com/rickyraz/zbeam/actions/workflows/ci.yml/badge.svg)](https://github.com/rickyraz/zbeam/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> **A bounded, single-actor Erlang Distribution peer in Zig.**
+> **A bounded native Erlang Distribution peer in Zig.**
 
-zbeam implements a development MVP: a separate Zig process registers through EPMD, authenticates with OTP, exposes one registered echo or SHA-256 binary worker, and supports repeated messages and sequential reconnects. An explicit `serve-worker` profile adds PID-addressable SHA-256, process monitoring and normal worker stop without node exit. Both handshake directions and the monitor profile are verified against real OTP 25, 26 and 27.
+zbeam implements a development MVP: a separate Zig process registers through EPMD, authenticates with OTP and serves repeated requests across sequential reconnects. `serve-worker` exposes one monitorable SHA-256 worker; the separate `serve-workers` profile exposes two fixed task-owned workers. Both handshake directions, M1 monitoring and the basic two-worker profile are checked against real OTP 25, 26 and 27.
 
 **Not a production Erlang node.** Compatibility is limited to the [MVP wire subset](docs/mvp.md). Arbitrary ETF terms, RPC, process links, outbound process monitors, distributed registry semantics and the full v0.5 runtime are not implemented.
 
@@ -23,7 +23,7 @@ The current benchmark includes negative results. It does not establish a perform
 | ETF | Bounded owned subset, including aggregate allocation limits |
 | EPMD and handshake | Registration/lookup; both handshake roles verified on OTP 25–27 |
 | Distribution | Pass-through framing, tick echo, REG_SEND/SEND subset |
-| Service lifecycle | One synchronous worker; repeated messages; sequential peer recovery; bounded socket waits; optional PID discovery/hash/normal-stop profile |
+| Service lifecycle | M1 single worker and separate M2b two-task profile; one peer at a time, bounded admission and cooperative stop/join |
 | Process monitors | Worker PID and discovery-name monitoring; fixed 64-slot connection table; OTP 25/26/27 evidence |
 | External recovery example | One-slot Elixir owner, no uncertain replay, bounded restarts and guarded Linux child cleanup; separately tested on Elixir 1.20.4/OTP 29 |
 | Backpressure | Demand-gated unbuffered reads; TCP saturation/resume evidence |
@@ -35,8 +35,9 @@ The current benchmark includes negative results. It does not establish a perform
 [Implementation Status](docs/implementation-status.md) is the source of truth.
 [Bounded M1 acceptance](docs/evidence/phase-b/2026-10-26-m1-integration.md) is complete
 on master; [local M2a is also accepted](docs/evidence/phase-c/2026-10-27-m2a-acceptance.md).
-M2b multi-actor wire routing and production release gates remain open. The v0.5
-specification describes a broader design, not shipped behavior.
+The M2b two-worker profile has OTP matrix smoke coverage; its full recovery and
+acceptance gates remain open. The v0.5 specification describes a broader design,
+not shipped behavior.
 
 ## Build and verify
 
@@ -81,6 +82,13 @@ PID-addressable worker. It is not a multi-actor scheduler. The runnable
 rejects concurrent submissions and recovers without replaying uncertain work.
 It requires Linux, Python 3 and Elixir; `zig build test-worker-recovery` runs its
 opt-in failure campaign. The native executable itself does not require Python.
+
+### Run two fixed native workers
+
+`serve-workers` provides two distinct PID-addressable SHA-256 tasks and the
+`zbeam_workers` discovery endpoint. See the [two-worker guide](docs/two-worker-wire.md)
+for commands, monitor semantics, bounded demand and reconnect limitations. It is
+separate from M1 and is not a general scheduler.
 
 Cookies in arguments are visible in process listings. Handshake, frame and write waits have bounded defaults, but CPU-bound handlers are not preempted. There is no TLS integration; do not expose this development service to untrusted peers.
 
