@@ -37,6 +37,8 @@ scheduler or production release.
 - [Internal connection lifetime](phase-a/2026-10-28-m2b-connection.md), [fault checks](phase-a/2026-10-28-m2b-connection-faults.md) and [service owner](phase-a/2026-10-28-m2b-service-owner.md) — loopback connections and zbeam handshakes.
 - [Two-worker CLI OTP smoke](phase-b/2026-10-28-m2b-cli.md), [independent OTP vectors](phase-b/2026-10-28-m2b-vectors.md), [process-loss recovery](phase-c/2026-10-28-m2b-process-recovery.md), [bounded controls](phase-c/2026-10-28-m2b-control-ordering.md) and [error policy](phase-a/2026-10-28-m2b-error-policy.md) and [production EPMD loss](phase-c/2026-10-28-m2b-production-epmd.md), [epoch barrier](phase-c/2026-10-28-m2b-epoch-barrier.md) and [bounded M2b acceptance](phase-c/2026-10-28-m2b-acceptance.md).
 
+- [M2c bounded Elixir owner plan](phase-a/2026-10-29-m2c-owner-plan.md) — authorized scope and baseline, not implementation evidence.
+
 ## Compiler migration
 
 - [2026-10-26 all-branch verification and delivery ledger](phase-a/2026-10-26-zig-0.17-rollout.md) — historical 14/14 profile verification; branch handover and subsequent M1 acceptance are recorded separately.
