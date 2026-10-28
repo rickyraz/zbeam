@@ -16,6 +16,7 @@ for version in ${OTP_VERSIONS:-25 26 27}; do
         fi
         "$smoke" "$erl_bin" "$zbeam_bin" "otp$version"
         sh "$root/scripts/interop/otp_worker_smoke.sh" "$erl_bin" "$zbeam_bin" "otp$version"
+        sh "$root/scripts/interop/otp_workers_smoke.sh" "$erl_bin" "$zbeam_bin" "otp$version"
         ran_target=$((ran_target + 1))
     else
         echo "SKIP OTP $version: set OTP_ERL_$version to its erl executable"
@@ -29,6 +30,7 @@ if [ "$ran_target" -eq 0 ]; then
     if ! command -v erl >/dev/null 2>&1; then echo "FAIL no Erlang executable" >&2; exit 1; fi
     "$smoke" "$(command -v erl)" "$zbeam_bin" development
     sh "$root/scripts/interop/otp_worker_smoke.sh" "$(command -v erl)" "$zbeam_bin" development
+    sh "$root/scripts/interop/otp_workers_smoke.sh" "$(command -v erl)" "$zbeam_bin" development
     echo "NOTE development evidence only; no target-matrix pass"
 else
     echo "Target entries passed: $ran_target; missing: $missing"

@@ -6,6 +6,7 @@ const transport = @import("zbeam-transport");
 const Echo = @import("echo.zig").Echo;
 const Sha256 = @import("sha256.zig").Sha256;
 const worker_service = @import("worker.zig");
+const wire_service = @import("wire_service.zig");
 
 pub const Config = struct {
     node_name: []const u8,
@@ -14,7 +15,7 @@ pub const Config = struct {
     /// Deterministic override for tests only. Otherwise fresh per connection.
     challenge: ?u32 = null,
     registered_name: []const u8 = "echo",
-    service: enum { echo, sha256, worker } = .echo,
+    service: enum { echo, sha256, worker, workers } = .echo,
     flags: u64 = protocol.flags.m1,
     limits: protocol.distribution.Limits = .{},
     max_messages: usize = 1,
@@ -32,6 +33,15 @@ pub const Config = struct {
 /// A connection owns its demand, reader and packet lifetimes. Reconnect starts
 /// empty; the EPMD registration (and therefore creation) belongs to the caller.
 pub fn serve(io: std.Io, allocator: std.mem.Allocator, server: *std.Io.net.Server, config: Config) !void {
+    var workers: ?wire_service.Service = null;
+    if (config.service == .workers) workers = try wire_service.Service.init(io, allocator, .{
+        .node_name = config.node_name,
+        .cookie = config.cookie,
+        .creation = config.creation,
+        .handshake_timeout = config.handshake_timeout,
+        .connection = .{ .frame_timeout = config.frame_timeout, .write_timeout = config.write_timeout },
+    });
+    defer if (workers) |*state| state.deinit();
     var worker: ?worker_service.Worker = null;
     if (config.service == .worker) {
         var identity: [8]u8 = undefined;
@@ -44,14 +54,18 @@ pub fn serve(io: std.Io, allocator: std.mem.Allocator, server: *std.Io.net.Serve
         const stream = try server.accept(io);
         defer stream.close(io);
         if (config.max_connections != 0) accepted += 1;
-        (if (worker) |*state|
+        (if (workers) |*state|
+            state.servePeer(stream)
+        else if (worker) |*state|
             serveWorkerConnection(io, allocator, stream, config, state)
         else
             serveConnection(io, allocator, stream, config)) catch |err| {
             // Recover only at the connection boundary; resource exhaustion and
             // cancellation remain visible to the caller/supervisor.
             if (err == error.EndOfStream) continue;
-            if (err == error.Canceled or err == error.OutOfMemory or config.max_connections == 1) return err;
+            if (err == error.Canceled or err == error.OutOfMemory or err == error.ConcurrencyUnavailable or
+                err == error.EpochExhausted or err == error.UnknownCompletion or err == error.MissingCompletion or
+                err == error.NoProgress or config.max_connections == 1) return err;
             if (err != error.ConnectionResetByPeer)
                 std.log.warn("peer disconnected: {s}", .{@errorName(err)});
         };
@@ -119,7 +133,7 @@ pub fn probe(io: std.Io, allocator: std.mem.Allocator, stream: std.Io.net.Stream
 }
 
 pub fn serveConnection(io: std.Io, allocator: std.mem.Allocator, stream: std.Io.net.Stream, config: Config) !void {
-    if (config.service == .worker) return error.WorkerRequiresService;
+    if (config.service == .worker or config.service == .workers) return error.WorkerRequiresService;
     var peer = try acceptPeer(io, allocator, stream, config);
     defer peer.deinit(allocator);
     if (config.service == .sha256)
