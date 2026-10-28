@@ -11,7 +11,7 @@ zbeam implements a development MVP: a separate Zig process registers through EPM
 
 ## Purpose
 
-NIFs execute native code within the BEAM VM. Ports already provide a separate-process boundary. zbeam explores whether distribution-addressable native actors justify the additional protocol and lifecycle complexity; process isolation alone is not its differentiator.
+NIFs execute native code within the BEAM VM. Ports already provide a separate-process boundary. zbeam explores whether distribution-addressable native actors with explicit ownership and no tracing GC justify the additional protocol and lifecycle complexity; process isolation alone is not its differentiator.
 
 The current benchmark includes negative results. It does not establish a performance advantage over Ports.
 
@@ -25,7 +25,7 @@ The current benchmark includes negative results. It does not establish a perform
 | Distribution | Pass-through framing, tick echo, REG_SEND/SEND subset |
 | Service lifecycle | M1 single worker and separate M2b two-task profile; one peer at a time, bounded admission and cooperative stop/join |
 | Process monitors | Worker PID and discovery-name monitoring; fixed 64-slot connection table; OTP 25/26/27 evidence |
-| External recovery example | One-slot Elixir owner, no uncertain replay, bounded restarts and guarded Linux child cleanup; separately tested on Elixir 1.20.4/OTP 29 |
+| External recovery | M1 has a reusable one-slot Elixir owner; M2b has a bounded no-replay process-loss test, not a reusable supervisor |
 | Backpressure | Demand-gated unbuffered reads; TCP saturation/resume evidence |
 | Local actor primitives | Bounded mailbox, logical receive ownership, caller-owned registry and termination |
 | Local M2a task owner | Two fixed SHA-256 tasks, bounded copied work/results, explicit stop/join; [API and example](docs/task-runtime.md) |
@@ -34,10 +34,11 @@ The current benchmark includes negative results. It does not establish a perform
 
 [Implementation Status](docs/implementation-status.md) is the source of truth.
 [Bounded M1 acceptance](docs/evidence/phase-b/2026-10-26-m1-integration.md) is complete
-on master; [local M2a is also accepted](docs/evidence/phase-c/2026-10-27-m2a-acceptance.md).
-The M2b two-worker profile has OTP matrix smoke coverage; its full recovery and
-acceptance gates remain open. The v0.5 specification describes a broader design,
-not shipped behavior.
+on master; [local M2a](docs/evidence/phase-c/2026-10-27-m2a-acceptance.md)
+and the [bounded M2b wire profile](docs/evidence/phase-c/2026-10-28-m2b-acceptance.md)
+are also accepted. M2b process replacement is externally orchestrated; uncertain
+work is not replayed. The v0.5 specification describes a broader design, not
+shipped behavior.
 
 ## Build and verify
 

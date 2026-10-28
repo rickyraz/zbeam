@@ -287,18 +287,20 @@ The [M2 design/work plan](m2-task-lifecycle-plan.md) and
 (M2a) from separately reviewed wire routing (M2b). M2a is implemented and
 [accepted on actual master](evidence/phase-c/2026-10-27-m2a-acceptance.md): two
 fixed SHA-256 tasks with copied inputs, completion budgets and stop/join/deinit.
-Existing `Runtime(T)` stays caller-owned; M2b remains unimplemented.
+Existing `Runtime(T)` stays caller-owned. The separate [M2b profile](two-worker-wire.md)
+is accepted with two fixed wire PIDs, bounded shared admission and one peer;
+[verification](evidence/phase-c/2026-10-28-m2b-acceptance.md) remains scoped.
 
-M2 connects bounded mailboxes and the registry to runtime-owned `std.Io` tasks,
-using an API with explicit lifecycle migration notes. Start with two actors;
-prove task joining, queued-message cleanup, safe send/terminate races and
-independent progress when one actor waits. Do not promise preemption of arbitrary
-CPU-bound Zig code or actor-local panic/corruption isolation.
+M2a owns two bounded `std.Io` task loops through an additive local API; it does
+not turn the caller-owned registry into a scheduler. Lifecycle tests cover task
+joining, queued-message cleanup, send/stop races and independent local progress.
+Arbitrary CPU-bound Zig code is not preempted, and panic/corruption is not
+isolated to one actor.
 
-Review shared-wire routing/admission before adding destinations: unknown next
-routes cannot use summed free capacity. Accept documented head-of-line blocking
-before introducing a pending queue. Verify monitor behavior across local actor
-stop/replacement and node loss again with the concurrent runtime.
+The shared-stream adapter reserves every running destination before reading;
+unknown next routes cannot use summed free capacity. Head-of-line blocking is
+intentional, including for ticks. Monitor and epoch behavior is tested for fixed
+slot stop and node loss; in-process replacement remains unsupported.
 
 Process links and native supervision require subsequent explicit semantics and
 OTP/fault tests. External supervision remains usable without either. Custom
@@ -321,10 +323,9 @@ not M1/M2 prerequisites. Performance work resumes only against a stable baseline
   [design-target sections](../specs/zbeam-v0.5.0.md) with each implemented
   lifecycle/protocol increment; planning alone changes no implementation status.
 
-**Next action:** review a separate M2b wire-profile ADR for discovery/stop schema,
-atomic shared-route reservations, output/monitor bounds and connection epochs
-before implementation. General scheduling and performance comparators remain
-separate decisions; local acceptance does not authorize wire expansion.
+**Next action:** address the remaining deployment/security, native-host soak and
+BEAM-side backpressure risks before widening this development profile. General
+scheduling and performance comparators remain separate decisions.
 
 ## Acceptance policy
 

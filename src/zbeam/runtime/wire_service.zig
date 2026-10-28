@@ -1,4 +1,4 @@
-//! Internal service owner; no listener or CLI profile is exported yet.
+//! Internal owner for the separate two-worker listener and CLI profile.
 const std = @import("std");
 const etf = @import("zbeam-etf");
 const protocol = @import("zbeam-protocol");

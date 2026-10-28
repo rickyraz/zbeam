@@ -409,12 +409,13 @@ wire expansion. The additive [TaskRuntime](../docs/task-runtime.md) implements b
 ownership and stop/join. Deterministic lifecycle/conservation tests pass;
 the noncooperative subprocess gate verifies external kill/reap after stalled
 join, not preemption. [Actual-master acceptance](../docs/evidence/phase-c/2026-10-27-m2a-acceptance.md)
-closes local M2a only; [accepted M2b design ADR 0005](../docs/adr/0005-two-worker-wire-profile.md)
-does not enable a public wire service. The internal connection candidate joins
-readers/collectors and drains old-epoch results before peer release; its
-[loopback evidence](../docs/evidence/phase-a/2026-10-28-m2b-connection.md) is not OTP acceptance.
-M1 and the caller-owned `Runtime(T)` remain unchanged. `example-task-runtime` exercises the
-production-mode local API; it neither registers EPMD nor adds wire actor routes.
+closes local M2a only. The separate [M2b profile](../docs/two-worker-wire.md)
+implements [ADR 0005](../docs/adr/0005-two-worker-wire-profile.md): two fixed
+wire PIDs, atomic pre-read reservations, bounded monitor/output storage and
+joined old-epoch drainage. [Acceptance](../docs/evidence/phase-c/2026-10-28-m2b-acceptance.md)
+records the supported OTP subset and external no-replay recovery, not the full
+runtime below. M1 and the caller-owned `Runtime(T)` retain their contracts.
+`example-task-runtime` exercises the local API, not wire actor routes.
 
 **M2a prerequisite:** `Mailbox(T).tryDeliver` adds one-element nonblocking
 capacity admission with caller ownership retained on error. It does not change

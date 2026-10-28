@@ -1,0 +1,67 @@
+{
+  "implementation_master": "14ddc5d26f6fd73425937f5ecb731f256db56520",
+  "run": 40655977846,
+  "event": "push",
+  "conclusion": "success",
+  "jobs": [
+    {
+      "id": 122706995364,
+      "name": "test",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 122706995528,
+      "name": "worker-recovery (safe)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 122706995581,
+      "name": "otp-interop (27, safe)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 122706995609,
+      "name": "otp-interop (26, safe)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 122706995654,
+      "name": "otp-interop (25, debug)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 122706995725,
+      "name": "worker-recovery (debug)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 122706995729,
+      "name": "otp-interop (27, debug)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 122706995737,
+      "name": "otp-interop (26, debug)",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 122706995788,
+      "name": "otp-interop (25, safe)",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "asset_hashes_original_and_backup": 399,
+  "protected_local_and_remote_refs": 10,
+  "annotated_tag_local_remote_and_original_peel": 28,
+  "worktrees_observed": 13,
+  "dirty_worktrees_at_audit": 1
+}
