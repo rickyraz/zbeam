@@ -36,6 +36,20 @@ erl +S 2:2 -noshell -name pair_client@127.0.0.1 -setcookie development_cookie -e
   halt().'
 ```
 
+## Supervised Elixir owner
+
+From an Elixir node using the same cookie, load `examples/two_worker_owner.ex`:
+
+```elixir
+Code.require_file("examples/two_worker_owner.ex")
+{:ok, supervisor} = Supervisor.start_link([{TwoWorkerOwner, [name: :pair, peer: :"native_pair@127.0.0.1", executable: "./zig-out/bin/zbeam"]}], strategy: :one_for_one)
+{:ok, digest} = TwoWorkerOwner.hash(:pair, :a, "abc")
+Supervisor.stop(supervisor)
+```
+
+The owner starts its own native child; do not start another service with that
+name. Its M2c failure campaign is still in progress.
+
 ## Contract and limits
 
 Discovery replies `{Ref,{ok,Pid}}` or `{Ref,{error,noproc}}`. Hash accepts a

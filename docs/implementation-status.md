@@ -9,7 +9,7 @@
 - **Broader design target:** v0.5.0 draft, not a release description
 - **M2a accepted — 2026-10-27:** local task ownership at `221a48d`; [actual-master CI 40468839059](https://github.com/rickyraz/zbeam/actions/runs/40468839059) passed 9/9 jobs. [Acceptance evidence](evidence/phase-c/2026-10-27-m2a-acceptance.md) separates local implementation from unchanged M1 wire regressions.
 - **M2b accepted — 2026-10-28:** the separate [`serve-workers` profile](two-worker-wire.md) implements [ADR 0005](adr/0005-two-worker-wire-profile.md): two fixed task-owned PIDs, one peer, bounded shared-stream admission and joined epoch drainage. [Acceptance evidence](evidence/phase-c/2026-10-28-m2b-acceptance.md) distinguishes actual OTP, conformance and externally orchestrated recovery from production certification. Full M2 remains broader.
-- **M2c planned:** [a bounded Elixir owner](m2c-owner-plan.md) will provide supervised two-worker use; this plan alone adds no runtime behavior.
+- **M2c in progress:** [a bounded Elixir owner](two-worker-wire.md) composes supervised two-worker use; [fault and acceptance gates](m2c-owner-plan.md) remain open.
 
 This file is authoritative when code and historical specifications differ.
 
