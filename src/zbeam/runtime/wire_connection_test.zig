@@ -286,3 +286,43 @@ test "cancellation joins read and collector before waiting for accepted work" {
     try testing.expectError(error.Canceled, cancel.await(io));
     try expectDrained(tasks);
 }
+
+test "disconnect joins old connection operations before waiting for accepted work" {
+    FaultIo.reset();
+    var vtable = FaultIo.vtable();
+    const context = std.Io{ .userdata = io.userdata, .vtable = &vtable };
+    var control = @import("task_runtime_test.zig").Control{};
+    const tasks = try Runtime.create(testing.allocator, io, .{ "a", "b" });
+    defer tasks.deinit() catch unreachable;
+    defer _ = tasks.shutdown();
+    tasks.control = &control;
+    const streams = try pair();
+    var client_open = true;
+    defer if (client_open) streams[0].close(io);
+    defer streams[1].close(io);
+    const Runner = struct {
+        fn serve(ctx: std.Io, stream: std.Io.net.Stream, runtime: *Runtime, done: *std.Io.Event) anyerror!void {
+            defer done.set(io);
+            return connection.serve(ctx, testing.allocator, stream, &peer, runtime, pids, 1, .{ .frame_timeout = null, .write_timeout = null });
+        }
+    };
+    var done: std.Io.Event = .unset;
+    var old = try io.concurrent(Runner.serve, .{ context, streams[1], tasks, &done });
+    defer {
+        control.release.set(io);
+        _ = old.cancel(io) catch {};
+    }
+    var writer = streams[0].writer(io, &.{});
+    try send(&writer.interface, pids[0], 1, "old");
+    const timeout: std.Io.Timeout = .{ .duration = .{ .raw = .fromSeconds(5), .clock = .awake } };
+    try control.entered.waitTimeout(io, timeout);
+    try FaultIo.collector_started.waitTimeout(io, timeout);
+    streams[0].close(io);
+    client_open = false;
+    try FaultIo.group_joined.waitTimeout(io, timeout);
+    try testing.expect(!done.isSet());
+    control.release.set(io);
+    try expectDisconnect(old.await(io));
+    try testing.expect(done.isSet());
+    try expectDrained(tasks);
+}
