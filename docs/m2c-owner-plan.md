@@ -16,9 +16,10 @@ a production deployment or a general native actor API.
   input limit first. This bounds admitted API requests, not arbitrary BEAM
   messages, retained caller binaries, or total VM/process RSS.
 - A fixed caller-supplied peer node atom and bounded registration cleanup avoid
-  generating new BEAM atoms on each restart. A published name collision must
-  not connect to or terminate another service. The owner exclusively uses its
-  peer connection; cookie trust is node-wide, not process isolation.
+  generating new BEAM atoms on each restart. Initial name collisions reject
+  startup without deliberately connecting to or killing the existing service.
+  The owner requires exclusive use of that name and connection; malicious local
+  races are outside the cookie's node-wide trust boundary.
 - A controlled retirement or handled failure of `a` marks it unavailable while
   `b` remains usable. Slots are not replaced inside the native process. A
   process/node loss or uncertain timeout fails in-flight work and retires the
