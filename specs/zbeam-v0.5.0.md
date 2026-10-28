@@ -410,8 +410,10 @@ ownership and stop/join. Deterministic lifecycle/conservation tests pass;
 the noncooperative subprocess gate verifies external kill/reap after stalled
 join, not preemption. [Actual-master acceptance](../docs/evidence/phase-c/2026-10-27-m2a-acceptance.md)
 closes local M2a only; [proposed M2b ADR 0005](../docs/adr/0005-two-worker-wire-profile.md)
-does not approve or implement wire routes. M1 and the
-caller-owned `Runtime(T)` remain unchanged. `example-task-runtime` exercises the
+does not enable a public wire service. The internal connection candidate joins
+readers/collectors and drains old-epoch results before peer release; its
+[loopback evidence](../docs/evidence/phase-a/2026-10-28-m2b-connection.md) is not OTP acceptance.
+M1 and the caller-owned `Runtime(T)` remain unchanged. `example-task-runtime` exercises the
 production-mode local API; it neither registers EPMD nor adds wire actor routes.
 
 **M2a prerequisite:** `Mailbox(T).tryDeliver` adds one-element nonblocking
