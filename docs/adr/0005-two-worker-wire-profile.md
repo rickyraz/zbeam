@@ -1,153 +1,115 @@
-# ADR 0005 — Proposed bounded two-worker wire profile
+# ADR 0005 — Bounded two-worker wire profile
 
-**Status:** proposed; neither implementation nor wire contract is approved.
-**Date:** 2026-10-27. **Baseline:** master `39c1efd` (M1 and local M2a accepted).
-**Relation:** additive to ADR 0001 and ADR 0004; does not modify `serve-worker`
-or supersede the accepted M1 monitor decisions in ADR 0003.
+**Status:** accepted design; implementation and OTP acceptance remain in progress.
+**Date:** 2026-10-27; finalized 2026-10-28 under the owner's direction to complete M2b.
+**Relation:** additive to ADR 0001 and ADR 0004. It does not change the M1
+`serve-worker` profile or supersede ADR 0003.
 
-## Decision requested
+## Decision
 
-Approve the candidate below only after resolving the numbered gates. It exposes
-exactly two existing task-owned SHA-256 actors through one authenticated peer at
-a time. It is not a general actor system, concurrent-peer server, hard deadline,
-production deployment or a change to the existing M1 wire profile. Local M2a
-passes no network slices to its tasks and is not yet a wire adapter.
+Expose exactly two fixed task-owned SHA-256 actors through one authenticated
+Erlang Distribution peer at a time, using a service-owned, private `TaskRuntime`.
+The runtime is not shared with local senders or another collector. This is not a
+general actor system, concurrent-peer server, hard deadline or production
+certification. The service owns one collector and one lifecycle owner; neither
+peer data nor frame slices escape to tasks.
 
-## Candidate observable contract
-
-| Operation | Candidate request | Candidate reply or effect |
+| Operation | Request | Reply or effect |
 |---|---|---|
-| Discovery | `REG_SEND` to `zbeam_workers`: `{FromPid, Ref, {discover, Name}}`, Name one of atoms `a`, `b` | `{Ref, {ok, Pid}}` or `{Ref, {error, noproc}}` after actor retirement |
-| Hash | `SEND` to discovered Pid: `{FromPid, Ref, {hash, Binary}}` | `{Ref, {ok, Digest}}`, or bounded stopped/failure result if accepted but canceled |
-| Stop one | `SEND` to Pid: `{FromPid, Ref, stop}` | retires that actor, joins it, returns `{Ref, ok}` and sends PID-monitor `normal`; sibling and discovery endpoint survive |
-| Unknown/stale SEND target | any payload | drop, as in M1; no fabricated reply |
-| Monitoring | existing negotiated PID and named MONITOR_P/DEMONITOR_P forms | candidate semantics and proof obligations below |
+| Discovery | `REG_SEND` to `zbeam_workers`: `{FromPid, Ref, {discover, Name}}`, where Name is atom `a` or `b` | `{Ref, {ok, Pid}}`, or `{Ref, {error, noproc}}` for a retired slot |
+| Hash | `SEND` to a worker PID: `{FromPid, Ref, {hash, Binary}}` | `{Ref, {ok, Digest}}`, or `{Ref, {error, stopped\|canceled\|handler_failed}}` for accepted work |
+| Stop | `SEND` to a worker PID: `{FromPid, Ref, stop}` | retire and join that actor; `{Ref, ok}` then PID monitor `normal` exits; sibling and discovery endpoint survive |
+| Unknown/stale SEND target | any payload | drop, no fabricated reply |
+| Monitoring | negotiated PID/named `MONITOR_P` and `DEMONITOR_P` | rules below |
 
-These exact atoms, names, ordering and stop-error forms are proposals, **not**
-existing API. Packets and decoded terms retain M1's 2 MiB frame, 1 MiB binary,
-64-element, depth-16 and 4 MiB decoded-allocation limits. Peer PID/reference
-node and creation must match the authenticated peer; `REG_SEND` sender must
-match the envelope. SEND authenticates a node, not an individual process.
-Malformed wire controls and peer mismatch close the connection; recognized bad
-commands receive bounded errors where a trusted reply target exists. No replay.
+Handler failure returns `handler_failed` and PID-monitor exits with that reason.
+A stop encountering an already failed handler returns `handler_failed` instead
+of `ok`. Wire limits remain M1's 2 MiB frame, 1 MiB binary, 64-element,
+depth-16 and 4 MiB decoded-allocation limits. A peer PID/reference node and
+creation must match the authenticated peer; REG_SEND sender must equal the
+message envelope PID. SEND authenticates a node, not an individual process.
+Malformed controls or peer mismatch close the connection; recognized malformed
+commands receive `bad_request` only where a trusted reply target exists. No replay.
 
-### Identity and lifecycle
+## Identity and lifecycle
 
-Generate two distinct full wire PIDs using the service node name, EPMD creation
-and independently randomized id/serial values, retrying equality before any
-identity is published. Map fixed local IDs to those PIDs only inside the service;
-never reinterpret a local `u64` as a PID. PIDs persist through sequential peer
-reconnects while their tasks remain live; retired slots cannot be replaced or
-reused until a new service instance. EPMD creation plus randomness is not a
-persistent uniqueness guarantee. Failure to start either task publishes neither.
+Generate two distinct full wire PIDs from the service node name, EPMD creation
+and independent random id/serial values, retrying equality before publication.
+Map fixed local IDs to these PIDs only inside the service. Both tasks must start
+before either identity is published. PIDs persist across sequential connections
+while the actors remain live; retired slots cannot be replaced until a new
+service instance. EPMD creation and randomness are not persistent uniqueness.
 
-Service states are `starting -> running -> closing -> joined`. Each actor follows
-M2a's stop/join lifecycle. EPMD registration loss closes admission and joins
-cooperative tasks before storage release; noncooperative tasks require external
-process kill. Panic/corruption is process-wide. The process owner remains
-responsible for no-replay recovery and externally bounded replacement.
+Service states are `starting -> running -> closing -> joined`. EPMD registration
+loss closes admission and joins the service and cooperative tasks before storage
+release. A noncooperative task requires external process kill; panic/corruption
+is process-wide. An external owner supplies bounded restart and no-replay recovery.
 
-## Shared stream, reservation and liveness
+## Demand, output and memory
 
-Before **any** unbuffered read (including header, tick or control), atomically
-reserve one logical queue position and one outstanding-work ticket in *every*
-currently routable destination, plus required output/control capacity. Local
-senders, if exposed by the adapter, use the same lifecycle/admission gate. A
-snapshot, sum of credits, `Demand` counter alone, or calling existing `trySend`
-after reading is insufficient. If any reservation fails, roll all back and
-perform zero reads/allocations for that frame. One read reservation may be
-outstanding per connection. Release all reservations on tick/control/unknown
-route; for a work request transfer only the selected actor's reservation at
-queue insertion and release the rest. On partial read, cancellation, decoder
-failure or disconnect, release every still-owned reservation exactly once and
-fail the connection; never resume a partially consumed stream.
+Before any unbuffered read, including ticks and controls, reserve one logical
+queue position and outstanding-work ticket in every currently routable actor,
+plus one output credit. Reserve under the common lifecycle gate, roll back all
+on failure, and perform zero reads/allocations when any reservation fails. A
+single read reservation is outstanding. Release on control, tick, stale route,
+error or cancellation; transfer only the selected actor reservation on accepted
+work. Stop and admission linearize under the same gate. A stopped actor's held
+reservation is retired before join. Reader arguments and frame reservations stay
+alive until the reader has actually joined.
 
-Stop and routing changes must linearize with admission. A destination that
-retires after the reader reserves capacity cannot cause a dead reservation to be
-reused: specify ownership under the gate and release it before joining or peer
-teardown. A control blocked behind zero demand is intentionally unread, including
-ticks and demonitor. Head-of-line blocking and possible heartbeat disconnection
-are explicit consequences, not fairness or liveness guarantees.
+The connection owner alone mutates correlation and monitor tables and serializes
+writes. Ten fixed correlation credits are held from admission through reply write
+or explicit drop, independently of runtime tickets freed by collection. Peer
+names are canonicalized into storage that outlives all connection users. No
+collector waits while holding the runtime mutex. Output uses one 16 KiB fixed
+scratch buffer including encoder temporaries, and one synchronous write at a
+time; there is no queued encoded-output backlog. The frame's reserved credit
+covers its control reply, and sequentially encoded monitor exits need no array
+of 64 output buffers. A blocked writer stops dispatch until its cooperative
+write deadline; failure/partial write closes the connection and drops remaining
+notifications. It never promises delivery or replay. This sequential design
+must be proven under saturation and writer failure before public acceptance.
 
-**Implementation gap:** local `trySend` reserves while copying. An internal
-shared-route lease now reserves all running slots under the same gate and transfers
-one on insertion, but it does not authorize a socket read or reserve output.
-Completion collection in `nextResult` releases its ticket immediately. The future
-adapter must add and test output ownership and actual read gating; a separate
-unlocked capacity check or adapter-private counter cannot enforce these invariants
-against local sends.
+At most ten runtime work tickets and 10 MiB copied task payloads are live;
+metadata, allocator/provider resources and task stacks are additional. One frame
+up to 2 MiB plus header, up to 4 MiB decoded allocations, ten correlations, 64
+monitor entries and encoding scratch are additional logical limits, not an RSS
+or zero-copy guarantee. When demand is zero, even ticks and monitor controls are
+unread; head-of-line blocking and possible heartbeat disconnect are intentional.
 
-## Memory, writer and connection epoch
+## Connection epochs and monitoring
 
-- One connection owner alone mutates its fixed monitor table and serializes all
-  writes. Actor tasks produce owned inline results, not writer pointers or
-  borrowed frame/peer slices. A bounded collector-to-writer handoff must not
-  wait under the lifecycle mutex. Its task and any read/write/deadline task must
-  be stopped and joined before their arguments or peer storage are freed.
-- M2a permits at most ten outstanding tickets and 10 MiB of copied inputs;
-  metadata, allocator/provider resources, caller buffers and task stacks are
-  additional. One inbound frame (up to 2 MiB plus header), decoded allocations
-  (up to 4 MiB), reply correlation, encoded output and monitor notifications are
-  additional. Limits are logical allocations, not physical RSS/zero-copy claims.
-- Propose ten fixed request-correlation slots, each storing canonical peer PID,
-  bounded reference and local request ID. No packet/decoded-term slices escape.
-  Hold a separate reserved output token from admission until the writer has
-  completed or explicitly dropped the associated reply, even if `nextResult`
-  frees the runtime ticket earlier. Count local completions and locally originated
-  requests separately if local send is offered; do not silently steal them.
-- Propose a connection table of 64 monitors with canonical peer/service names;
-  allocate a bounded, independent control-output reserve large enough for all
-  stop-triggered monitor exits and the stop reply. Stop cannot require space in
-  a work-output queue that is already full. Bound encoded bytes as well as item
-  count; account for the encoder's temporary allocations and active write until
-  flush/drop. Exact byte bound and allocation failure behavior are gate G3.
-- Give each accepted connection an epoch owned by the service. Correlations and
-  pending outputs carry that epoch; a mismatch is dropped, never written to a
-  later peer. On disconnect, stop reads, quiesce/join all connection-owned tasks,
-  drain/drop old results and notifications and clear monitor/correlation state
-  before freeing peer storage. Work already accepted by service-owned actors may
-  finish, but old results must be consumed/discarded under bounded capacity before
-  a new epoch can begin. No result replay. Whether service survives a connection
-  loss without restarting its actors is gate G4, not an established behavior.
+An ordinary disconnect does not replace service actors or PIDs. Stop reads,
+cancel and join reader/collector/writer operations, release the held frame,
+drain and discard every accepted old-epoch completion, then discard monitor
+and correlation state before freeing peer storage or accepting a new epoch. An
+epoch mismatch is never delivered to a later peer. A noncooperative accepted
+job can indefinitely delay drain; cancellation does not preempt CPU work.
 
-## Monitor and stop candidate
+One 64-entry connection table covers worker PID and `zbeam_workers` named
+subscriptions. Matching duplicate monitors are idempotent; conflicting
+reference reuse or table exhaustion closes the connection. Matching demonitor
+removes the entry. Unknown or stopped targets get `noproc`. The named endpoint
+lives for the service, so a worker stop does not terminate its subscriptions.
+Disconnect clears all subscriptions and the peer observes connection loss.
 
-A single 64-entry table covers PID and registered-name targets. A matching
-monitor is idempotent; conflicting reference reuse is a connection error;
-matching demonitor removes it. Unknown/stopped PID or unknown name returns
-`noproc`; table exhaustion closes the connection. Node/creation checks and
-connection-owned canonical names follow M1. Name `zbeam_workers` denotes the
-service discovery endpoint, not either worker; its subscriptions survive an
-individual actor stop. No outbound subscriptions or links are introduced.
+The single dispatcher orders controls as read: a demonitor processed before
+stop removes that subscription; one behind stop cannot suppress its already
+attempted exit. Stop retires routing and joins the target before the stop reply,
+then sends each remaining PID exit at most once. Previously accepted work has a
+terminal result after join, but its reply may precede **or follow** the stop
+reply/monitor exits; no stronger cross-request ordering is promised. Output
+failure closes the connection and does not undo retirement or replay anything.
 
-Proposed normal stop ordering is retire routing, stop/join actor, finalize its
-accepted work, emit one correlated stop reply, then at most one `normal` exit per
-still-registered PID monitor. Output failure closes the connection and drops
-remaining notifications; it never claims delivery or replays on reconnect.
-Specify whether prior work replies precede the stop reply and how a concurrent
-demonitor is ordered before treating this ordering as an accepted contract.
+## Acceptance and exclusions
 
-## Gates before implementation approval
+Before enabling or accepting the service, prove transactional admission,
+zero-demand no-read, output bounds, stop/control ordering, epoch cleanup and
+fault paths. Independently generated wire vectors and actual OTP 25/26/27 in
+both debug and safe modes must accompany the existing M1, local M2a and owner
+regression matrix. Tests must distinguish conditional skips, cached work, and
+actual external kill/reap. See the [implementation status](../implementation-status.md)
+for delivered behavior; this decision is not itself implementation evidence.
 
-1. **G1 — Wire schema:** approve discovery name, two actor names, error atoms,
-   malformed/unknown behavior and stop ordering; validate OTP 25/26/27 encodings.
-2. **G2 — Reservations:** define a concrete transactional shared-ledger API,
-   including stop/read/local-send races, second-slot rollback, cancellation,
-   transfer and whether local sends are exposed at all. Prove no zero-demand read.
-3. **G3 — Output:** derive item *and byte* bounds for correlated replies, ticks,
-   `noproc`, stop reply and up to 64 exits, including encode failure/partial writes.
-   Prove collector progress and control reserve under a blocked writer.
-4. **G4 — Connection lifetime:** choose whether disconnect drains surviving
-   tasks or stops/recreates the entire service; define task joins, epoch-fence,
-   deadlines, loss of pending outputs, EPMD loss and externally owned users.
-5. **G5 — Monitor ordering:** define PID/name lifetime and stop/demonitor races,
-   including full table, duplicate/reference conflicts, and failure of each write.
-6. **G6 — Acceptance:** design deterministic ownership/conservation tests and
-   conformance vectors, then actual OTP 25/26/27 in debug/safe, existing M1 and
-   guardian/owner regressions. No historical M1 or local M2a result is new wire
-   evidence. Every implementation behavior travels with tests/docs and a rollback
-   boundary; use reviewable independent work units without unsafe interim exports.
-
-Until G1–G6 are resolved and separately approved, T6 remains disabled. A failed
-or canceled process can lose results; exactly-once execution, preemption, replay,
-TLS, secret handling, production certification and performance are out of scope.
+Exactly-once execution across process loss, preemption, replay, generic handlers,
+TLS/secrets, physical-memory certification and performance claims are excluded.

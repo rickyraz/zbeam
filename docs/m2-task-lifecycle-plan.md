@@ -1,6 +1,6 @@
 # M2 plan: own tasks before expanding wire concurrency
 
-**Status: local M2a implemented and accepted, 2026-10-27; M2b unstarted and gated.** Original design base:
+**Status: local M2a accepted; M2b design accepted and internal implementation in progress.** Original design base:
 master `cd81a21`, accepted bounded M1. Review
 [ADR 0004](adr/0004-bounded-task-owned-runtime.md) first. This plan adds no runtime
 API by itself; delivered code is recorded in [M2a acceptance](evidence/phase-c/2026-10-27-m2a-acceptance.md).
@@ -23,9 +23,9 @@ A canceled/noncooperative task does not authorize early free.
 ## Reviewable work units
 
 T0–T4 are executed through PR #6–#12, with actual-master acceptance at `221a48d`.
-T5 has a [proposed wire-profile ADR](adr/0005-two-worker-wire-profile.md); its
-numbered gates remain open. T6 has not started. The table preserves review and
-rollback boundaries.
+T5 has an [accepted wire-profile design](adr/0005-two-worker-wire-profile.md).
+T6 has internal prerequisites, but its public service and wire acceptance remain
+open. The table preserves review and rollback boundaries.
 
 Each row is an intended independently reviewable change with tests/docs/evidence,
 not a promise that an entire stage fits one PR. Target <=400 added+removed lines;
