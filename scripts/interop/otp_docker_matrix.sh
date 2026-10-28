@@ -2,6 +2,8 @@
 # Linux host networking lets containerized OTP reach the host's loopback peer.
 set -eu
 root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
+bin=${ZBEAM_BIN:-"$root/zig-out/bin/zbeam"}
+bin="$(CDPATH= cd -- "$(dirname "$bin")" && pwd)/$(basename "$bin")"
 wrappers=$(mktemp -d)
 trap 'rm -rf "$wrappers"' EXIT
 trap 'exit 130' INT TERM
@@ -16,5 +18,8 @@ for version in 25 26 27; do
     chmod +x "$wrappers/erl$version"
     export "OTP_ERL_$version=$wrappers/erl$version"
     echo "OTP $version image: $image"
+    docker run --rm --network none -e ZBEAM_ISOLATED_EPMD=1 \
+        -v "$bin:/zbeam:ro" -v "$root/scripts/interop/otp_workers_epmd_loss.sh:/epmd-test.sh:ro" \
+        "$image" sh /epmd-test.sh /zbeam
 done
 ZBEAM_REQUIRE_ALL_OTP=1 OTP_VERSIONS='25 26 27' "$root/scripts/interop/otp_matrix.sh"
