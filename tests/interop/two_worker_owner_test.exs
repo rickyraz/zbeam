@@ -42,6 +42,21 @@ defmodule TwoWorkerOwnerTest do
     {_, 0} = System.cmd("kill", ["-#{signal}", to_string(pid)], stderr_to_stdout: true)
   end
 
+  defp recovered(owner, old, native) do
+    await(fn -> is_pid(Process.whereis(@name)) and Process.whereis(@name) != owner end)
+    replacement = Process.whereis(@name)
+    {state, guard, child} = owned(replacement)
+    assert elem(state.actors.a, 0) != elem(old.actors.a, 0)
+    assert elem(state.actors.b, 0) != elem(old.actors.b, 0)
+    await(fn -> not live?(native) end)
+    {replacement, state, guard, child}
+  end
+
+  defp stop_and_check(sup, guard, native) do
+    Supervisor.stop(sup)
+    await(fn -> not live?(guard) and not live?(native) end)
+  end
+
   test "exact hashes, per-actor admission and input bounds" do
     {_, owner, _, native} = start()
     assert TwoWorkerOwner.hash(@name, :a, "abc") == {:ok, :crypto.hash(:sha256, "abc")}
@@ -90,6 +105,79 @@ defmodule TwoWorkerOwnerTest do
     await(fn -> :sys.get_state(owner).actors.a == nil end)
     assert TwoWorkerOwner.hash(@name, :a, "retired") == {:error, :unavailable}
     assert TwoWorkerOwner.hash(@name, :b, "alive") == {:ok, :crypto.hash(:sha256, "alive")}
+  end
+
+  test "caller death before delivery retires the old owner and both PIDs" do
+    {sup, owner, old, native} = start()
+    parent = self()
+
+    {caller, monitor} =
+      spawn_monitor(fn ->
+        assert {:ok, ^owner, _, _} = TwoWorkerAdmission.claim(@name, :a, "claimed")
+        send(parent, :claimed)
+      end)
+
+    assert_receive :claimed, 1_000
+    assert_receive {:DOWN, ^monitor, :process, ^caller, :normal}, 1_000
+    {_, _, guard, child} = recovered(owner, old, native)
+    assert TwoWorkerOwner.hash(@name, :b, "fresh") == {:ok, :crypto.hash(:sha256, "fresh")}
+    stop_and_check(sup, guard, child)
+  end
+
+  test "caller death during work fails the sibling's uncertain request" do
+    {sup, owner, old, native} = start()
+    kill(native, "STOP")
+    caller = spawn(fn -> TwoWorkerOwner.hash(@name, :a, "uncertain") end)
+    b = Task.async(fn -> TwoWorkerOwner.hash(@name, :b, "uncertain sibling") end)
+    await(fn -> map_size(:sys.get_state(owner).pending) == 2 end)
+    Process.exit(caller, :kill)
+    assert Task.await(b, 2_000) == {:error, :worker_lost}
+    {_, _, guard, child} = recovered(owner, old, native)
+    assert TwoWorkerOwner.hash(@name, :a, "fresh") == {:ok, :crypto.hash(:sha256, "fresh")}
+    stop_and_check(sup, guard, child)
+  end
+
+  test "disconnect discards both requests and old references cannot answer a replacement" do
+    {sup, owner, old, native} = start()
+    kill(native, "STOP")
+    a = Task.async(fn -> TwoWorkerOwner.hash(@name, :a, "uncertain a") end)
+    b = Task.async(fn -> TwoWorkerOwner.hash(@name, :b, "uncertain b") end)
+    await(fn -> map_size(:sys.get_state(owner).pending) == 2 end)
+    {_, _, old_ref, _, _} = :sys.get_state(owner).pending.a
+    assert Node.disconnect(@peer)
+    assert Task.await(a, 2_000) == {:error, :worker_lost}
+    assert Task.await(b, 2_000) == {:error, :worker_lost}
+    {replacement, _, guard, child} = recovered(owner, old, native)
+    kill(child, "STOP")
+
+    try do
+      fresh = Task.async(fn -> TwoWorkerOwner.hash(@name, :a, "fresh") end)
+      await(fn -> Map.has_key?(:sys.get_state(replacement).pending, :a) end)
+      {_, _, new_ref, _, _} = :sys.get_state(replacement).pending.a
+      send(replacement, {old_ref, {:ok, <<0::256>>}})
+      assert elem(:sys.get_state(replacement).pending.a, 2) == new_ref
+      kill(child, "CONT")
+      Process.put(:replacement_resumed, true)
+      assert Task.await(fresh, 2_000) == {:ok, :crypto.hash(:sha256, "fresh")}
+    after
+      if not Process.get(:replacement_resumed, false) and live?(child), do: kill(child, "CONT")
+    end
+
+    stop_and_check(sup, guard, child)
+  end
+
+  test "owner kill fails both requests and the guardian kills the owned child" do
+    {sup, owner, old, native} = start()
+    kill(native, "STOP")
+    a = Task.async(fn -> TwoWorkerOwner.hash(@name, :a, "uncertain a") end)
+    b = Task.async(fn -> TwoWorkerOwner.hash(@name, :b, "uncertain b") end)
+    await(fn -> map_size(:sys.get_state(owner).pending) == 2 end)
+    Process.exit(owner, :kill)
+    assert Task.await(a, 2_000) == {:error, :worker_lost}
+    assert Task.await(b, 2_000) == {:error, :worker_lost}
+    {_, _, guard, child} = recovered(owner, old, native)
+    assert TwoWorkerOwner.hash(@name, :b, "fresh") == {:ok, :crypto.hash(:sha256, "fresh")}
+    stop_and_check(sup, guard, child)
   end
 
   test "one timeout fails both uncertain requests and restarts without replay" do
