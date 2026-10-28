@@ -1,0 +1,17 @@
+Code.require_file("../../examples/two_worker_owner.ex", __DIR__)
+Code.require_file("m2c_test_support.exs", __DIR__)
+
+[bin, path] = System.argv()
+peer = String.to_atom("m2c_vm_peer_#{System.pid()}@127.0.0.1")
+opts = [name: :m2c_vm_owner, peer: peer, executable: bin]
+{:ok, _} = Supervisor.start_link([{TwoWorkerOwner, opts}], strategy: :one_for_one)
+owner = Process.whereis(:m2c_vm_owner)
+state = :sys.get_state(owner)
+{guard, native} = M2cTestSupport.child_pids(state.port)
+{_, 0} = System.cmd("kill", ["-STOP", to_string(native)], stderr_to_stdout: true)
+Task.start(fn -> TwoWorkerOwner.hash(:m2c_vm_owner, :a, "uncertain a") end)
+Task.start(fn -> TwoWorkerOwner.hash(:m2c_vm_owner, :b, "uncertain b") end)
+M2cTestSupport.await(fn -> map_size(:sys.get_state(owner).pending) == 2 end)
+File.write!(path <> ".tmp", "#{System.pid()} #{guard} #{native}\n")
+File.rename!(path <> ".tmp", path)
+Process.sleep(:infinity)

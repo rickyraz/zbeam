@@ -38,11 +38,11 @@ defmodule TwoWorkerLaunchTest do
       TwoWorkerLaunch.close(port)
     end
 
-    await(fn -> not live?(guard) and not live?(native) end)
+    await_dead([guard, native])
     assert {:ok, next} = TwoWorkerLaunch.start(@peer, @bin, 3_000)
     {next_guard, next_native} = child_pids(next)
     TwoWorkerLaunch.close(next)
-    await(fn -> not live?(next_guard) and not live?(next_native) end)
+    await_dead([next_guard, next_native])
   end
 
   test "a name collision never attaches to or terminates the existing service" do
@@ -61,7 +61,7 @@ defmodule TwoWorkerLaunchTest do
       TwoWorkerLaunch.close(first)
     end
 
-    await(fn -> not live?(guard) and not live?(native) end)
+    await_dead([guard, native])
   end
 
   test "restart waits for an existing connection and registration to disappear" do
@@ -90,7 +90,7 @@ defmodule TwoWorkerLaunchTest do
       assert live?(native)
       Node.disconnect(@peer)
       TwoWorkerLaunch.close(first)
-      await(fn -> not live?(guard) and not live?(native) end)
+      await_dead([guard, native])
       assert {:ok, next} = Task.await(starter, 4_000)
       {next_guard, next_native} = child_pids(next)
 
@@ -102,7 +102,7 @@ defmodule TwoWorkerLaunchTest do
         TwoWorkerLaunch.close(next)
       end
 
-      await(fn -> not live?(next_guard) and not live?(next_native) end)
+      await_dead([next_guard, next_native])
     after
       if Port.info(first) != nil, do: TwoWorkerLaunch.close(first)
       Task.shutdown(starter, :brutal_kill)
@@ -117,6 +117,6 @@ defmodule TwoWorkerLaunchTest do
     assert {:ok, port} = TwoWorkerLaunch.start(@peer, @bin, 3_000)
     {guard, native} = child_pids(port)
     TwoWorkerLaunch.close(port)
-    await(fn -> not live?(guard) and not live?(native) end)
+    await_dead([guard, native])
   end
 end
