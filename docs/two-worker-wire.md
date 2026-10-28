@@ -54,6 +54,8 @@ CPU preemption; a noncooperative task requires external process kill and reap.
 A panic or corruption affects the whole native process, not just one worker.
 
 Cookies appear in process arguments; there is no TLS. External supervision and
-no-replay recovery are deployment responsibilities. Do not expose this profile
-to untrusted networks. OTP matrix evidence and remaining gates are tracked in
+no-replay recovery are deployment responsibilities. The Linux
+[process-loss campaign](evidence/phase-c/2026-10-28-m2b-process-recovery.md)
+provides a bounded test example, not a reusable supervisor. Do not expose this
+profile to untrusted networks. OTP evidence and remaining gates are tracked in
 [implementation status](implementation-status.md), not inferred from this guide.

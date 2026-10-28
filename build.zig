@@ -202,7 +202,12 @@ pub fn build(b: *std.Build) void {
     recovery_cmd.addFileArg(b.path("scripts/interop/worker_recovery.sh"));
     recovery_cmd.addArtifactArg(exe);
     recovery_cmd.addArtifactArg(fault_worker);
-    recovery_step.dependOn(&recovery_cmd.step);
+    const two_worker_recovery = b.addSystemCommand(&.{"sh"});
+    two_worker_recovery.addFileArg(b.path("scripts/interop/two_worker_recovery.sh"));
+    two_worker_recovery.addArtifactArg(exe);
+    two_worker_recovery.addArtifactArg(fault_worker);
+    two_worker_recovery.step.dependOn(&recovery_cmd.step);
+    recovery_step.dependOn(&two_worker_recovery.step);
 
     const benchmark_step = b.step("bench-port-vs-zbeam", "Run local Erlang Port comparison");
     const benchmark_cmd = b.addSystemCommand(&.{"sh"});
