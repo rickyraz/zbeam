@@ -53,9 +53,11 @@ reconnect; it is never replayed. Stop/join and deadlines are cooperative, not
 CPU preemption; a noncooperative task requires external process kill and reap.
 A panic or corruption affects the whole native process, not just one worker.
 
-Cookies appear in process arguments; there is no TLS. External supervision and
-no-replay recovery are deployment responsibilities. The Linux
+Cookies appear in process arguments; there is no TLS. Authentication trusts the
+peer node, not individual BEAM processes. External supervision and no-replay
+recovery are deployment responsibilities. The Linux
 [process-loss campaign](evidence/phase-c/2026-10-28-m2b-process-recovery.md)
 provides a bounded test example, not a reusable supervisor. Do not expose this
-profile to untrusted networks. OTP evidence and remaining gates are tracked in
-[implementation status](implementation-status.md), not inferred from this guide.
+profile to untrusted networks. [Acceptance evidence](evidence/phase-c/2026-10-28-m2b-acceptance.md)
+and [implementation status](implementation-status.md) distinguish the supported
+subset from remaining deployment and compatibility risks.

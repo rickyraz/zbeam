@@ -4,11 +4,11 @@
 - **Compiler migration:** Zig 0.17.0 verified 2026-10-25; M1 runtime scope unchanged
 - **All-branch verification:** [14/14 profiles](evidence/phase-a/2026-10-26-zig-0.17-rollout.md) verified and archived; [consolidation executed](evidence/phase-a/2026-10-26-branch-consolidation.md), 28 to 11 local/remote names. Compiler PR #2 and M1 PR #3 are merged; nine protected research topics remain independent.
 - **Package version:** 0.0.1 pre-alpha (no release tag created)
-- **Implemented milestone:** restricted MVP, bounded monitorable-worker M1, and local fixed-task M2a
-- **M1 accepted into master — 2026-10-26:** owner approved `size:exception`; PR #3 merged as `2241e7f`, followed by cleanup repair PR #4 as `88db721`. [Actual repaired-master CI 40354417903](https://github.com/rickyraz/zbeam/actions/runs/40354417903) passed 9/9 jobs, including all six native OTP/mode lanes and 14 complementary recovery cases per mode. [Acceptance record](evidence/phase-b/2026-10-26-m1-integration.md); earlier failures remain preserved. Local M2a is subsequently accepted; M2b wire expansion remains pending.
+- **Implemented milestone:** restricted MVP, bounded monitorable-worker M1, local fixed-task M2a and the bounded two-worker M2b development profile
+- **M1 accepted into master — 2026-10-26:** owner approved `size:exception`; PR #3 merged as `2241e7f`, followed by cleanup repair PR #4 as `88db721`. [Actual repaired-master CI 40354417903](https://github.com/rickyraz/zbeam/actions/runs/40354417903) passed 9/9 jobs, including all six native OTP/mode lanes and 14 complementary recovery cases per mode. [Acceptance record](evidence/phase-b/2026-10-26-m1-integration.md); earlier failures remain preserved. Local M2a and the separate M2b profile were subsequently accepted.
 - **Broader design target:** v0.5.0 draft, not a release description
 - **M2a accepted — 2026-10-27:** local task ownership at `221a48d`; [actual-master CI 40468839059](https://github.com/rickyraz/zbeam/actions/runs/40468839059) passed 9/9 jobs. [Acceptance evidence](evidence/phase-c/2026-10-27-m2a-acceptance.md) separates local implementation from unchanged M1 wire regressions.
-- **Next phase:** [M2b wire design](adr/0005-two-worker-wire-profile.md) is accepted; its public implementation and acceptance remain in progress. Its [internal connection loop](evidence/phase-a/2026-10-28-m2b-connection.md) composes the dispatcher with joined reads/results and old-epoch drainage on loopback streams. A focused [connection fault campaign](evidence/phase-a/2026-10-28-m2b-connection-faults.md) covers cancellation, launch and I/O failures and corrects timeout reporting. An [internal service owner](evidence/phase-a/2026-10-28-m2b-service-owner.md) starts both tasks and authenticates supplied streams with stable distinct PIDs. The separate `serve-workers` listener/CLI has [OTP 25/26/27 smoke coverage](evidence/phase-b/2026-10-28-m2b-cli.md) in both modes. [Independent OTP-generated vectors](evidence/phase-b/2026-10-28-m2b-vectors.md) cover its principal packet shapes. A bounded [M2b process-loss recovery campaign](evidence/phase-c/2026-10-28-m2b-process-recovery.md) verifies an externally orchestrated replacement without replay. [Control/output checks](evidence/phase-c/2026-10-28-m2b-control-ordering.md) cover 64 monitor exits, pending sibling work and write failure. [Isolated EPMD-loss checks](evidence/phase-c/2026-10-28-m2b-production-epmd.md) use the actual CLI. Final acceptance remains open. Full M2 and production acceptance are not established.
+- **M2b accepted — 2026-10-28:** the separate [`serve-workers` profile](two-worker-wire.md) implements [ADR 0005](adr/0005-two-worker-wire-profile.md): two fixed task-owned PIDs, one peer, bounded shared-stream admission and joined epoch drainage. [Acceptance evidence](evidence/phase-c/2026-10-28-m2b-acceptance.md) distinguishes actual OTP, conformance and externally orchestrated recovery from production certification. Full M2 remains broader.
 
 This file is authoritative when code and historical specifications differ.
 
@@ -21,7 +21,7 @@ This file is authoritative when code and historical specifications differ.
 | EPMD | Registration-socket ownership; node lookup; fail-stop executable when registration socket closes | Deterministic socket-loss test and real OTP discovery/removal |
 | Handshake | Initiating and accepting OTP 23+ format; mutual cookie digest; no read-ahead loss at distribution handoff | Coalesced-frame regression, partial NAME/REPLY and silent-initiator deadline tests; actual OTP 25/26/27 |
 | Distribution | Bounded pass-through framing, ticks, REG_SEND and SEND subset | Conformance and socket integration |
-| Runtime service | One synchronous registered echo or SHA-256 binary worker per process; repeat messages; sequential peers; fresh per-connection state | `serve`, `serve-sha256`, integration and OTP matrix |
+| Runtime service | MVP/M1 synchronous worker or separate M2b two-task profile; one peer at a time with fresh per-connection state | `serve`, `serve-worker`, `serve-workers`, integration and OTP matrix |
 | Initiating request | `probe` discovers an OTP peer, authenticates identity and validates one exact SEND reply | Synthetic housekeeping/tick regression and OTP matrix |
 | Demand | One outstanding frame; atomic reservation before unbuffered read; credit restored after handler/reply; 90-second frame and five-second write budgets | Zero-read/allocation oracle, partial-frame recovery, blocked-writer and pause/resume tests |
 | Local actors | Bounded MPSC mailbox; blocking delivery plus nonblocking `tryDeliver` (`WouldBlock`, no pending putter); logical consumer token; concurrent receive rejection; caller-owned registry and termination | Unit and eight-producer stress tests |
@@ -76,8 +76,8 @@ The [subprocess watchdog](evidence/phase-c/2026-10-27-m2a-shutdown-watchdog.md)
 verifies stalled join and external kill/reap, not preemption.
 The [production-mode example/public API stress](evidence/phase-c/2026-10-27-m2a-public-api.md)
 and [actual-master acceptance](evidence/phase-c/2026-10-27-m2a-acceptance.md)
-close local T0–T4 only. M2b routing is not implemented; existing `Runtime(T)`
-and all M1 network services remain unchanged.
+close local T0–T4 only. The separate M2b profile implements bounded two-worker
+routing; existing `Runtime(T)` and M1 network services retain their contracts.
 
 ## Not implemented or not established
 
@@ -90,7 +90,7 @@ and all M1 network services remain unchanged.
 - BEAM distribution-sender throttling measurements, multi-workload performance conclusions or isolation between actors inside the native process.
 - Memory-corruption/OS-OOM injection, sanitizers/TSAN or a production security audit. Test-only panic and deterministic allocation-failure recovery are covered.
 
-The service deliberately uses synchronous owned-copy processing. The reusable mailbox/registry is not an implicit asynchronous scheduler. Logical tokens are copyable; they do not prove an OS-thread or task identity. Caller-managed lifetimes remain required.
+M1 uses synchronous owned-copy processing; M2b uses two fixed task-owned workers. The reusable mailbox/registry is not an implicit asynchronous scheduler. Logical tokens are copyable; they do not prove an OS-thread or task identity. Caller-managed lifetimes remain required.
 
 ## Zig 0.17 compiler migration
 
@@ -114,7 +114,7 @@ The executable passes `std.process.Init.gpa` to the runtime. The [source/binary 
 
 ## Compatibility scope
 
-The checked-in runner passed on real OTP 25, 26 and 27 using pinned Docker images on Linux x86-64. OTP 28 is additional local development evidence. Only the MVP operations are covered; mandatory handshake bits do not establish complete support for every corresponding ETF tag. Unsupported matching payloads are rejected by disconnecting that peer.
+The checked-in runner passed on real OTP 25, 26 and 27 using pinned Docker images on Linux x86-64. OTP 28 is additional local development evidence. Only documented MVP, M1 and M2b profile operations are covered; mandatory handshake bits do not establish complete support for every corresponding ETF tag. Unsupported matching payloads are rejected by disconnecting that peer.
 
 No claim is made for all patch versions, other operating systems, or full v0.5 conformance. Historical July records remain historical; missing matrix and demand evidence from those records is superseded by the September records, not retroactively changed.
 

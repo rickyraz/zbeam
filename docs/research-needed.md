@@ -1,6 +1,6 @@
 # Research and Risk Backlog
 
-**Reviewed:** 2026-10-27. The [single-actor MVP](mvp.md), bounded M1 and [local M2a](task-runtime.md) are accepted; M2b wire expansion and the full v0.5 design are not implemented. [Implementation status](implementation-status.md) distinguishes executed evidence from proposals.
+**Reviewed:** 2026-10-28. The [single-actor MVP](mvp.md), bounded M1, [local M2a](task-runtime.md) and restricted [M2b profile](two-worker-wire.md) are accepted; the full v0.5 design is not implemented. [Implementation status](implementation-status.md) distinguishes executed evidence from proposals.
 
 The [development plan](development-plan.md) defines execution order and final release gates. The [snmalloc evaluation](snmalloc-evaluation.md) specifies the allocator experiment without changing the default build.
 
@@ -86,8 +86,8 @@ checks verify stalled join plus external kill/reap, not preemption.
 [Actual-master acceptance](evidence/phase-c/2026-10-27-m2a-acceptance.md) closes
 local M2a; external-user quiescence remains caller-owned. Caller-owned registry
 lifetimes stay unchanged; [local API](task-runtime.md).
-M2b additionally needs atomic shared-route reservations, output/monitor bounds
-and connection-epoch ownership before wire expansion; [gates](m2-task-lifecycle-plan.md).
+M2b implements atomic shared-route reservations, bounded output/monitor tables
+and joined epoch drainage for its private runtime; [evidence](evidence/phase-c/2026-10-28-m2b-acceptance.md).
 
 Bounded queue operations, logical token ownership, concurrent-receive exclusion, duplicate mailbox registration and close/drain behavior are implemented. Tokens remain copyable and publicly constructible. Callers must join all operations before destroying mailbox storage or the registry, including sends that resolved a mailbox before termination.
 
@@ -128,13 +128,13 @@ The MVP rejects cached/fragmented headers, checks wire lengths before allocation
 
 ### M2b shared-wire capacity and ownership
 
-[Proposed ADR 0005](adr/0005-two-worker-wire-profile.md) records unresolved wire
-schema, atomic pre-read reservation, bounded reply/control output, connection
-epoch and stop/monitor ordering gates. An internal shared-route lease now reserves
-actor capacity before a potential read. An internal output-credit table and pre-read
-gate now have a counted-reader oracle. A fixed 16 KiB scratch encoder bounds its
-own output/transient allocation; socket integration, lifecycle/epoch teardown and
-wire conformance remain unimplemented. No M2b profile is enabled.
+[ADR 0005](adr/0005-two-worker-wire-profile.md) defines the implemented two-worker
+profile. Atomic pre-read reservations, output credits, 64 monitor slots, joined
+epoch drainage and bounded 16 KiB encoding scratch have focused tests. Pinned OTP
+25/26/27 and independent vectors cover the supported subset; actual registration
+loss is exercised in isolated containers. [Acceptance](evidence/phase-c/2026-10-28-m2b-acceptance.md)
+does not imply an RSS bound, fairness, a reusable M2b supervisor or production
+readiness. Heartbeats can be blocked by pressure and CPU spin needs an external kill.
 
 ### Actor failure blast radius
 

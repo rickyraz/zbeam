@@ -1,4 +1,4 @@
-//! Internal single-peer connection loop; no listener or CLI profile is enabled.
+//! Internal single-peer connection loop used by the two-worker service.
 //! The caller owns peer identity, task runtime and sequential connection epochs.
 const std = @import("std");
 const etf = @import("zbeam-etf");

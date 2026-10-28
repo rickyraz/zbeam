@@ -3,8 +3,8 @@
 `@import("zbeam-runtime").TaskRuntime` owns two fixed SHA-256 tasks and their
 mailbox/input/result storage. It is additive: `Runtime(T)` remains a caller-owned
 mailbox registry, and all M1 network services remain synchronous and unchanged.
-[Local M2a is accepted](evidence/phase-c/2026-10-27-m2a-acceptance.md);
-this is not multi-actor OTP routing.
+[Local M2a is accepted](evidence/phase-c/2026-10-27-m2a-acceptance.md).
+This local API is separate from the bounded [two-worker wire profile](two-worker-wire.md).
 Run `zig build example-task-runtime -Doptimize=safe` for the
 [standalone example](../examples/task_runtime.zig) (also checked by the lifecycle target).
 
@@ -38,6 +38,6 @@ promised. `zig build test-task-lifecycle -Doptimize=safe` runs the Linux
 lifecycle/watchdog harness (repeat with `-Doptimize=debug`); conditional spin skips in ordinary unit runs are
 not counted as passing the separately executed kill/reap probe.
 See [ADR 0004](adr/0004-bounded-task-owned-runtime.md) and the
-[M2 work plan](m2-task-lifecycle-plan.md) for executed local gates and the
-separately gated M2b wire expansion. Supported methods expose IDs/results, not
+[M2 work plan](m2-task-lifecycle-plan.md) for local gates and the separately
+accepted M2b wire profile. Supported methods expose IDs/results, not
 mailbox handles; Zig does not statically prevent direct field/slice misuse.

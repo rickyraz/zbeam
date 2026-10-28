@@ -1,6 +1,6 @@
 # ADR 0005 — Bounded two-worker wire profile
 
-**Status:** accepted design; implementation and OTP acceptance remain in progress.
+**Status:** accepted; bounded implementation and OTP acceptance recorded in [M2b acceptance](../evidence/phase-c/2026-10-28-m2b-acceptance.md).
 **Date:** 2026-10-27; finalized 2026-10-28 under the owner's direction to complete M2b.
 **Relation:** additive to ADR 0001 and ADR 0004. It does not change the M1
 `serve-worker` profile or supersede ADR 0003.

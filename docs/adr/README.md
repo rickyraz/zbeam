@@ -21,4 +21,4 @@ Accepted ADRs are immutable except for status and supersession links. New eviden
 - [0002 — Monitorable worker lifecycle](0002-monitorable-worker-lifecycle.md) — superseded by 0003; original decision retained
 - [0003 — PID and named monitor capabilities](0003-pid-and-named-monitor-capabilities.md) — accepted; retains 0002's other lifecycle rules
 - [0004 — Bounded task-owned runtime](0004-bounded-task-owned-runtime.md) — accepted and implemented for local M2a; M2b wire expansion separately gated
-- [0005 — Bounded two-worker wire profile](0005-two-worker-wire-profile.md) — accepted design; service implementation and wire acceptance remain open
+- [0005 — Bounded two-worker wire profile](0005-two-worker-wire-profile.md) — accepted and implemented for the restricted M2b profile
