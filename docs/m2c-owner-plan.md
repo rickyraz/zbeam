@@ -39,7 +39,7 @@ a production deployment or a general native actor API.
 | C2 | Owned launcher, supervised owner and exact hashes | Both PIDs ready before admission, one request per actor, bounded name/registration handling and startup rollback; M1 stays separate. |
 | C3 | Actor retirement and failure paths | Monitor identity, independent sibling progress on controlled retirement, timeout/connection loss, two in-flight failures, stale replies and no replay. |
 | C4 | Process and caller cleanup | Claim-before-delivery death, owner/guardian/VM loss, restart intensity, name collision and owned-child cleanup. Fault injection remains test-only. |
-| C5 | Integration and acceptance | Runnable example, mandatory CI, debug/safe core/labs/lifecycle and M1/M2b regressions, real OTP 25/26/27 and supported Elixir/OTP combinations, exact actual-master CI and evidence. |
+| C5 | Integration and acceptance | Runnable example, mandatory CI, debug/safe core/labs/lifecycle and M1/M2b regressions; native OTP 25/26/27 in both modes; Elixir 1.17.3 with OTP 25/26/27 in safe mode and Elixir 1.20.4 with OTP 29 in both modes; exact actual-master CI and evidence. |
 
 Each independently reviewed unit includes its own tests and evidence, targets at
 most 400 changed text lines, and can be rolled back without losing unrelated

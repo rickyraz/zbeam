@@ -51,6 +51,24 @@ jobs:
           export ZBEAM_REQUIRE_ALL_OTP=1
           zig build test-interop -Doptimize=${{ matrix.optimize }}
 
+  m2c-elixir-compat:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        otp: ["25", "26", "27"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.17.0
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{ matrix.otp }}
+          elixir-version: "1.17.3"
+      - name: Verify Elixir owner, cleanup and no-replay recovery
+        run: zig build test-worker-recovery -Doptimize=safe
+
   worker-recovery:
     runs-on: ubuntu-latest
     strategy:
