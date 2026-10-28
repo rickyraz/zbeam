@@ -17,6 +17,8 @@ for program in elixir python3 epmd kill; do command -v "$program" >/dev/null; do
 timeout 15 elixir --erl '+S 2:2' "$root/tests/interop/two_worker_admission_test.exs"
 python3 "$root/tests/integration/worker_guard_test.py"
 sh "$root/scripts/interop/ensure_epmd.sh"
+timeout 30 elixir --erl '+S 2:2' --name "m2c_launch_$$@127.0.0.1" --cookie zbeam_test_cookie \
+    "$root/tests/interop/two_worker_launch_test.exs" "$bin"
 timeout 90 elixir --erl '+S 2:2' --name "recovery_$$@127.0.0.1" --cookie zbeam_test_cookie \
     "$root/tests/interop/worker_recovery_test.exs" "$bin" "$fault_bin"
 timeout 15 elixir --erl '+S 2:2' --name "example_$$@127.0.0.1" --cookie zbeam_test_cookie \
