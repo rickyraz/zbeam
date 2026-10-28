@@ -62,7 +62,7 @@ const State = struct {
             switch (try self.select.await()) {
                 .read => |outcome| {
                     self.reading = false;
-                    const bytes = outcome catch |err| return self.reader.err orelse err;
+                    const bytes = outcome catch |err| return if (err == error.ReadFailed) self.reader.err orelse err else err;
                     defer self.allocator.free(bytes);
                     try transport.deadline.run(self.io, self.allocator, self.config.write_timeout, Session.process, .{ &self.session, &self.frame.?, self.allocator, bytes, &self.writer.interface }, transport.deadline.dropVoid);
                     self.frame = null;
