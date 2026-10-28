@@ -38,17 +38,35 @@ erl +S 2:2 -noshell -name pair_client@127.0.0.1 -setcookie development_cookie -e
 
 ## Supervised Elixir owner
 
-From an Elixir node using the same cookie, load `examples/two_worker_owner.ex`:
+On Linux with Zig, Python 3, Elixir and EPMD installed, build and run the example:
+
+```sh
+zig build -Doptimize=safe
+sh scripts/interop/ensure_epmd.sh
+elixir --erl '+S 2:2' --name pair_client@127.0.0.1 \
+  --cookie development_cookie examples/supervised_two_workers.exs ./zig-out/bin/zbeam
+```
+
+The example starts one supervised native process and checks simultaneous exact
+hashes on `a` and `b`. It creates one peer-name atom per VM and reuses it on
+restart. Applications may instead load `examples/two_worker_owner.ex` and
+provide a fixed peer atom, an exclusive name and an executable path:
 
 ```elixir
 Code.require_file("examples/two_worker_owner.ex")
-{:ok, supervisor} = Supervisor.start_link([{TwoWorkerOwner, [name: :pair, peer: :"native_pair@127.0.0.1", executable: "./zig-out/bin/zbeam"]}], strategy: :one_for_one)
+opts = [name: :pair, peer: :"native_pair@127.0.0.1", executable: "./zig-out/bin/zbeam"]
+{:ok, supervisor} = Supervisor.start_link([{TwoWorkerOwner, opts}], strategy: :one_for_one)
 {:ok, digest} = TwoWorkerOwner.hash(:pair, :a, "abc")
 Supervisor.stop(supervisor)
 ```
 
-The owner starts its own native child; do not start another service with that
-name. Its M2c failure campaign is still in progress.
+The owner starts its own child; do not start another service using that name.
+Only one call per actor is admitted before the owner mailbox; excess calls return
+`{:error, :busy}`. Input is limited to 1 MiB. A timeout, caller death or loss of
+connection/process can fail **both** pending calls and restart the child. Work
+with uncertain outcome is never replayed. The owner requires exclusive control
+of its peer connection and assumes trusted local processes. This development
+example is not production certification; M2c acceptance is still in progress.
 
 ## Contract and limits
 
@@ -71,7 +89,7 @@ Cookies appear in process arguments; there is no TLS. Authentication trusts the
 peer node, not individual BEAM processes. External supervision and no-replay
 recovery are deployment responsibilities. The Linux
 [process-loss campaign](evidence/phase-c/2026-10-28-m2b-process-recovery.md)
-provides a bounded test example, not a reusable supervisor. Do not expose this
-profile to untrusted networks. [Acceptance evidence](evidence/phase-c/2026-10-28-m2b-acceptance.md)
+covers the wire profile separately from the Elixir owner above. Do not expose
+this profile to untrusted networks. [Acceptance evidence](evidence/phase-c/2026-10-28-m2b-acceptance.md)
 and [implementation status](implementation-status.md) distinguish the supported
 subset from remaining deployment and compatibility risks.

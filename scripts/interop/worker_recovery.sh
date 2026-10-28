@@ -25,6 +25,8 @@ timeout 30 elixir --erl '+S 2:2' --name "m2c_owner_$$@127.0.0.1" --cookie zbeam_
     "$root/tests/interop/two_worker_owner_test.exs" "$bin"
 timeout 30 elixir --erl '+S 2:2' --name "m2c_process_$$@127.0.0.1" --cookie zbeam_test_cookie \
     "$root/tests/interop/two_worker_process_test.exs" "$bin"
+timeout 15 elixir --erl '+S 2:2' --name "m2c_example_$$@127.0.0.1" --cookie zbeam_test_cookie \
+    "$root/examples/supervised_two_workers.exs" "$bin"
 timeout 90 elixir --erl '+S 2:2' --name "recovery_$$@127.0.0.1" --cookie zbeam_test_cookie \
     "$root/tests/interop/worker_recovery_test.exs" "$bin" "$fault_bin"
 timeout 15 elixir --erl '+S 2:2' --name "example_$$@127.0.0.1" --cookie zbeam_test_cookie \
