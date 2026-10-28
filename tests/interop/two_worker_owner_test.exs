@@ -137,6 +137,26 @@ defmodule TwoWorkerOwnerTest do
     assert TwoWorkerOwner.hash(@name, :b, "alive") == {:ok, :crypto.hash(:sha256, "alive")}
   end
 
+  test "a handled actor failure retires its slot and leaves the sibling usable" do
+    {_, owner, _, native} = start()
+    kill(native, "STOP")
+
+    try do
+      task = Task.async(fn -> TwoWorkerOwner.hash(@name, :a, "uncertain") end)
+      await(fn -> Map.has_key?(:sys.get_state(owner).pending, :a) end)
+      {_, _, ref, _, _} = :sys.get_state(owner).pending.a
+      send(owner, {ref, {:error, :handler_failed}})
+      assert Task.await(task, 2_000) == {:error, :handler_failed}
+      assert :sys.get_state(owner).actors.a == nil
+      kill(native, "CONT")
+      Process.put(:failure_resumed, true)
+      assert TwoWorkerOwner.hash(@name, :a, "retired") == {:error, :unavailable}
+      assert TwoWorkerOwner.hash(@name, :b, "fresh") == {:ok, :crypto.hash(:sha256, "fresh")}
+    after
+      if not Process.get(:failure_resumed, false) and live?(native), do: kill(native, "CONT")
+    end
+  end
+
   test "caller death before delivery retires the old owner and both PIDs" do
     {sup, owner, old, native} = start()
     parent = self()
