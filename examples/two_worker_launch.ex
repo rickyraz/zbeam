@@ -8,11 +8,11 @@ defmodule TwoWorkerLaunch do
     with true <- Node.alive?(),
          [short, "127.0.0.1"] <- String.split(Atom.to_string(peer), "@", parts: 2),
          true <- Regex.match?(~r/\A[a-zA-Z0-9_-]{1,64}\z/, short),
-         true <- peer != Node.self() and peer not in Node.list(:connected),
+         true <- peer != Node.self(),
          true <- File.regular?(executable),
          python when is_binary(python) <- System.find_executable("python3"),
          deadline = System.monotonic_time(:millisecond) + timeout_ms,
-         :ok <- await_available(short, deadline) do
+         :ok <- await_available(peer, short, deadline) do
       port =
         Port.open({:spawn_executable, python}, [
           :binary,
@@ -52,19 +52,21 @@ defmodule TwoWorkerLaunch do
     error in ArgumentError -> if Port.info(port) != nil, do: reraise(error, __STACKTRACE__)
   end
 
-  defp await_available(short, deadline) do
+  defp await_available(peer, short, deadline) do
     left = deadline - System.monotonic_time(:millisecond)
 
     if left <= 0 do
       {:error, :name_taken}
     else
-      case epmd_lookup(short, deadline) do
+      status = if peer in Node.list(:connected), do: :taken, else: epmd_lookup(short, deadline)
+
+      case status do
         :available ->
           :ok
 
         :taken ->
           Process.sleep(min(20, left))
-          await_available(short, deadline)
+          await_available(peer, short, deadline)
 
         :error ->
           {:error, :not_ready}
