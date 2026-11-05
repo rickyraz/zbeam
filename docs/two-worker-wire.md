@@ -106,8 +106,10 @@ elixir --erl '+S 2:2' --name custom_client@127.0.0.1 \
 ```
 
 The example launches its own guarded child, calls both actors, and cleans up the
-connection and child. It has a [local live-OTP check](evidence/phase-c/2026-11-05-handler-example.md);
-full custom-profile fault and compatibility acceptance remains separate.
+connection and child. The [live interoperability campaign](evidence/phase-c/2026-11-05-handler-interop.md)
+covers OTP 25/26/27 in both modes plus local Elixir fault scenarios; final
+actual-master CI and production acceptance remain separate. The raw example is
+not the bounded SHA-256 owner API and does not bound arbitrary BEAM senders.
 
 ## Contract and limits
 

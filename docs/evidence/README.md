@@ -41,7 +41,7 @@ scheduler or production release.
 - M2c owner: [composition](phase-c/2026-10-29-m2c-owner.md), [caller/disconnect faults](phase-c/2026-10-29-m2c-caller-faults.md), [process faults](phase-c/2026-10-29-m2c-process-faults.md), [handled retirement](phase-c/2026-10-29-m2c-handled-retirement.md) and [supervised example](phase-c/2026-10-29-m2c-example.md).
 - M2c verification: [Elixir/OTP matrix gate](phase-a/2026-10-29-m2c-elixir-matrix.md), [send-pressure observation](phase-c/2026-10-28-m2c-send-pressure.md) and [acceptance](phase-c/2026-10-28-m2c-acceptance.md).
 - Later owner changes: [confirmed-unsent pressure handling](phase-c/2026-11-05-owner-send-pressure.md), [per-actor stop](phase-c/2026-11-05-owner-stop.md), the [restart test-oracle repair](phase-c/2026-11-05-restart-oracle.md) and a [short queue/memory observation](phase-c/2026-11-05-owner-pressure-observation.md).
-- Compiled handlers: [design](phase-a/2026-11-05-compiled-handler-plan.md), [local lifecycle](phase-c/2026-11-05-handler-local.md), [wire primitives/vectors](phase-b/2026-11-05-handler-wire-primitives.md), [synthetic composition](phase-b/2026-11-05-handler-composition.md) and [local live example](phase-c/2026-11-05-handler-example.md).
+- Compiled handlers: [design](phase-a/2026-11-05-compiled-handler-plan.md), [local lifecycle](phase-c/2026-11-05-handler-local.md), [wire primitives/vectors](phase-b/2026-11-05-handler-wire-primitives.md), [synthetic composition](phase-b/2026-11-05-handler-composition.md), [local example](phase-c/2026-11-05-handler-example.md) and [live interop/faults](phase-c/2026-11-05-handler-interop.md).
 
 ## Compiler migration
 

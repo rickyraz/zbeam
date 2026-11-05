@@ -181,10 +181,10 @@ handler profile with borrowed bounded input, inline bounded output, cooperative
 shutdown and no replay. A [local-only implementation](task-runtime.md#compiled-stateless-handler-local-only)
 has focused lifecycle and external-kill checks. Mode-specific routing and
 synthetic service composition are implemented, with independent OTP-generated
-vectors. A separate compiled uppercase example has a local OTP 29 round trip;
-its broader OTP matrix, fault coverage and end-to-end acceptance remain pending.
-Arbitrary state, destructor ownership, large output and dynamic plugins remain
-outside that proposal.
+vectors. A separate compiled uppercase example has local OTP 25/26/27 checks in
+both modes and local Elixir/OTP 29 fault coverage; actual-master CI and broader
+production acceptance remain pending. Arbitrary state, destructor ownership,
+large output and dynamic plugins remain outside that proposal.
 
 ### Arena identity and recycling
 
