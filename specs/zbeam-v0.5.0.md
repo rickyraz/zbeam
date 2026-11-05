@@ -426,6 +426,10 @@ not add native scheduling, arbitrary handlers or production certification. [Evid
 records the verified scope. M1 and the caller-owned `Runtime(T)` retain their
 contracts. `example-task-runtime` exercises the local API, not wire actor routes.
 
+**Proposed compiled handlers:** [ADR 0006](../docs/adr/0006-compiled-binary-handler.md)
+scopes an additive stateless binary handler profile; it is not yet implementation
+or interoperability evidence and does not change the SHA-256 profiles.
+
 **M2a prerequisite:** `Mailbox(T).tryDeliver` adds one-element nonblocking
 capacity admission with caller ownership retained on error. It does not change
 blocking `deliver`, queue-close races or caller-managed storage lifetime.
