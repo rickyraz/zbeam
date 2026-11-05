@@ -33,7 +33,8 @@ pub const Session = struct {
         defer if (frame.active) frame.release();
         var packet = try protocol.distribution.decodePacket(allocator, bytes, worker.limits);
         defer packet.deinit(allocator);
-        var parsed = try route.parse(allocator, &packet, self.peer, self.pids, self.running());
+        const mode: route.Mode = if (self.tasks.handler == null) .hash else .call;
+        var parsed = try route.parseMode(allocator, &packet, self.peer, self.pids, self.running(), mode);
         defer parsed.deinit(allocator);
         switch (parsed.action) {
             .tick => try transport.distribution_io.writePacket(writer, &protocol.distribution.tickPacket()),
@@ -72,8 +73,12 @@ pub const Session = struct {
     pub fn result(self: *Session, value: Runtime.Result, writer: *std.Io.Writer) !void {
         const delivery = self.outputs.beginWrite(self.outputs.epoch, value.request_id) orelse return error.UnknownCompletion;
         defer self.outputs.finishWrite(delivery.ticket);
+        if (value.output_len > 32) return error.InvalidOutputLength;
         const encoded: encode.Result = switch (value.outcome) {
-            .digest => |digest| .{ .digest = digest },
+            .digest => |*digest| if (self.tasks.handler == null)
+                .{ .digest = digest.* }
+            else
+                .{ .binary = digest[0..value.output_len] },
             .stopped => .{ .failure = .stopped },
             .canceled => .{ .failure = .canceled },
             .handler_failed => .{ .failure = .handler_failed },

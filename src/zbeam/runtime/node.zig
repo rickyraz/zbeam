@@ -7,6 +7,7 @@ const Echo = @import("echo.zig").Echo;
 const Sha256 = @import("sha256.zig").Sha256;
 const worker_service = @import("worker.zig");
 const wire_service = @import("wire_service.zig");
+const TaskRuntime = @import("task_runtime.zig");
 
 pub const Config = struct {
     node_name: []const u8,
@@ -16,6 +17,8 @@ pub const Config = struct {
     challenge: ?u32 = null,
     registered_name: []const u8 = "echo",
     service: enum { echo, sha256, worker, workers } = .echo,
+    /// Selects the separate custom-call mode only for the workers service.
+    custom_handler: ?TaskRuntime.Handler = null,
     flags: u64 = protocol.flags.m1,
     limits: protocol.distribution.Limits = .{},
     max_messages: usize = 1,
@@ -33,11 +36,13 @@ pub const Config = struct {
 /// A connection owns its demand, reader and packet lifetimes. Reconnect starts
 /// empty; the EPMD registration (and therefore creation) belongs to the caller.
 pub fn serve(io: std.Io, allocator: std.mem.Allocator, server: *std.Io.net.Server, config: Config) !void {
+    if (config.custom_handler != null and config.service != .workers) return error.InvalidHandlerConfiguration;
     var workers: ?wire_service.Service = null;
     if (config.service == .workers) workers = try wire_service.Service.init(io, allocator, .{
         .node_name = config.node_name,
         .cookie = config.cookie,
         .creation = config.creation,
+        .handler = config.custom_handler,
         .handshake_timeout = config.handshake_timeout,
         .connection = .{ .frame_timeout = config.frame_timeout, .write_timeout = config.write_timeout },
     });
@@ -74,7 +79,7 @@ fn fatalConnectionError(err: anyerror, config: Config) bool {
     if (err == error.Canceled or err == error.OutOfMemory or config.max_connections == 1) return true;
     return config.service == .workers and (err == error.ConcurrencyUnavailable or err == error.EpochExhausted or
         err == error.RequestIdExhausted or err == error.UnknownCompletion or err == error.MissingCompletion or
-        err == error.NoProgress or err == error.ReservationOutstanding);
+        err == error.NoProgress or err == error.ReservationOutstanding or err == error.InvalidOutputLength);
 }
 
 test "two-worker internal failures stop service without changing M1 error policy" {
@@ -83,7 +88,7 @@ test "two-worker internal failures stop service without changing M1 error policy
     m1.service = .worker;
     var m2 = base;
     m2.service = .workers;
-    for ([_]anyerror{ error.ConcurrencyUnavailable, error.EpochExhausted, error.RequestIdExhausted, error.UnknownCompletion, error.MissingCompletion, error.NoProgress, error.ReservationOutstanding }) |err| {
+    for ([_]anyerror{ error.ConcurrencyUnavailable, error.EpochExhausted, error.RequestIdExhausted, error.UnknownCompletion, error.MissingCompletion, error.NoProgress, error.ReservationOutstanding, error.InvalidOutputLength }) |err| {
         try std.testing.expect(!fatalConnectionError(err, m1));
         try std.testing.expect(fatalConnectionError(err, m2));
     }
@@ -94,6 +99,21 @@ test "two-worker internal failures stop service without changing M1 error policy
     try std.testing.expect(!fatalConnectionError(error.InvalidControl, m2));
     m1.max_connections = 1;
     try std.testing.expect(fatalConnectionError(error.InvalidControl, m1));
+}
+
+test "custom handler is rejected outside the two-worker service" {
+    const Handler = struct {
+        fn apply(_: []const u8, _: *[32]u8) error{HandlerFailed}!usize {
+            return 0;
+        }
+    };
+    var server: std.Io.net.Server = undefined;
+    try std.testing.expectError(error.InvalidHandlerConfiguration, serve(std.testing.io, std.testing.allocator, &server, .{
+        .node_name = "node@host",
+        .cookie = "cookie",
+        .creation = 1,
+        .custom_handler = Handler.apply,
+    }));
 }
 
 /// Initiating-role smoke request to an OTP actor implementing {From, Value}.
@@ -157,7 +177,7 @@ pub fn probe(io: std.Io, allocator: std.mem.Allocator, stream: std.Io.net.Stream
 }
 
 pub fn serveConnection(io: std.Io, allocator: std.mem.Allocator, stream: std.Io.net.Stream, config: Config) !void {
-    if (config.service == .worker or config.service == .workers) return error.WorkerRequiresService;
+    if (config.custom_handler != null or config.service == .worker or config.service == .workers) return error.WorkerRequiresService;
     var peer = try acceptPeer(io, allocator, stream, config);
     defer peer.deinit(allocator);
     if (config.service == .sha256)

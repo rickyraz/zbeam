@@ -111,6 +111,91 @@ test "internal session discovers, hashes, stops one actor and preserves sibling"
     session.outputs.discard();
 }
 
+test "custom session separates commands and writes the exact bounded output" {
+    const Handler = struct {
+        fn apply(input: []const u8, output: *[32]u8) error{HandlerFailed}!usize {
+            if (input.len > output.len) return error.HandlerFailed;
+            for (input, 0..) |byte, i| output[i] = std.ascii.toUpper(byte);
+            return input.len;
+        }
+    };
+    const tasks = try Runtime.createWithHandler(testing.allocator, io, .{ "a", "b" }, Handler.apply);
+    defer tasks.deinit() catch unreachable;
+    defer _ = tasks.shutdown();
+    var session = Session.init(tasks, &peer, pids, 1);
+    var buffer: [8192]u8 = undefined;
+    var writer = std.Io.Writer.fixed(&buffer);
+    var command = [_]etf.Term{ .{ .atom = "hash" }, .{ .binary = "abc" } };
+    try request(&session, pids[0], .{ .tuple = &command }, &writer);
+    var rejected = try decodeReply(writer.buffered());
+    defer rejected.deinit(testing.allocator);
+    try testing.expectEqualStrings("bad_request", rejected.tuple[1].tuple[1].atom);
+
+    const maximum: [32]u8 = @splat('a');
+    command[0] = .{ .atom = "call" };
+    for ([_][]const u8{ "", "abc", &maximum }, 0..) |input, i| {
+        writer = .fixed(&buffer);
+        command[1] = .{ .binary = input };
+        try request(&session, pids[i % 2], .{ .tuple = &command }, &writer);
+        try testing.expectEqual(@as(usize, 0), writer.buffered().len);
+        try session.result((try tasks.nextResult()).?, &writer);
+        var reply = try decodeReply(writer.buffered());
+        defer reply.deinit(testing.allocator);
+        const expected = [_][]const u8{ "", "ABC", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" };
+        try testing.expectEqualStrings(expected[i], reply.tuple[1].tuple[1].binary);
+    }
+    session.outputs.discard();
+}
+
+test "custom handler failure retires its actor without disabling the sibling" {
+    const Handler = struct {
+        fn apply(input: []const u8, output: *[32]u8) error{HandlerFailed}!usize {
+            if (std.mem.eql(u8, input, "fail")) return error.HandlerFailed;
+            output[0] = 42;
+            return 1;
+        }
+    };
+    const tasks = try Runtime.createWithHandler(testing.allocator, io, .{ "a", "b" }, Handler.apply);
+    defer tasks.deinit() catch unreachable;
+    defer _ = tasks.shutdown();
+    var session = Session.init(tasks, &peer, pids, 1);
+    var buffer: [8192]u8 = undefined;
+    var writer = std.Io.Writer.fixed(&buffer);
+    var command = [_]etf.Term{ .{ .atom = "call" }, .{ .binary = "fail" } };
+    try request(&session, pids[0], .{ .tuple = &command }, &writer);
+    try session.result((try tasks.nextResult()).?, &writer);
+    var failed = try decodeReply(writer.buffered());
+    defer failed.deinit(testing.allocator);
+    try testing.expectEqualStrings("handler_failed", failed.tuple[1].tuple[1].atom);
+    try testing.expect(tasks.whereis("a") == null and tasks.whereis("b") != null);
+    writer = .fixed(&buffer);
+    command[1] = .{ .binary = "fresh" };
+    try request(&session, pids[1], .{ .tuple = &command }, &writer);
+    try session.result((try tasks.nextResult()).?, &writer);
+    var sibling = try decodeReply(writer.buffered());
+    defer sibling.deinit(testing.allocator);
+    try testing.expectEqualSlices(u8, &.{42}, sibling.tuple[1].tuple[1].binary);
+    session.outputs.discard();
+}
+
+test "invalid result length fails closed and releases its output credit" {
+    const tasks = try Runtime.create(testing.allocator, io, .{ "a", "b" });
+    defer tasks.deinit() catch unreachable;
+    defer _ = tasks.shutdown();
+    var session = Session.init(tasks, &peer, pids, 1);
+    var buffer: [8192]u8 = undefined;
+    var writer = std.Io.Writer.fixed(&buffer);
+    var command = [_]etf.Term{ .{ .atom = "hash" }, .{ .binary = "abc" } };
+    try request(&session, pids[0], .{ .tuple = &command }, &writer);
+    var result = (try tasks.nextResult()).?;
+    result.output_len = 33;
+    try testing.expectError(error.InvalidOutputLength, session.result(result, &writer));
+    try testing.expectError(error.UnknownCompletion, session.result(result, &writer));
+    for (0..10) |_| _ = try session.outputs.reserve();
+    try testing.expectError(error.WouldBlock, session.outputs.reserve());
+    session.outputs.discard();
+}
+
 test "handler failure joins the actor and notifies its monitor once" {
     var control = @import("task_runtime_test.zig").Control{ .fail = true };
     const tasks = try Runtime.create(testing.allocator, io, .{ "a", "b" });
