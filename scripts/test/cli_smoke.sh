@@ -1,6 +1,7 @@
 #!/bin/sh
 set -eu
-bin=${1:?usage: cli_smoke.sh ZBEAM}
+bin=${1:?ZBEAM required}
+custom_bin=${2:?CUSTOM_WORKER required}
 logs=$(mktemp -d)
 trap 'rm -rf "$logs"' EXIT
 trap 'exit 130' INT TERM
@@ -27,4 +28,10 @@ if "$bin" serve-workers valid cookie unexpected >"$logs/out" 2>"$logs/error"; th
 grep -q UnexpectedArgument "$logs/error"
 if "$bin" unknown >"$logs/out" 2>"$logs/error"; then exit 1; fi
 grep -q UnknownCommand "$logs/error"
+if "$bin" serve-custom valid cookie >"$logs/out" 2>"$logs/error"; then exit 1; fi
+grep -q UnknownCommand "$logs/error"
+if "$custom_bin" serve-custom 'bad@name' cookie >"$logs/out" 2>"$logs/error"; then exit 1; fi
+grep -q InvalidNodeName "$logs/error"
+if "$custom_bin" serve-custom valid cookie unexpected >"$logs/out" 2>"$logs/error"; then exit 1; fi
+grep -q UnexpectedArgument "$logs/error"
 echo 'PASS CLI streaming stdout and argument validation'

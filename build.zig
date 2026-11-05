@@ -64,6 +64,18 @@ pub fn build(b: *std.Build) void {
     });
     b.installArtifact(exe);
 
+    const custom_worker = b.addExecutable(.{
+        .name = "zbeam-custom-worker",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("examples/custom_worker.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{.{ .name = "zbeam-cli", .module = exe.root_module }},
+        }),
+    });
+    const install_custom = b.addInstallArtifact(custom_worker, .{});
+    b.step("example-custom-worker", "Build the separate compiled-handler example").dependOn(&install_custom.step);
+
     const port_echo = b.addExecutable(.{
         .name = "zbeam-port-echo",
         .root_module = b.createModule(.{
@@ -87,6 +99,8 @@ pub fn build(b: *std.Build) void {
     }
     const exe_tests = b.addTest(.{ .root_module = exe.root_module });
     test_unit_step.dependOn(&b.addRunArtifact(exe_tests).step);
+    const custom_tests = b.addTest(.{ .root_module = custom_worker.root_module });
+    test_unit_step.dependOn(&b.addRunArtifact(custom_tests).step);
 
     const integration_tests_mod = b.createModule(.{
         .root_source_file = b.path("tests/integration/basic_integration.zig"),
@@ -107,6 +121,7 @@ pub fn build(b: *std.Build) void {
     const cli_smoke = b.addSystemCommand(&.{"sh"});
     cli_smoke.addFileArg(b.path("scripts/test/cli_smoke.sh"));
     cli_smoke.addArtifactArg(exe);
+    cli_smoke.addArtifactArg(custom_worker);
     test_integration_step.dependOn(&cli_smoke.step);
 
     const etf_fixtures_mod = b.createModule(.{
@@ -202,6 +217,7 @@ pub fn build(b: *std.Build) void {
     recovery_cmd.addFileArg(b.path("scripts/interop/worker_recovery.sh"));
     recovery_cmd.addArtifactArg(exe);
     recovery_cmd.addArtifactArg(fault_worker);
+    recovery_cmd.addArtifactArg(custom_worker);
     const two_worker_recovery = b.addSystemCommand(&.{"sh"});
     two_worker_recovery.addFileArg(b.path("scripts/interop/two_worker_recovery.sh"));
     two_worker_recovery.addArtifactArg(exe);

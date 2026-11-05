@@ -2,12 +2,22 @@ const std = @import("std");
 const zbeam = @import("zbeam");
 
 pub fn main(init: std.process.Init) !void {
+    return runCli(init, null);
+}
+
+/// Used by a separately compiled executable, never by the default zbeam CLI.
+pub fn runCustom(init: std.process.Init, handler: zbeam.runtime.TaskRuntime.Handler) !void {
+    return runCli(init, handler);
+}
+
+fn runCli(init: std.process.Init, handler: ?zbeam.runtime.TaskRuntime.Handler) !void {
     var args = try std.process.Args.Iterator.initAllocator(init.minimal.args, init.gpa);
     defer args.deinit();
     _ = args.next();
-    const command = args.next() orelse return printStatus(init);
+    const command = args.next() orelse return printStatus(init, handler != null);
     const worker = std.mem.eql(u8, command, "serve-worker");
-    const workers = std.mem.eql(u8, command, "serve-workers");
+    const custom = handler != null and std.mem.eql(u8, command, "serve-custom");
+    const workers = custom or std.mem.eql(u8, command, "serve-workers");
     const hashing = std.mem.eql(u8, command, "sha256") or std.mem.eql(u8, command, "serve-sha256");
     const serving = worker or workers or std.mem.eql(u8, command, "serve") or std.mem.eql(u8, command, "serve-sha256");
     const probing = std.mem.eql(u8, command, "probe");
@@ -22,7 +32,7 @@ pub fn main(init: std.process.Init) !void {
         break :blk if (args.next()) |value| try std.fmt.parseInt(usize, value, 10) else if (serving) @as(usize, 0) else @as(usize, 1);
     } else if (workers) @as(usize, 0) else @as(usize, 1);
     if (args.next() != null) return error.UnexpectedArgument;
-    try run(init, short_name, cookie, max_messages, serving, peer_name, hashing, worker, workers);
+    try run(init, short_name, cookie, max_messages, serving, peer_name, hashing, worker, workers, if (custom) handler else null);
 }
 
 fn validateName(name: []const u8) !void {
@@ -32,7 +42,7 @@ fn validateName(name: []const u8) !void {
     }
 }
 
-fn printStatus(init: std.process.Init) !void {
+fn printStatus(init: std.process.Init, custom: bool) !void {
     var buffer: [1024]u8 = undefined;
     var writer: std.Io.File.Writer = .initStreaming(.stdout(), init.io, &buffer);
     try writer.interface.writeAll(
@@ -52,10 +62,11 @@ fn printStatus(init: std.process.Init) !void {
         \\probe: initiate a connection and verify one echo round trip with an OTP actor.
         \\
     );
+    if (custom) try writer.interface.writeAll("       custom-worker serve-custom <short-name> <cookie>\n");
     try writer.interface.flush();
 }
 
-fn run(init: std.process.Init, short_name: []const u8, cookie: []const u8, max_messages: usize, serving: bool, peer_name: ?[]const u8, hashing: bool, worker: bool, workers: bool) !void {
+fn run(init: std.process.Init, short_name: []const u8, cookie: []const u8, max_messages: usize, serving: bool, peer_name: ?[]const u8, hashing: bool, worker: bool, workers: bool, custom_handler: ?zbeam.runtime.TaskRuntime.Handler) !void {
     const allocator = init.gpa;
     const io = init.io;
     const full_name = try std.fmt.allocPrint(allocator, "{s}@127.0.0.1", .{short_name});
@@ -74,6 +85,7 @@ fn run(init: std.process.Init, short_name: []const u8, cookie: []const u8, max_m
         .max_connections = if (serving) 0 else 1,
         .registered_name = if (hashing) "sha256" else "echo",
         .service = if (workers) .workers else if (worker) .worker else if (hashing) .sha256 else .echo,
+        .custom_handler = custom_handler,
     };
     var buffer: [1024]u8 = undefined;
     var writer: std.Io.File.Writer = .initStreaming(.stdout(), io, &buffer);

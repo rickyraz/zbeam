@@ -3,8 +3,11 @@ defmodule TwoWorkerLaunch do
   @guard Path.join(__DIR__, "worker_guard.py")
 
   # The caller owns the returned Port and traps exits throughout its lifetime.
-  def start(peer, executable, timeout_ms)
-      when is_atom(peer) and is_binary(executable) and is_integer(timeout_ms) and timeout_ms > 0 do
+  def start(peer, executable, timeout_ms), do: start(peer, executable, timeout_ms, "serve-workers")
+
+  def start(peer, executable, timeout_ms, command)
+      when is_atom(peer) and is_binary(executable) and is_integer(timeout_ms) and timeout_ms > 0 and
+             command in ["serve-workers", "serve-custom"] do
     with true <- Node.alive?(),
          [short, "127.0.0.1"] <- String.split(Atom.to_string(peer), "@", parts: 2),
          true <- Regex.match?(~r/\A[a-zA-Z0-9_-]{1,64}\z/, short),
@@ -22,7 +25,7 @@ defmodule TwoWorkerLaunch do
           args: [
             @guard,
             Path.expand(executable),
-            "serve-workers",
+            command,
             short,
             Atom.to_string(Node.get_cookie())
           ]
@@ -44,7 +47,7 @@ defmodule TwoWorkerLaunch do
     ArgumentError -> {:error, :not_ready}
   end
 
-  def start(_, _, _), do: {:error, :not_ready}
+  def start(_, _, _, _), do: {:error, :not_ready}
 
   def close(port) do
     Port.close(port)
