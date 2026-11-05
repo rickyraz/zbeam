@@ -46,8 +46,7 @@ defmodule TwoWorkerOwnerTest do
   end
 
   defp recovered(owner, old, native) do
-    await(fn -> is_pid(Process.whereis(@name)) and Process.whereis(@name) != owner end)
-    replacement = Process.whereis(@name)
+    replacement = await_replacement(@name, owner)
     {state, guard, child} = owned(replacement)
     assert elem(state.actors.a, 0) != elem(old.actors.a, 0)
     assert elem(state.actors.b, 0) != elem(old.actors.b, 0)
@@ -343,12 +342,10 @@ defmodule TwoWorkerOwnerTest do
     await(fn -> map_size(:sys.get_state(owner).pending) == 2 end)
     assert Task.await(a, 2_000) == {:error, :timeout}
     assert Task.await(b, 2_000) == {:error, :worker_lost}
-    await(fn -> is_pid(Process.whereis(@name)) and Process.whereis(@name) != owner end)
-    {new, new_guard, new_native} = owned(Process.whereis(@name))
+    {_, new, new_guard, new_native} = recovered(owner, old, native)
     assert elem(new.actors.a, 0) != elem(old.actors.a, 0)
     assert TwoWorkerOwner.hash(@name, :b, "fresh") == {:ok, :crypto.hash(:sha256, "fresh")}
     assert Process.alive?(sup)
-    Supervisor.stop(sup)
-    await_dead([new_guard, new_native])
+    stop_and_check(sup, new_guard, new_native)
   end
 end

@@ -146,6 +146,10 @@ parse all procfs terminal states without repeating a successful death observatio
 The runner's raw stat snapshots are unavailable; no unique historical X-state
 cause or production guardian repair is claimed.
 
+[Restart-oracle follow-up](evidence/phase-c/2026-11-05-restart-oracle.md)
+retains an actual-master `:sys.get_state(nil)` failure and removes a demonstrable
+multi-read test race. The original precise interleaving was not captured.
+
 SIGKILL process-loss checks preserve the BEAM VM and unrelated local process.
 M1 additionally verifies test-only panic, deterministic allocator failure, spin,
 external recovery and owned-process cleanup, including a regression for concurrent

@@ -17,6 +17,24 @@ defmodule M2cTestSupport do
     loop.(loop)
   end
 
+  def await_replacement(name, old, timeout \\ 5_000, lookup \\ &Process.whereis/1) do
+    deadline = System.monotonic_time(:millisecond) + timeout
+
+    loop = fn loop ->
+      case lookup.(name) do
+        pid when is_pid(pid) and pid != old ->
+          pid
+
+        _ ->
+          assert System.monotonic_time(:millisecond) < deadline, "replacement wait expired"
+          Process.sleep(10)
+          loop.(loop)
+      end
+    end
+
+    loop.(loop)
+  end
+
   def live?(pid) do
     case File.read("/proc/#{pid}/stat") do
       {:ok, stat} ->
