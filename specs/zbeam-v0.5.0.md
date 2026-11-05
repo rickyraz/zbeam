@@ -419,8 +419,10 @@ adds bounded external supervision and no-replay failure fencing for that fixed
 profile. A distribution `:nosuspend` result proves that particular request was
 not sent; the owner releases only its admission and returns `busy`, without
 replaying it or discarding an already-sent sibling. Connection loss and uncertain
-timeouts still fail closed. This does not add native scheduling, arbitrary
-handlers or production certification. [Evidence](../docs/evidence/phase-c/2026-10-28-m2c-acceptance.md)
+timeouts still fail closed. The owner also exposes per-actor stop through the
+same admission slot: busy work is not interrupted, a successful stop retires
+only that actor, and an uncertain stop fails closed without replay. This does
+not add native scheduling, arbitrary handlers or production certification. [Evidence](../docs/evidence/phase-c/2026-10-28-m2c-acceptance.md)
 records the verified scope. M1 and the caller-owned `Runtime(T)` retain their
 contracts. `example-task-runtime` exercises the local API, not wire actor routes.
 

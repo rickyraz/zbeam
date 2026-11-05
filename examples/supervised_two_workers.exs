@@ -25,6 +25,10 @@ try do
     IO.puts("verified SHA-256: " <> input)
   end
 
+  :ok = TwoWorkerOwner.stop(:pair, :a)
+  {:error, :unavailable} = TwoWorkerOwner.hash(:pair, :a, "retired")
+  expected = :crypto.hash(:sha256, "still running")
+  {:ok, ^expected} = TwoWorkerOwner.hash(:pair, :b, "still running")
   IO.puts("PASS supervised two-worker example")
 after
   Supervisor.stop(supervisor)

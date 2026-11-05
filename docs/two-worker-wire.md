@@ -47,9 +47,9 @@ elixir --erl '+S 2:2' --name pair_client@127.0.0.1 \
   --cookie development_cookie examples/supervised_two_workers.exs ./zig-out/bin/zbeam
 ```
 
-The example starts one supervised native process and checks simultaneous exact
-hashes on `a` and `b`. It creates one peer-name atom per VM and reuses it on
-restart. Applications may instead load `examples/two_worker_owner.ex` and
+The example starts one supervised native process, checks simultaneous exact
+hashes on `a` and `b`, and stops `a` while `b` remains usable. It creates one
+peer-name atom per VM and reuses it on restart. Applications may instead load `examples/two_worker_owner.ex` and
 provide a fixed peer atom, an exclusive name and an executable path:
 
 ```elixir
@@ -57,6 +57,8 @@ Code.require_file("examples/two_worker_owner.ex")
 opts = [name: :pair, peer: :"native_pair@127.0.0.1", executable: "./zig-out/bin/zbeam"]
 {:ok, supervisor} = Supervisor.start_link([{TwoWorkerOwner, opts}], strategy: :one_for_one)
 {:ok, digest} = TwoWorkerOwner.hash(:pair, :a, "abc")
+:ok = TwoWorkerOwner.stop(:pair, :a)
+{:ok, sibling_digest} = TwoWorkerOwner.hash(:pair, :b, "still running")
 Supervisor.stop(supervisor)
 ```
 
@@ -68,11 +70,15 @@ distribution send returning `:nosuspend` did not send that request: its caller
 receives `{:error, :busy}`, its admission slot is released, and an already-sent
 sibling remains pending. A `:noconnect` result still fails the owner closed.
 No request is retried automatically; work with uncertain outcome is never replayed.
-The owner requires exclusive control
-of its peer connection and assumes trusted local processes. Its public API is
-limited to hash requests; controlled stop is available on the separate wire
-profile, not through an owner stop function. The [M2c acceptance record](evidence/phase-c/2026-10-28-m2c-acceptance.md)
-covers this restricted development example, not production certification.
+The owner requires exclusive control of its peer connection and assumes trusted
+local processes. `stop(owner, actor)` uses the same admission ticket as `hash`:
+it returns `busy` instead of interrupting an in-flight call. A successful stop
+joins and retires that actor without stopping its sibling; further calls to the
+retired actor return `unavailable` until the native process is replaced. A
+caller death or timeout after a stop was sent has an uncertain outcome and fails
+the owner closed, without replay. The [M2c acceptance record](evidence/phase-c/2026-10-28-m2c-acceptance.md)
+and [stop regression](evidence/phase-c/2026-11-05-owner-stop.md) cover this
+restricted development example, not production certification.
 
 ## Contract and limits
 

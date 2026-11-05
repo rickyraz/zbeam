@@ -115,6 +115,7 @@ defmodule TwoWorkerOwnerTest do
       assert pressure == :full
       b = Task.async(fn -> TwoWorkerOwner.hash(@name, :b, payload) end)
       assert Task.await(b, 5_000) == {:error, :busy}
+      assert TwoWorkerOwner.stop(@name, :b) == {:error, :busy}
       assert Process.whereis(@name) == owner
       assert Map.keys(:sys.get_state(owner).pending) == [:a]
       assert :ets.lookup(@name, :b) == []
@@ -177,6 +178,69 @@ defmodule TwoWorkerOwnerTest do
     assert TwoWorkerOwner.hash(@name, :b, "alive") == {:ok, :crypto.hash(:sha256, "alive")}
   end
 
+  test "owner stop retires only the requested actor" do
+    {_, owner, _, _} = start()
+    assert TwoWorkerOwner.stop(@name, :c) == {:error, :invalid_input}
+    assert TwoWorkerOwner.stop(@name, :a) == :ok
+    assert :sys.get_state(owner).actors.a == nil
+    assert TwoWorkerOwner.stop(@name, :a) == {:error, :unavailable}
+    assert TwoWorkerOwner.hash(@name, :a, "retired") == {:error, :unavailable}
+    assert TwoWorkerOwner.hash(@name, :b, "alive") == {:ok, :crypto.hash(:sha256, "alive")}
+  end
+
+  test "stop and hash share admission and cannot consume each other's reply" do
+    {_, owner, _, native} = start(15_000)
+    kill(native, "STOP")
+
+    try do
+      hash = Task.async(fn -> TwoWorkerOwner.hash(@name, :a, "alive") end)
+      await(fn -> Map.has_key?(:sys.get_state(owner).pending, :a) end)
+      assert TwoWorkerOwner.stop(@name, :a) == {:error, :busy}
+      stop = Task.async(fn -> TwoWorkerOwner.stop(@name, :b) end)
+      await(fn -> map_size(:sys.get_state(owner).pending) == 2 end)
+      assert TwoWorkerOwner.hash(@name, :b, "excess") == {:error, :busy}
+      pending = :sys.get_state(owner).pending
+      send(owner, {elem(pending.a, 2), :ok})
+      send(owner, {elem(pending.b, 2), {:ok, <<0::256>>}})
+      assert map_size(:sys.get_state(owner).pending) == 2
+      kill(native, "CONT")
+      Process.put(:stop_resumed, true)
+      assert Task.await(hash, 5_000) == {:ok, :crypto.hash(:sha256, "alive")}
+      assert Task.await(stop, 5_000) == :ok
+      assert TwoWorkerOwner.hash(@name, :b, "retired") == {:error, :unavailable}
+      assert TwoWorkerOwner.hash(@name, :a, "fresh") == {:ok, :crypto.hash(:sha256, "fresh")}
+    after
+      if not Process.get(:stop_resumed, false) and live?(native), do: kill(native, "CONT")
+    end
+  end
+
+  test "caller death during an uncertain stop fails the sibling without replay" do
+    {sup, owner, old, native} = start()
+    kill(native, "STOP")
+    a = Task.async(fn -> TwoWorkerOwner.hash(@name, :a, "uncertain") end)
+    caller = spawn(fn -> TwoWorkerOwner.stop(@name, :b) end)
+    await(fn -> map_size(:sys.get_state(owner).pending) == 2 end)
+    Process.exit(caller, :kill)
+    assert Task.await(a, 2_000) == {:error, :worker_lost}
+    {_, _, guard, child} = recovered(owner, old, native)
+    assert TwoWorkerOwner.hash(@name, :b, "fresh") == {:ok, :crypto.hash(:sha256, "fresh")}
+    stop_and_check(sup, guard, child)
+  end
+
+  test "an uncertain stop timeout fails the sibling and replaces both actors" do
+    {sup, owner, old, native} = start(500)
+    kill(native, "STOP")
+    stop = Task.async(fn -> TwoWorkerOwner.stop(@name, :b) end)
+    await(fn -> Map.has_key?(:sys.get_state(owner).pending, :b) end)
+    a = Task.async(fn -> TwoWorkerOwner.hash(@name, :a, "uncertain") end)
+    await(fn -> map_size(:sys.get_state(owner).pending) == 2 end)
+    assert Task.await(stop, 2_000) == {:error, :timeout}
+    assert Task.await(a, 2_000) == {:error, :worker_lost}
+    {_, _, guard, child} = recovered(owner, old, native)
+    assert TwoWorkerOwner.hash(@name, :b, "fresh") == {:ok, :crypto.hash(:sha256, "fresh")}
+    stop_and_check(sup, guard, child)
+  end
+
   test "a handled actor failure retires its slot and leaves the sibling usable" do
     {_, owner, _, native} = start()
     kill(native, "STOP")
@@ -184,7 +248,7 @@ defmodule TwoWorkerOwnerTest do
     try do
       task = Task.async(fn -> TwoWorkerOwner.hash(@name, :a, "uncertain") end)
       await(fn -> Map.has_key?(:sys.get_state(owner).pending, :a) end)
-      {_, _, ref, _, _} = :sys.get_state(owner).pending.a
+      {_, _, ref, _, _, _} = :sys.get_state(owner).pending.a
       send(owner, {ref, {:error, :handler_failed}})
       assert Task.await(task, 2_000) == {:error, :handler_failed}
       assert :sys.get_state(owner).actors.a == nil
@@ -233,7 +297,7 @@ defmodule TwoWorkerOwnerTest do
     a = Task.async(fn -> TwoWorkerOwner.hash(@name, :a, "uncertain a") end)
     b = Task.async(fn -> TwoWorkerOwner.hash(@name, :b, "uncertain b") end)
     await(fn -> map_size(:sys.get_state(owner).pending) == 2 end)
-    {_, _, old_ref, _, _} = :sys.get_state(owner).pending.a
+    {_, _, old_ref, _, _, _} = :sys.get_state(owner).pending.a
     assert Node.disconnect(@peer)
     assert Task.await(a, 2_000) == {:error, :worker_lost}
     assert Task.await(b, 2_000) == {:error, :worker_lost}
@@ -243,7 +307,7 @@ defmodule TwoWorkerOwnerTest do
     try do
       fresh = Task.async(fn -> TwoWorkerOwner.hash(@name, :a, "fresh") end)
       await(fn -> Map.has_key?(:sys.get_state(replacement).pending, :a) end)
-      {_, _, new_ref, _, _} = :sys.get_state(replacement).pending.a
+      {_, _, new_ref, _, _, _} = :sys.get_state(replacement).pending.a
       send(replacement, {old_ref, {:ok, <<0::256>>}})
       assert elem(:sys.get_state(replacement).pending.a, 2) == new_ref
       kill(child, "CONT")

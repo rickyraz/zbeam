@@ -25,7 +25,9 @@ a production deployment or a general native actor API.
 - A controlled retirement or handled failure of `a` marks it unavailable while
   `b` remains usable. Slots are not replaced inside the native process. A
   process/node loss or uncertain timeout fails in-flight work and retires the
-  whole owned process; sibling work can consequently fail too.
+  whole owned process; sibling work can consequently fail too. The later
+  [owner stop API](two-worker-wire.md#supervised-elixir-owner) adds controlled
+  retirement without changing the original M2c acceptance.
 - Never replay uncertain work. A timeout is not proof that execution did not
   occur. Fresh requests after replacement use fresh native PIDs/references.
 - A dead caller, including death between admission and delivery, cannot reopen
