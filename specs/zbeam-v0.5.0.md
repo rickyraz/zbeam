@@ -432,9 +432,9 @@ scopes an additive stateless binary handler profile. The local-only
 borrows owned input, returns at most 32 inline bytes and retains join barriers.
 Mode-specific routing and bounded binary encoding have conformance vectors, and
 `node.Config.custom_handler` composes an experimental separate `call` profile.
-A separately built example runs a non-SHA-256 function from Elixir on local OTP
-29; broader interoperability and fault acceptance remain pending. The SHA-256
-profiles are unchanged.
+A separately built example runs a non-SHA-256 function from Elixir; local live
+OTP 25/26/27 checks cover both debug and safe modes, while actual-master and
+production acceptance remain separate. The SHA-256 profiles are unchanged.
 
 **M2a prerequisite:** `Mailbox(T).tryDeliver` adds one-element nonblocking
 capacity admission with caller ownership retained on error. It does not change
