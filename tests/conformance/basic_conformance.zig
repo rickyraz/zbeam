@@ -6,6 +6,7 @@ const fixtures = @import("zbeam-protocol-fixtures");
 comptime {
     _ = @import("fixture_manifest.zig");
     _ = @import("m2b_vectors.zig");
+    _ = @import("m3_vectors.zig");
 }
 
 test "public pure wire batteries remain importable" {

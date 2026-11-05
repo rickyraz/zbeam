@@ -8,12 +8,13 @@ const dist = protocol.distribution;
 const worker = @import("worker.zig");
 
 pub const Envelope = struct { to: etf.Pid, reference: etf.Reference };
+pub const Mode = enum { hash, call };
 pub const Action = union(enum) {
     tick,
     drop,
     monitor: protocol.monitor.Signal,
     discover: struct { envelope: Envelope, actor_id: ?u64 },
-    hash: struct { envelope: Envelope, actor_id: u64, bytes: []const u8 },
+    work: struct { envelope: Envelope, actor_id: u64, bytes: []const u8 },
     stop: struct { envelope: Envelope, actor_id: u64 },
     bad_request: Envelope,
 };
@@ -27,6 +28,10 @@ pub const Parsed = struct {
 };
 
 pub fn parse(allocator: std.mem.Allocator, packet: *const dist.Packet, peer: *const transport.handshake_io.Peer, pids: [2]etf.Pid, running: [2]bool) !Parsed {
+    return parseMode(allocator, packet, peer, pids, running, .hash);
+}
+
+pub fn parseMode(allocator: std.mem.Allocator, packet: *const dist.Packet, peer: *const transport.handshake_io.Peer, pids: [2]etf.Pid, running: [2]bool, mode: Mode) !Parsed {
     if (packet.* == .tick) return .{ .action = .tick };
     const message = &packet.message;
     const control = &message.control;
@@ -79,8 +84,8 @@ pub fn parse(allocator: std.mem.Allocator, packet: *const dist.Packet, peer: *co
         }
     } else if (atom(command, "stop")) {
         action = .{ .stop = .{ .envelope = envelope, .actor_id = actor_id.? } };
-    } else if (command.* == .tuple and command.tuple.len == 2 and atom(&command.tuple[0], "hash") and command.tuple[1] == .binary) {
-        action = .{ .hash = .{ .envelope = envelope, .actor_id = actor_id.?, .bytes = command.tuple[1].binary } };
+    } else if (command.* == .tuple and command.tuple.len == 2 and atom(&command.tuple[0], @tagName(mode)) and command.tuple[1] == .binary) {
+        action = .{ .work = .{ .envelope = envelope, .actor_id = actor_id.?, .bytes = command.tuple[1].binary } };
     }
     return .{ .action = action, .payload = payload };
 }
@@ -125,12 +130,67 @@ test "discovery, hash and stop decode with authenticated correlated envelopes" {
         switch (i) {
             0 => try testing.expectEqual(@as(?u64, 2), parsed.action.discover.actor_id),
             1 => {
-                try testing.expectEqual(@as(u64, 2), parsed.action.hash.actor_id);
-                try testing.expectEqualStrings("abc", parsed.action.hash.bytes);
-                try testing.expect(parsed.action.hash.envelope.reference.eql(test_ref));
+                try testing.expectEqual(@as(u64, 2), parsed.action.work.actor_id);
+                try testing.expectEqualStrings("abc", parsed.action.work.bytes);
+                try testing.expect(parsed.action.work.envelope.reference.eql(test_ref));
             },
             2 => try testing.expectEqual(@as(u64, 2), parsed.action.stop.actor_id),
             else => unreachable,
+        }
+    }
+}
+
+test "hash and call profiles accept only their own binary command" {
+    var control = [_]etf.Term{ .{ .integer = dist.send }, .{ .atom = "" }, .{ .pid = test_pids[0] } };
+    var command = [_]etf.Term{ .{ .atom = "hash" }, .{ .binary = "abc" } };
+    var body = [_]etf.Term{ .{ .pid = test_from }, .{ .reference = test_ref }, .{ .tuple = &command } };
+    for ([_][]const u8{ "hash", "call" }) |name| {
+        command[0] = .{ .atom = name };
+        const bytes = try dist.encodePacket(testing.allocator, &.{ .tuple = &control }, &.{ .tuple = &body });
+        defer testing.allocator.free(bytes);
+        var packet = try dist.decodePacket(testing.allocator, bytes, worker.limits);
+        defer packet.deinit(testing.allocator);
+        for ([_]Mode{ .hash, .call }) |mode| {
+            var parsed = try parseMode(testing.allocator, &packet, &test_peer, test_pids, .{ true, true }, mode);
+            defer parsed.deinit(testing.allocator);
+            if (std.mem.eql(u8, name, @tagName(mode))) {
+                try testing.expectEqualStrings("abc", parsed.action.work.bytes);
+                try testing.expect(parsed.action.work.envelope.reference.eql(test_ref));
+            } else {
+                try testing.expect(parsed.action == .bad_request);
+            }
+        }
+    }
+    command[0] = .{ .atom = "call" };
+    command[1] = .{ .integer = 42 };
+    const invalid = try dist.encodePacket(testing.allocator, &.{ .tuple = &control }, &.{ .tuple = &body });
+    defer testing.allocator.free(invalid);
+    var packet = try dist.decodePacket(testing.allocator, invalid, worker.limits);
+    defer packet.deinit(testing.allocator);
+    var parsed = try parseMode(testing.allocator, &packet, &test_peer, test_pids, .{ true, true }, .call);
+    defer parsed.deinit(testing.allocator);
+    try testing.expect(parsed.action == .bad_request);
+}
+
+test "custom call retains the existing binary input bound" {
+    var control = [_]etf.Term{ .{ .integer = dist.send }, .{ .atom = "" }, .{ .pid = test_pids[0] } };
+    const binary = try testing.allocator.alloc(u8, 1024 * 1024 + 1);
+    defer testing.allocator.free(binary);
+    @memset(binary, 'x');
+    var command = [_]etf.Term{ .{ .atom = "call" }, .{ .binary = binary } };
+    var body = [_]etf.Term{ .{ .pid = test_from }, .{ .reference = test_ref }, .{ .tuple = &command } };
+    for ([_]usize{ 0, 1024 * 1024, 1024 * 1024 + 1 }) |len| {
+        command[1] = .{ .binary = binary[0..len] };
+        const bytes = try dist.encodePacket(testing.allocator, &.{ .tuple = &control }, &.{ .tuple = &body });
+        defer testing.allocator.free(bytes);
+        var packet = try dist.decodePacket(testing.allocator, bytes, worker.limits);
+        defer packet.deinit(testing.allocator);
+        if (len > 1024 * 1024) {
+            try testing.expectError(error.LimitExceeded, parseMode(testing.allocator, &packet, &test_peer, test_pids, .{ true, true }, .call));
+        } else {
+            var parsed = try parseMode(testing.allocator, &packet, &test_peer, test_pids, .{ true, true }, .call);
+            defer parsed.deinit(testing.allocator);
+            try testing.expectEqual(len, parsed.action.work.bytes.len);
         }
     }
 }
@@ -179,7 +239,7 @@ test "hash input limit and allocation failure release decoded payload" {
             }
             var parsed = try parse(testing.allocator, &packet, &test_peer, test_pids, .{ true, true });
             defer parsed.deinit(testing.allocator);
-            try testing.expectEqual(@as(usize, 1024 * 1024), parsed.action.hash.bytes.len);
+            try testing.expectEqual(@as(usize, 1024 * 1024), parsed.action.work.bytes.len);
         } else {
             try testing.expectError(error.LimitExceeded, parse(testing.allocator, &packet, &test_peer, test_pids, .{ true, true }));
         }

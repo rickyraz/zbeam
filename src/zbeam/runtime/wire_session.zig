@@ -45,7 +45,7 @@ pub const Session = struct {
                 if (!self.running()[slot]) return sendReply(writer, request.envelope, .{ .failure = .noproc });
                 try sendReply(writer, request.envelope, .{ .pid = self.pids[slot] });
             },
-            .hash => |request| {
+            .work => |request| {
                 _ = frame.send(request.actor_id, request.bytes, request.envelope.to, request.envelope.reference) catch |err| switch (err) {
                     error.ActorStopped => return,
                     else => return err,
