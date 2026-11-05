@@ -30,16 +30,30 @@ defmodule TwoWorkerProcessTest do
     sup
   end
 
-  defp current do
-    owner = Process.whereis(@name)
+  defp current(owner \\ Process.whereis(@name)) do
     state = :sys.get_state(owner)
     {guard, native} = child_pids(state.port)
     {owner, state, guard, native}
   end
 
-  defp replacement(old) do
-    await(fn -> is_pid(Process.whereis(@name)) and Process.whereis(@name) != old end)
-    current()
+  defp replacement(old), do: current(await_replacement(@name, old))
+
+  test "replacement lookup ignores old and missing observations" do
+    fresh = spawn(fn -> receive do :stop -> :ok end end)
+    Process.put(:lookup_sequence, [self(), nil, fresh])
+
+    try do
+      lookup = fn _ ->
+        [next | rest] = Process.get(:lookup_sequence)
+        Process.put(:lookup_sequence, rest)
+        next
+      end
+
+      assert await_replacement(@name, self(), 1_000, lookup) == fresh
+      assert Process.get(:lookup_sequence) == []
+    after
+      send(fresh, :stop)
+    end
   end
 
   test "terminal PIDs are not probed again while other children exit" do
