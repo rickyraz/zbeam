@@ -2,6 +2,8 @@
 
 Evidence records support implementation and compatibility claims. Passing tests without preserved inputs or environment details is not sufficient for protocol, safety, or performance claims.
 
+The [focused development security review](phase-c/2026-11-05-development-security-review.md) records source-inspection limits and an observed cookie exposure.
+
 ## Current MVP records
 
 - [2026-09-26 protocol and OTP matrix](phase-b/2026-09-26-mvp.md)
