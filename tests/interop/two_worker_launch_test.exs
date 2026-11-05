@@ -25,6 +25,7 @@ defmodule TwoWorkerLaunchTest do
   end
 
   test "owned launcher registers two workers and cleans up before name reuse" do
+    assert {:error, :not_ready} = TwoWorkerLaunch.start(@peer, @bin, 3_000, "unknown")
     assert {:ok, port} = TwoWorkerLaunch.start(@peer, @bin, 3_000)
     {guard, native} = child_pids(port)
 

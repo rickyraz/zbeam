@@ -89,9 +89,25 @@ continues to use SHA-256 and rejects `call`. The handler borrows its runtime-own
 input during the call and returns 0–32 bytes in zeroed inline output storage;
 see the [local handler contract](task-runtime.md#compiled-stateless-handler-local-only).
 Discovery, bounded admission, stop, monitors and joined connection epochs are
-shared with the two-worker service. The custom profile currently has synthetic
-session and independent vector checks, not a shipped CLI example or live OTP
-acceptance. The SHA-256 Elixir owner is not a custom-call client.
+shared with the two-worker service. The SHA-256 Elixir owner is not a
+custom-call client.
+
+The separate example executable compiles the Zig function in
+[`examples/custom_worker.zig`](../examples/custom_worker.zig); replace that
+function and rebuild to use another handler. Its example function uppercases
+ASCII bytes and deliberately returns `handler_failed` for inputs above 32
+bytes, retiring that actor. The runtime's general input limit remains 1 MiB.
+
+```sh
+zig build example-custom-worker -Doptimize=safe
+sh scripts/interop/ensure_epmd.sh
+elixir --erl '+S 2:2' --name custom_client@127.0.0.1 \
+  --cookie development_cookie examples/custom_client.exs ./zig-out/bin/zbeam-custom-worker
+```
+
+The example launches its own guarded child, calls both actors, and cleans up the
+connection and child. It has a [local live-OTP check](evidence/phase-c/2026-11-05-handler-example.md);
+full custom-profile fault and compatibility acceptance remains separate.
 
 ## Contract and limits
 
