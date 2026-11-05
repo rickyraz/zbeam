@@ -1,4 +1,5 @@
 pub const m2b_vectors = @embedFile("m2b.tsv");
+pub const m3_vectors = @embedFile("m3.tsv");
 
 pub const new_name = [_]u8{
     0x00, 0x12, 'N',

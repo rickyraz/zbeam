@@ -8,7 +8,7 @@ const monitor = protocol.monitor;
 
 pub const scratch_bytes = 16 * 1024;
 pub const ErrorAtom = enum { bad_request, noproc, stopped, canceled, handler_failed };
-pub const Result = union(enum) { pid: etf.Pid, digest: [32]u8, ok, failure: ErrorAtom };
+pub const Result = union(enum) { pid: etf.Pid, digest: [32]u8, binary: []const u8, ok, failure: ErrorAtom };
 pub const Reason = enum { normal, noproc, handler_failed };
 
 /// Uses only caller-owned bounded storage, including ETF encoder temporaries.
@@ -24,6 +24,11 @@ pub fn reply(scratch: *[scratch_bytes]u8, to: etf.Pid, reference: etf.Reference,
         },
         .digest => |*digest| blk: {
             pair = .{ .{ .atom = "ok" }, .{ .binary = digest } };
+            break :blk .{ .tuple = &pair };
+        },
+        .binary => |binary| blk: {
+            if (binary.len > 32) return error.OutputTooLarge;
+            pair = .{ .{ .atom = "ok" }, .{ .binary = binary } };
             break :blk .{ .tuple = &pair };
         },
         .failure => |failure| blk: {
@@ -60,6 +65,22 @@ test "bounded reply encoding preserves reference and exact digest" {
     try testing.expectEqualSlices(u8, &digest, payload.tuple[1].tuple[1].binary);
 }
 
+test "custom binary replies encode exact lengths and reject oversized output" {
+    var scratch: [scratch_bytes]u8 = undefined;
+    const output: [33]u8 = @splat(42);
+    for ([_]usize{ 0, 1, 32 }) |len| {
+        const bytes = try reply(&scratch, test_pid, test_ref, .{ .binary = output[0..len] });
+        var packet = try dist.decodePacket(testing.allocator, bytes, .{});
+        defer packet.deinit(testing.allocator);
+        var payload = try packet.message.decodePayload(testing.allocator, .{});
+        defer payload.deinit(testing.allocator);
+        try testing.expect(payload.tuple[0].reference.eql(test_ref));
+        try testing.expectEqualStrings("ok", payload.tuple[1].tuple[0].atom);
+        try testing.expectEqualSlices(u8, output[0..len], payload.tuple[1].tuple[1].binary);
+    }
+    try testing.expectError(error.OutputTooLarge, reply(&scratch, test_pid, test_ref, .{ .binary = &output }));
+}
+
 test "monitor exit and all bounded reply forms fit for maximum node atoms" {
     var scratch: [scratch_bytes]u8 = undefined;
     var name: [255]u8 = @splat('n');
@@ -82,6 +103,7 @@ test "monitor exit and all bounded reply forms fit for maximum node atoms" {
                 try testing.expectEqualStrings("ok", value.tuple[0].atom);
                 try testing.expectEqualSlices(u8, &expected, value.tuple[1].binary);
             },
+            .binary => |expected| try testing.expectEqualSlices(u8, expected, value.tuple[1].binary),
             .ok => try testing.expectEqualStrings("ok", value.atom),
             .failure => |reason| {
                 try testing.expectEqualStrings("error", value.tuple[0].atom);

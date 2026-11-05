@@ -5,7 +5,11 @@ const vectors = @import("zbeam-protocol-fixtures").m2b_vectors;
 const testing = std.testing;
 
 fn check(name: []const u8, control: *const etf.Term, payload: ?*const etf.Term) !void {
-    var lines = std.mem.splitScalar(u8, vectors, '\n');
+    return checkFixture(vectors, name, control, payload);
+}
+
+pub fn checkFixture(data: []const u8, name: []const u8, control: *const etf.Term, payload: ?*const etf.Term) !void {
+    var lines = std.mem.splitScalar(u8, data, '\n');
     var found = false;
     while (lines.next()) |line| {
         if (line.len == 0) continue;
