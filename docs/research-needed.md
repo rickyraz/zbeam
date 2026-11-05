@@ -95,7 +95,7 @@ Bounded queue operations, logical token ownership, concurrent-receive exclusion,
 
 ### Observable BEAM-side backpressure
 
-A real TCP sender is stopped during a paused handler and completes after progress resumes. This establishes transport backpressure, not how a BEAM distribution sender, port queue or process scheduler behaves under saturation. The M2c owner uses non-suspending sends and fails the process closed if a send cannot proceed; under pressure this can also fail the sibling's in-flight work. Admission and the 1 MiB input limit do not guarantee successful delivery.
+A real TCP sender is stopped during a paused handler and completes after progress resumes. This establishes transport backpressure, not how a BEAM distribution sender, port queue or process scheduler behaves under saturation. The M2c owner returns `busy` for a confirmed-unsent `:nosuspend` request without failing its in-flight sibling; connection loss and uncertain timeouts still fail closed. Admission and the 1 MiB input limit do not guarantee successful delivery.
 
 **Required evidence:** a fast OTP sender, a slow actor, distribution queue/memory measurements, bounded pause windows and externally observed sender throttling. Report normal pauses separately from actor failures.
 

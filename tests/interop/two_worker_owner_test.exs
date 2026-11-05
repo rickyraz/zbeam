@@ -89,6 +89,46 @@ defmodule TwoWorkerOwnerTest do
     end
   end
 
+  test "an unsent request returns busy without disturbing its uncertain sibling" do
+    {_, owner, state, native} = start(15_000)
+    {b_pid, _} = state.actors.b
+    payload = :binary.copy(<<23>>, 1_048_576)
+    kill(native, "STOP")
+
+    try do
+      a = Task.async(fn -> TwoWorkerOwner.hash(@name, :a, payload) end)
+      await(fn -> Map.has_key?(:sys.get_state(owner).pending, :a) end)
+
+      # Test-only traffic fills the shared distribution buffer without enqueuing work.
+      pressure =
+        Enum.reduce_while(1..64, 0, fn _, blocked ->
+          case :erlang.send(b_pid, {self(), make_ref(), {:padding, payload}}, [:noconnect, :nosuspend]) do
+            :ok -> {:cont, 0}
+            :nosuspend when blocked == 4 -> {:halt, :full}
+            :nosuspend ->
+              Process.sleep(20)
+              {:cont, blocked + 1}
+            :noconnect -> flunk("lost distribution connection while applying pressure")
+          end
+        end)
+
+      assert pressure == :full
+      b = Task.async(fn -> TwoWorkerOwner.hash(@name, :b, payload) end)
+      assert Task.await(b, 5_000) == {:error, :busy}
+      assert Process.whereis(@name) == owner
+      assert Map.keys(:sys.get_state(owner).pending) == [:a]
+      assert :ets.lookup(@name, :b) == []
+      Process.sleep(150)
+      assert Process.whereis(@name) == owner
+      kill(native, "CONT")
+      Process.put(:pressure_resumed, true)
+      assert Task.await(a, 10_000) == {:ok, :crypto.hash(:sha256, payload)}
+      assert TwoWorkerOwner.hash(@name, :b, "fresh") == {:ok, :crypto.hash(:sha256, "fresh")}
+    after
+      if not Process.get(:pressure_resumed, false) and live?(native), do: kill(native, "CONT")
+    end
+  end
+
   test "simultaneous callers admit only one payload per actor" do
     {_, owner, _, native} = start()
     payload = :binary.copy(<<23>>, 256)
