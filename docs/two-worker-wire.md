@@ -64,8 +64,11 @@ The owner starts its own child; do not start another service using that name.
 Only one call per actor is admitted before the owner mailbox; excess calls return
 `{:error, :busy}`. Input is limited to 1 MiB. A timeout, caller death or loss of
 connection/process can fail **both** pending calls and restart the child. A
-non-suspending distribution send that cannot proceed also fails the owner
-closed. Work with uncertain outcome is never replayed. The owner requires exclusive control
+distribution send returning `:nosuspend` did not send that request: its caller
+receives `{:error, :busy}`, its admission slot is released, and an already-sent
+sibling remains pending. A `:noconnect` result still fails the owner closed.
+No request is retried automatically; work with uncertain outcome is never replayed.
+The owner requires exclusive control
 of its peer connection and assumes trusted local processes. Its public API is
 limited to hash requests; controlled stop is available on the separate wire
 profile, not through an owner stop function. The [M2c acceptance record](evidence/phase-c/2026-10-28-m2c-acceptance.md)

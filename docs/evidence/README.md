@@ -40,6 +40,7 @@ scheduler or production release.
 - M2c foundations: [plan](phase-a/2026-10-29-m2c-owner-plan.md), [admission](phase-a/2026-10-29-m2c-admission.md), [launcher](phase-a/2026-10-29-m2c-launch.md), [peer readiness](phase-a/2026-10-29-m2c-peer.md), [test oracle](phase-a/2026-10-29-m2c-test-oracle.md) and [restart barrier](phase-a/2026-10-29-m2c-restart-barrier.md).
 - M2c owner: [composition](phase-c/2026-10-29-m2c-owner.md), [caller/disconnect faults](phase-c/2026-10-29-m2c-caller-faults.md), [process faults](phase-c/2026-10-29-m2c-process-faults.md), [handled retirement](phase-c/2026-10-29-m2c-handled-retirement.md) and [supervised example](phase-c/2026-10-29-m2c-example.md).
 - M2c verification: [Elixir/OTP matrix gate](phase-a/2026-10-29-m2c-elixir-matrix.md), [send-pressure observation](phase-c/2026-10-28-m2c-send-pressure.md) and [acceptance](phase-c/2026-10-28-m2c-acceptance.md).
+- Later owner change: [confirmed-unsent pressure handling](phase-c/2026-11-05-owner-send-pressure.md).
 
 ## Compiler migration
 

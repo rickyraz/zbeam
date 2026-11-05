@@ -104,7 +104,8 @@ defmodule TwoWorkerOwner do
 
         case :erlang.send(pid, {self(), ref, {:hash, input}}, [:noconnect, :nosuspend]) do
           :ok -> {:noreply, state}
-          _ -> fail(state, :worker_lost)
+          :nosuspend -> {:noreply, finish(state, actor, {:error, :busy})}
+          :noconnect -> fail(state, :worker_lost)
         end
     end
   end
