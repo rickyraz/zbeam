@@ -430,9 +430,10 @@ contracts. `example-task-runtime` exercises the local API, not wire actor routes
 scopes an additive stateless binary handler profile. The local-only
 [`createWithHandler`](../docs/task-runtime.md#compiled-stateless-handler-local-only)
 borrows owned input, returns at most 32 inline bytes and retains join barriers.
-Internal mode-specific routing and bounded binary encoding now have conformance
-vectors, but a custom wire service and live interoperability remain proposed;
-the SHA-256 profiles are unchanged.
+Mode-specific routing and bounded binary encoding have conformance vectors, and
+`node.Config.custom_handler` composes an experimental separate `call` profile.
+A runnable custom executable and live OTP interoperability remain pending; the
+SHA-256 profiles are unchanged.
 
 **M2a prerequisite:** `Mailbox(T).tryDeliver` adds one-element nonblocking
 capacity admission with caller ownership retained on error. It does not change

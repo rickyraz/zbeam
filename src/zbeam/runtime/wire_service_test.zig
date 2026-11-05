@@ -94,6 +94,21 @@ test "authenticated sequential peers observe stable distinct service identities"
     try testing.expectEqual(@as(u64, 3), owner.epoch);
 }
 
+test "custom service owns its compiled handler and inline result" {
+    const Handler = struct {
+        fn apply(_: []const u8, output: *[32]u8) error{HandlerFailed}!usize {
+            output[0] = 42;
+            return 1;
+        }
+    };
+    var owner = try service.Service.init(io, testing.allocator, .{ .node_name = "native@host", .cookie = "cookie", .creation = 1, .handler = Handler.apply });
+    defer owner.deinit();
+    _ = try owner.tasks.trySend(1, "input");
+    const result = (try owner.tasks.nextResult()).?;
+    try testing.expectEqual(@as(u6, 1), result.output_len);
+    try testing.expectEqual(@as(u8, 42), result.outcome.digest[0]);
+}
+
 test "identity is not published when either actor cannot start" {
     var failing = testing.FailingAllocator.init(testing.allocator, .{ .fail_index = 0 });
     try testing.expectError(error.OutOfMemory, service.Service.init(io, failing.allocator(), .{ .node_name = "native@host", .cookie = "cookie", .creation = 1 }));

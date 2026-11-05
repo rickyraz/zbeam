@@ -80,6 +80,19 @@ the owner closed, without replay. The [M2c acceptance record](evidence/phase-c/2
 and [stop regression](evidence/phase-c/2026-11-05-owner-stop.md) cover this
 restricted development example, not production certification.
 
+## Compiled-handler composition (experimental)
+
+A Zig embedding may set `node.Config.custom_handler` for the `workers` service.
+This selects a separate profile using `{FromPid, Ref, {call, Binary}}` and
+`{Ref, {ok, Binary}}`; it rejects `hash`. The ordinary `serve-workers` command
+continues to use SHA-256 and rejects `call`. The handler borrows its runtime-owned
+input during the call and returns 0–32 bytes in zeroed inline output storage;
+see the [local handler contract](task-runtime.md#compiled-stateless-handler-local-only).
+Discovery, bounded admission, stop, monitors and joined connection epochs are
+shared with the two-worker service. The custom profile currently has synthetic
+session and independent vector checks, not a shipped CLI example or live OTP
+acceptance. The SHA-256 Elixir owner is not a custom-call client.
+
 ## Contract and limits
 
 Discovery replies `{Ref,{ok,Pid}}` or `{Ref,{error,noproc}}`. Hash accepts a

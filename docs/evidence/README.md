@@ -41,7 +41,7 @@ scheduler or production release.
 - M2c owner: [composition](phase-c/2026-10-29-m2c-owner.md), [caller/disconnect faults](phase-c/2026-10-29-m2c-caller-faults.md), [process faults](phase-c/2026-10-29-m2c-process-faults.md), [handled retirement](phase-c/2026-10-29-m2c-handled-retirement.md) and [supervised example](phase-c/2026-10-29-m2c-example.md).
 - M2c verification: [Elixir/OTP matrix gate](phase-a/2026-10-29-m2c-elixir-matrix.md), [send-pressure observation](phase-c/2026-10-28-m2c-send-pressure.md) and [acceptance](phase-c/2026-10-28-m2c-acceptance.md).
 - Later owner changes: [confirmed-unsent pressure handling](phase-c/2026-11-05-owner-send-pressure.md) and [per-actor stop](phase-c/2026-11-05-owner-stop.md).
-- [Compiled-handler source inspection and proposed gates](phase-a/2026-11-05-compiled-handler-plan.md) — design only; [local handler lifecycle](phase-c/2026-11-05-handler-local.md) and [wire primitives/vectors](phase-b/2026-11-05-handler-wire-primitives.md) are verified separately.
+- [Compiled-handler source inspection and proposed gates](phase-a/2026-11-05-compiled-handler-plan.md) — design only; [local handler lifecycle](phase-c/2026-11-05-handler-local.md), [wire primitives/vectors](phase-b/2026-11-05-handler-wire-primitives.md) and [synthetic composition](phase-b/2026-11-05-handler-composition.md) are verified separately.
 
 ## Compiler migration
 

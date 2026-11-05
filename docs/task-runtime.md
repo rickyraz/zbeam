@@ -57,8 +57,9 @@ process, and an uncooperative function requires external kill/reap.
 For a successful custom result, `result.output_len` selects the used prefix of
 `result.outcome.digest`; the field name is retained for SHA-256 compatibility.
 Default `create` still hashes and returns length 32. The ticket remains held
-until collection, just as for a digest. This local addition does not enable a
-custom wire profile or change the SHA-256 service. Stateful handlers, owned
-user destructors and dynamic plugins are not supported. See the [local
-verification](evidence/phase-c/2026-11-05-handler-local.md) and the separately
-proposed [wire design](adr/0006-compiled-binary-handler.md).
+until collection, just as for a digest. The separate experimental
+[custom wire composition](two-worker-wire.md#compiled-handler-composition-experimental)
+uses the same handler contract without changing the SHA-256 service. Stateful
+handlers, owned user destructors and dynamic plugins are not supported. See the
+[local verification](evidence/phase-c/2026-11-05-handler-local.md) and the
+[wire design](adr/0006-compiled-binary-handler.md).

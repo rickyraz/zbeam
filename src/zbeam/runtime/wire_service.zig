@@ -11,6 +11,7 @@ pub const Config = struct {
     node_name: []const u8,
     cookie: []const u8,
     creation: u32,
+    handler: ?Runtime.Handler = null,
     handshake_timeout: ?std.Io.Duration = .fromSeconds(5),
     connection: connection.Config = .{},
 };
@@ -25,7 +26,10 @@ pub const Service = struct {
 
     /// Caller keeps configuration and the I/O provider alive through deinit.
     pub fn init(io: std.Io, allocator: std.mem.Allocator, config: Config) !Service {
-        const tasks = try Runtime.create(allocator, io, .{ "a", "b" });
+        const tasks = if (config.handler) |handler|
+            try Runtime.createWithHandler(allocator, io, .{ "a", "b" }, handler)
+        else
+            try Runtime.create(allocator, io, .{ "a", "b" });
         errdefer {
             _ = tasks.shutdown();
             tasks.deinit() catch unreachable;
