@@ -13,11 +13,14 @@ defmodule TwoWorkerOwner do
     )
   end
 
-  def hash(name, actor, input) do
+  def hash(name, actor, input), do: request(name, actor, input, :hash)
+  def stop(name, actor), do: request(name, actor, <<>>, :stop)
+
+  defp request(name, actor, input, operation) do
     case TwoWorkerAdmission.claim(name, actor, input) do
       {:ok, owner, _, ticket} ->
         try do
-          GenServer.call(owner, {:hash, actor, ticket, input}, :infinity)
+          GenServer.call(owner, {operation, actor, ticket, input}, :infinity)
         catch
           :exit, _ -> {:error, :worker_lost}
         end
@@ -81,8 +84,16 @@ defmodule TwoWorkerOwner do
   end
 
   @impl true
-  def handle_call({:hash, actor, ticket, input}, {caller, _} = from, state)
-      when actor in [:a, :b] and is_binary(input) and byte_size(input) <= 1_048_576 do
+  def handle_call({:hash, actor, ticket, input}, from, state)
+      when actor in [:a, :b] and is_binary(input) and byte_size(input) <= 1_048_576,
+      do: submit(state, actor, ticket, from, :hash, {:hash, input})
+
+  def handle_call({:stop, actor, ticket, <<>>}, from, state) when actor in [:a, :b],
+    do: submit(state, actor, ticket, from, :stop, :stop)
+
+  def handle_call(_, _, state), do: {:reply, {:error, :invalid_input}, state}
+
+  defp submit(state, actor, ticket, {caller, _} = from, operation, command) do
     cond do
       not TwoWorkerAdmission.matches?(state.table, actor, caller, ticket) ->
         {:reply, {:error, :not_ready}, state}
@@ -99,10 +110,10 @@ defmodule TwoWorkerOwner do
         ref = make_ref()
         timer = Process.send_after(self(), {:request_timeout, actor, ref}, state.timeout)
         monitor = Process.monitor(caller)
-        pending = Map.put(state.pending, actor, {from, ticket, ref, timer, monitor})
+        pending = Map.put(state.pending, actor, {from, ticket, ref, timer, monitor, operation})
         state = %{state | pending: pending}
 
-        case :erlang.send(pid, {self(), ref, {:hash, input}}, [:noconnect, :nosuspend]) do
+        case :erlang.send(pid, {self(), ref, command}, [:noconnect, :nosuspend]) do
           :ok -> {:noreply, state}
           :nosuspend -> {:noreply, finish(state, actor, {:error, :busy})}
           :noconnect -> fail(state, :worker_lost)
@@ -110,14 +121,25 @@ defmodule TwoWorkerOwner do
     end
   end
 
-  def handle_call(_, _, state), do: {:reply, {:error, :invalid_input}, state}
-
   @impl true
   def handle_info({ref, {:ok, digest}}, state)
       when is_reference(ref) and is_binary(digest) and byte_size(digest) == 32 do
     case actor_for_ref(state, ref) do
       nil -> {:noreply, state}
-      actor -> {:noreply, finish(state, actor, {:ok, digest})}
+      actor ->
+        if elem(state.pending[actor], 5) == :hash,
+          do: {:noreply, finish(state, actor, {:ok, digest})},
+          else: {:noreply, state}
+    end
+  end
+
+  def handle_info({ref, :ok}, state) when is_reference(ref) do
+    case actor_for_ref(state, ref) do
+      nil -> {:noreply, state}
+      actor ->
+        if elem(state.pending[actor], 5) == :stop,
+          do: {:noreply, state |> finish(actor, :ok) |> retire(actor)},
+          else: {:noreply, state}
     end
   end
 
@@ -147,7 +169,7 @@ defmodule TwoWorkerOwner do
 
   def handle_info({:DOWN, ref, :process, pid, reason}, state) do
     actor = Enum.find([:a, :b], fn a -> state.actors[a] == {pid, ref} end)
-    caller = Enum.find(state.pending, fn {_, {_, _, _, _, monitor}} -> monitor == ref end)
+    caller = Enum.find(state.pending, fn {_, {_, _, _, _, monitor, _}} -> monitor == ref end)
 
     cond do
       actor && reason == :noconnection -> fail(state, :worker_lost)
@@ -173,7 +195,7 @@ defmodule TwoWorkerOwner do
   def handle_info(_, state), do: {:noreply, state}
 
   defp actor_for_ref(state, ref) do
-    Enum.find_value(state.pending, fn {actor, {_, _, pending_ref, _, _}} ->
+    Enum.find_value(state.pending, fn {actor, {_, _, pending_ref, _, _, _}} ->
       if ref == pending_ref, do: actor
     end)
   end
@@ -183,7 +205,7 @@ defmodule TwoWorkerOwner do
       {nil, _} ->
         state
 
-      {{from, ticket, _, timer, monitor}, pending} ->
+      {{from, ticket, _, timer, monitor, _}, pending} ->
         Process.cancel_timer(timer)
         Process.demonitor(monitor, [:flush])
         TwoWorkerAdmission.release(state.table, actor, elem(from, 0), ticket)
@@ -202,7 +224,7 @@ defmodule TwoWorkerOwner do
   end
 
   defp fail(state, reason) do
-    for {actor, {from, _, _, timer, monitor}} <- state.pending do
+    for {actor, {from, _, _, timer, monitor, _}} <- state.pending do
       Process.cancel_timer(timer)
       Process.demonitor(monitor, [:flush])
       reply = if reason == {:timeout, actor}, do: {:error, :timeout}, else: {:error, :worker_lost}
