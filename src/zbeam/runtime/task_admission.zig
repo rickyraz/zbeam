@@ -7,7 +7,7 @@ pub const max_input = 1024 * 1024;
 pub const queue_capacity = 4;
 pub const ticket_capacity = queue_capacity + 1;
 pub const Outcome = union(enum) { digest: [32]u8, stopped, canceled, handler_failed };
-pub const Completion = struct { request_id: u64, outcome: Outcome };
+pub const Completion = struct { request_id: u64, outcome: Outcome, output_len: u6 = 32 };
 pub const Message = struct { ticket: usize, bytes: []u8 };
 
 pub const Admission = struct {
@@ -16,6 +16,7 @@ pub const Admission = struct {
         stage: Stage = .free,
         id: u64 = 0,
         outcome: Outcome = .stopped,
+        output_len: u6 = 32,
     };
 
     allocator: std.mem.Allocator,
@@ -76,18 +77,23 @@ pub const Admission = struct {
 
     /// No allocation or wait: the ticket already reserves terminal-result space.
     pub fn finish(self: *Admission, message: Message, outcome: Outcome) void {
+        self.finishSized(message, outcome, 32);
+    }
+
+    pub fn finishSized(self: *Admission, message: Message, outcome: Outcome, output_len: u6) void {
         const record = &self.records[message.ticket];
-        assert(record.stage == .active);
+        assert(record.stage == .active and output_len <= 32);
         self.allocator.free(message.bytes);
         record.stage = .complete;
         record.outcome = outcome;
+        record.output_len = output_len;
     }
 
     /// Result collection, not payload destruction, returns outstanding capacity.
     pub fn take(self: *Admission) ?Completion {
         for (&self.records) |*record| {
             if (record.stage != .complete) continue;
-            const completion = Completion{ .request_id = record.id, .outcome = record.outcome };
+            const completion = Completion{ .request_id = record.id, .outcome = record.outcome, .output_len = record.output_len };
             record.* = .{};
             return completion;
         }

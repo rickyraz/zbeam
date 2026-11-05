@@ -6,8 +6,8 @@ import subprocess
 import sys
 
 
-def check_stalled_join(executable):
-    env = dict(os.environ, ZBEAM_M2_SPIN_PROBE="1")
+def check_stalled_join(executable, mode):
+    env = dict(os.environ, ZBEAM_M2_SPIN_PROBE=mode)
     child = subprocess.Popen(
         [executable], env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
     )
@@ -22,7 +22,7 @@ def check_stalled_join(executable):
             assert child.returncode == -signal.SIGKILL, child.returncode
             sys.stdout.buffer.write(output)
             sys.stdout.flush()
-            print("PASS noncooperative task: join stalled; owned process killed/reaped")
+            print(f"PASS noncooperative task: join stalled; owned process killed/reaped ({mode})")
             return
         raise AssertionError(
             f"probe returned {child.returncode}, expected blocked join:\n"
@@ -39,4 +39,5 @@ if __name__ == "__main__":
         raise SystemExit("task shutdown probe requires Linux; target not verified")
     if len(sys.argv) != 2:
         raise SystemExit("usage: task_shutdown_test.py TEST_BINARY")
-    check_stalled_join(sys.argv[1])
+    for mode in ("1", "handler"):
+        check_stalled_join(sys.argv[1], mode)

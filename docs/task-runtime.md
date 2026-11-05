@@ -25,8 +25,8 @@ or dynamic slot replacement is created. Payload copies total at most 10 MiB;
 metadata, provider/task resources and caller-owned buffers are additional.
 
 One collector calls `nextResult`, returning inline digest/stopped/canceled
-outcomes (test-only handler faults also report `handler_failed`); null means all
-tasks joined and results exhausted. `requestStop` is thread-safe with send while
+outcomes (handler failures report `handler_failed`); null means all tasks joined
+and results exhausted. `requestStop` is thread-safe with send while
 the owner keeps storage alive. The single lifecycle
 owner uses `stopAndJoin` for one actor or `shutdown` for both. Stop prevents new
 handler claims, not effects of already accepted work; digest can win a stop race.
@@ -41,3 +41,24 @@ See [ADR 0004](adr/0004-bounded-task-owned-runtime.md) and the
 [M2 work plan](m2-task-lifecycle-plan.md) for local gates and the separately
 accepted M2b wire profile. Supported methods expose IDs/results, not
 mailbox handles; Zig does not statically prevent direct field/slice misuse.
+
+## Compiled stateless handler (local only)
+
+`TaskRuntime.createWithHandler(allocator, io, names, handler)` selects one
+compiled Zig function for both fixed actors. `Handler` has the signature
+`fn ([]const u8, *[32]u8) error{HandlerFailed}!usize`. Input is the runtime's
+owned copy, borrowed only until the function returns; output is a zeroed inline
+buffer borrowed for the same duration. The function must not retain either
+buffer or create unmanaged tasks, and must be safe for concurrent calls. Its
+returned length must be 0–32. An error or larger length retires that actor with
+`handler_failed`; the sibling remains usable. A panic still affects the native
+process, and an uncooperative function requires external kill/reap.
+
+For a successful custom result, `result.output_len` selects the used prefix of
+`result.outcome.digest`; the field name is retained for SHA-256 compatibility.
+Default `create` still hashes and returns length 32. The ticket remains held
+until collection, just as for a digest. This local addition does not enable a
+custom wire profile or change the SHA-256 service. Stateful handlers, owned
+user destructors and dynamic plugins are not supported. See the [local
+verification](evidence/phase-c/2026-11-05-handler-local.md) and the separately
+proposed [wire design](adr/0006-compiled-binary-handler.md).

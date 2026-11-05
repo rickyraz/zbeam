@@ -193,6 +193,65 @@ test "lifecycle: handler error retires actor, joins and preserves sibling progre
     try std.testing.expectEqual(@as(usize, 1), digests);
 }
 
+test "lifecycle: compiled handler returns bounded inline bytes on both actors" {
+    const Handler = struct {
+        fn apply(input: []const u8, output: *[32]u8) error{HandlerFailed}!usize {
+            for (input, 0..) |byte, i| output[i] = std.ascii.toUpper(byte);
+            return input.len;
+        }
+    };
+    const tasks = try Runtime.createWithHandler(std.testing.allocator, io, .{ "a", "b" }, Handler.apply);
+    defer tasks.deinit() catch unreachable;
+    defer _ = tasks.shutdown();
+
+    const empty = try tasks.trySend(1, "");
+    var input: [32]u8 = @splat('a');
+    const maximum = try tasks.trySend(2, &input);
+    @memset(&input, 'z');
+    var seen: [2]bool = @splat(false);
+    for (0..2) |_| {
+        const result = (try tasks.nextResult()).?;
+        try std.testing.expect(result.outcome == .digest);
+        if (result.request_id == empty) {
+            try std.testing.expectEqual(@as(u6, 0), result.output_len);
+            try std.testing.expectEqual(@as([32]u8, @splat(0)), result.outcome.digest);
+            seen[0] = true;
+        } else {
+            try std.testing.expectEqual(maximum, result.request_id);
+            try std.testing.expectEqual(@as(u6, 32), result.output_len);
+            try std.testing.expectEqualStrings("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", &result.outcome.digest);
+            seen[1] = true;
+        }
+    }
+    try std.testing.expect(seen[0] and seen[1]);
+}
+
+test "lifecycle: compiled handler failures retire only the affected actor" {
+    const Handler = struct {
+        fn apply(input: []const u8, output: *[32]u8) error{HandlerFailed}!usize {
+            if (std.mem.eql(u8, input, "error")) return error.HandlerFailed;
+            if (std.mem.eql(u8, input, "too long")) return 33;
+            output[0] = 42;
+            return 1;
+        }
+    };
+    for ([_][]const u8{ "error", "too long" }) |input| {
+        const tasks = try Runtime.createWithHandler(std.testing.allocator, io, .{ "a", "b" }, Handler.apply);
+        defer tasks.deinit() catch unreachable;
+        defer _ = tasks.shutdown();
+        _ = try tasks.trySend(1, input);
+        const failed = (try tasks.nextResult()).?;
+        try std.testing.expect(failed.outcome == .handler_failed);
+        try std.testing.expectEqual(Runtime.Exit.handler_failed, try tasks.stopAndJoin(1));
+        try std.testing.expectError(error.ActorStopped, tasks.trySend(1, "late"));
+        _ = try tasks.trySend(2, "ok");
+        const sibling = (try tasks.nextResult()).?;
+        try std.testing.expectEqual(@as(u6, 1), sibling.output_len);
+        try std.testing.expectEqual(@as(u8, 42), sibling.outcome.digest[0]);
+        for (sibling.outcome.digest[1..]) |byte| try std.testing.expectEqual(@as(u8, 0), byte);
+    }
+}
+
 test "lifecycle: noncooperative spin requires external process termination" {
     const enabled = std.testing.environ.getAlloc(std.testing.allocator, "ZBEAM_M2_SPIN_PROBE") catch |err| switch (err) {
         error.EnvironmentVariableMissing => return error.SkipZigTest,
@@ -217,6 +276,37 @@ test "lifecycle: noncooperative spin requires external process termination" {
     _ = try tasks.trySend(1, "noncooperative");
     try waitEntered(&control);
     std.debug.print("M2_SPIN_ENTERED\n", .{});
+    _ = tasks.shutdown();
+    return error.TestUnexpectedResult;
+}
+
+test "lifecycle: noncooperative compiled handler requires external process termination" {
+    const enabled = std.testing.environ.getAlloc(std.testing.allocator, "ZBEAM_M2_SPIN_PROBE") catch |err| switch (err) {
+        error.EnvironmentVariableMissing => return error.SkipZigTest,
+        else => return err,
+    };
+    defer std.testing.allocator.free(enabled);
+    if (!std.mem.eql(u8, enabled, "handler")) return error.SkipZigTest;
+    const Handler = struct {
+        var entered: std.atomic.Value(bool) = .init(false);
+        fn apply(_: []const u8, _: *[32]u8) error{HandlerFailed}!usize {
+            std.debug.print("M2_SPIN_ENTERED\n", .{});
+            entered.store(true, .release);
+            while (true) std.atomic.spinLoopHint();
+        }
+        fn cancel(userdata: ?*anyopaque, future: *std.Io.AnyFuture, result: []u8, alignment: std.mem.Alignment) void {
+            std.debug.print("M2_JOIN_WAIT\n", .{});
+            std.testing.io.vtable.cancel(userdata, future, result, alignment);
+        }
+    };
+    var vtable = io.vtable.*;
+    vtable.cancel = Handler.cancel;
+    const wrapped = std.Io{ .userdata = io.userdata, .vtable = &vtable };
+    const tasks = try Runtime.createWithHandler(std.testing.allocator, wrapped, .{ "a", "b" }, Handler.apply);
+    defer tasks.deinit() catch unreachable;
+    defer _ = tasks.shutdown();
+    _ = try tasks.trySend(1, "noncooperative handler");
+    while (!Handler.entered.load(.acquire)) std.atomic.spinLoopHint();
     _ = tasks.shutdown();
     return error.TestUnexpectedResult;
 }
