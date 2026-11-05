@@ -166,6 +166,14 @@ The committed Port comparison is a single sequential payload/workload on one hos
 
 ## P1 — Ownership design before implementation
 
+### Compiled stateless handlers
+
+[ADR 0006](adr/0006-compiled-binary-handler.md) proposes a separate compiled
+handler profile with borrowed bounded input, inline bounded output, cooperative
+shutdown and no replay. Implementation, real OTP conformance and lifecycle
+verification remain pending. Arbitrary state, destructor ownership, large output
+and dynamic plugins remain outside that proposal.
+
 ### Arena identity and recycling
 
 Determine whether identity requires `{connection, slot, generation}`. A final release followed by a separate reset can overwrite a concurrent new claim; the v0.5 pseudocode is not a proof of safe reclamation. Tests must establish that live handles prevent reuse and stale generations are rejected.
