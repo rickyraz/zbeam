@@ -11,6 +11,8 @@
 - **M2b accepted — 2026-10-28:** the separate [`serve-workers` profile](two-worker-wire.md) implements [ADR 0005](adr/0005-two-worker-wire-profile.md): two fixed task-owned PIDs, one peer, bounded shared-stream admission and joined epoch drainage. [Acceptance evidence](evidence/phase-c/2026-10-28-m2b-acceptance.md) distinguishes actual OTP, conformance and externally orchestrated recovery from production certification. Full M2 remains broader.
 - **M2c accepted — 2026-10-28 UTC:** [the Linux Elixir owner](two-worker-wire.md#supervised-elixir-owner) composes bounded two-worker admission and external no-replay supervision. [Actual implementation-master CI 40693887236](https://github.com/rickyraz/zbeam/actions/runs/40693887236) passed 12/12; [acceptance evidence](evidence/phase-c/2026-10-28-m2c-acceptance.md) records the limits and failure traces.
 
+A local-only stateless compiled handler is also available through `TaskRuntime.createWithHandler`; [its evidence](evidence/phase-c/2026-11-05-handler-local.md) does not establish a custom wire profile.
+
 This file is authoritative when code and historical specifications differ.
 
 ## Implemented and verified

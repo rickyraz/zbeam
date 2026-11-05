@@ -1,5 +1,5 @@
-//! Two fixed local SHA-256 actors. The owner must join API users before deinit;
-//! stop/cancel joins cooperatively, never preempts CPU code or isolates a panic.
+//! Two fixed local actors, SHA-256 by default. The owner must join API users
+//! before deinit; stop/cancel joins cooperatively and never isolates a panic.
 const std = @import("std");
 const builtin = @import("builtin");
 const actor = @import("zbeam-actor");
@@ -7,7 +7,11 @@ const admission = @import("task_admission.zig");
 const Self = @This();
 
 pub const Outcome = admission.Outcome;
-pub const Result = struct { actor_id: u64, request_id: u64, outcome: Outcome };
+/// For successful custom handlers, output_len selects the used prefix of the
+/// legacy digest buffer. SHA-256 results always have output_len == 32.
+pub const Result = struct { actor_id: u64, request_id: u64, outcome: Outcome, output_len: u6 = 32 };
+/// Borrows both buffers only during this call; the function must be thread-safe.
+pub const Handler = *const fn ([]const u8, *[32]u8) error{HandlerFailed}!usize;
 pub const Exit = enum { stopped, canceled, handler_failed };
 const State = enum { starting, running, stopping, exited, joined };
 const Slot = struct {
@@ -24,6 +28,7 @@ const Slot = struct {
 
 allocator: std.mem.Allocator,
 io: std.Io,
+handler: ?Handler = null,
 mutex: std.Io.Mutex = .init,
 changed: std.Io.Condition = .init,
 start: std.Io.Event = .unset,
@@ -37,11 +42,20 @@ control: if (builtin.is_test) ?*@import("task_runtime_test.zig").Control else vo
 /// ready. Allocator and I/O provider must outlive the joined runtime and support
 /// concurrent use. Start/shutdown/stopAndJoin/deinit have one lifecycle owner.
 pub fn create(allocator: std.mem.Allocator, io: std.Io, names: [2][]const u8) !*Self {
+    return createConfigured(allocator, io, names, null);
+}
+
+/// Uses one stateless, compiled function for both actors; output is at most 32 bytes.
+pub fn createWithHandler(allocator: std.mem.Allocator, io: std.Io, names: [2][]const u8, handler: Handler) !*Self {
+    return createConfigured(allocator, io, names, handler);
+}
+
+fn createConfigured(allocator: std.mem.Allocator, io: std.Io, names: [2][]const u8, handler: ?Handler) !*Self {
     for (names) |name| if (name.len == 0 or name.len > 64) return error.InvalidName;
     if (std.mem.eql(u8, names[0], names[1])) return error.NameTaken;
     const self = try allocator.create(Self);
     errdefer allocator.destroy(self);
-    self.* = .{ .allocator = allocator, .io = io };
+    self.* = .{ .allocator = allocator, .io = io, .handler = handler };
     for (&self.slots, names) |*slot, name| {
         slot.* = .{ .name_len = name.len, .ledger = .{ .allocator = allocator } };
         @memcpy(slot.name[0..name.len], name);
@@ -98,7 +112,7 @@ pub fn nextResult(self: *Self) !?Result {
     defer self.mutex.unlock(self.io);
     while (true) {
         for (&self.slots, 0..) |*slot, i| {
-            if (slot.ledger.take()) |result| return .{ .actor_id = i + 1, .request_id = result.request_id, .outcome = result.outcome };
+            if (slot.ledger.take()) |result| return .{ .actor_id = i + 1, .request_id = result.request_id, .outcome = result.outcome, .output_len = result.output_len };
         }
         if (self.joined) return null;
         try self.changed.wait(self.io, &self.mutex);
@@ -177,8 +191,9 @@ fn work(self: *Self, i: usize) error{ Canceled, HandlerFailed }!void {
 
 fn process(self: *Self, i: usize, message: admission.Message) !void {
     var outcome: Outcome = .stopped;
+    var output_len: u6 = 0;
     var claimed = false;
-    defer self.complete(i, message, outcome, claimed);
+    defer self.complete(i, message, outcome, output_len, claimed);
     if (builtin.is_test) {
         if (self.control) |control| control.checkpoint(self.io, i, .before_claim) catch |err| {
             outcome = if (err == error.Canceled) .canceled else .handler_failed;
@@ -201,16 +216,29 @@ fn process(self: *Self, i: usize, message: admission.Message) !void {
         outcome = .canceled;
         return err;
     };
-    var digest: [32]u8 = undefined;
-    std.crypto.hash.sha2.Sha256.hash(message.bytes, &digest, .{});
-    outcome = .{ .digest = digest };
+    var output: [32]u8 = @splat(0);
+    if (self.handler) |handler| {
+        const len = handler(message.bytes, &output) catch {
+            outcome = .handler_failed;
+            return error.HandlerFailed;
+        };
+        if (len > output.len) {
+            outcome = .handler_failed;
+            return error.HandlerFailed;
+        }
+        output_len = @intCast(len);
+    } else {
+        std.crypto.hash.sha2.Sha256.hash(message.bytes, &output, .{});
+        output_len = 32;
+    }
+    outcome = .{ .digest = output };
 }
 
-fn complete(self: *Self, i: usize, message: admission.Message, outcome: Outcome, claimed: bool) void {
+fn complete(self: *Self, i: usize, message: admission.Message, outcome: Outcome, output_len: u6, claimed: bool) void {
     self.mutex.lockUncancelable(self.io);
     defer self.mutex.unlock(self.io);
     if (!claimed) self.slots[i].ledger.claim(message);
-    self.slots[i].ledger.finish(message, outcome);
+    self.slots[i].ledger.finishSized(message, outcome, output_len);
     self.changed.broadcast(self.io);
 }
 
@@ -227,7 +255,7 @@ fn joinSlot(self: *Self, i: usize) void {
         self.mutex.lockUncancelable(self.io);
         slot.ledger.claim(message);
         self.mutex.unlock(self.io);
-        self.complete(i, message, .stopped, true);
+        self.complete(i, message, .stopped, 0, true);
     }
     self.mutex.lockUncancelable(self.io);
     defer self.mutex.unlock(self.io);
@@ -258,6 +286,7 @@ test "task owner copies names, hashes on both actors, stops and joins idempotent
         try std.testing.expect(result.request_id == first or result.request_id == second);
         try std.testing.expect(!seen[result.actor_id - 1]);
         seen[result.actor_id - 1] = true;
+        try std.testing.expectEqual(@as(u6, 32), result.output_len);
         try std.testing.expectEqualStrings("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad", &std.fmt.bytesToHex(result.outcome.digest, .lower));
     }
     _ = try self.stopAndJoin(a);

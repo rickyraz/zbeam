@@ -170,9 +170,10 @@ The committed Port comparison is a single sequential payload/workload on one hos
 
 [ADR 0006](adr/0006-compiled-binary-handler.md) proposes a separate compiled
 handler profile with borrowed bounded input, inline bounded output, cooperative
-shutdown and no replay. Implementation, real OTP conformance and lifecycle
-verification remain pending. Arbitrary state, destructor ownership, large output
-and dynamic plugins remain outside that proposal.
+shutdown and no replay. A [local-only implementation](task-runtime.md#compiled-stateless-handler-local-only)
+has focused lifecycle and external-kill checks; custom wire routing, real OTP
+conformance and end-to-end verification remain pending. Arbitrary state,
+destructor ownership, large output and dynamic plugins remain outside that proposal.
 
 ### Arena identity and recycling
 
