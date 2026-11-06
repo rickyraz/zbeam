@@ -214,12 +214,22 @@ pub fn build(b: *std.Build) void {
             .imports = &.{.{ .name = "zbeam", .module = lib_mod }},
         }),
     });
+    const panic_custom_worker = b.addExecutable(.{
+        .name = "zbeam-test-panic-custom-worker",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("tests/interop/panic_custom_worker.zig"),
+            .target = target,
+            .optimize = optimize,
+            .imports = &.{.{ .name = "zbeam-cli", .module = exe.root_module }},
+        }),
+    });
     const recovery_step = b.step("test-worker-recovery", "Run Linux Elixir owner, guardian and test-only worker faults");
     const recovery_cmd = b.addSystemCommand(&.{"sh"});
     recovery_cmd.addFileArg(b.path("scripts/interop/worker_recovery.sh"));
     recovery_cmd.addArtifactArg(exe);
     recovery_cmd.addArtifactArg(fault_worker);
     recovery_cmd.addArtifactArg(custom_worker);
+    recovery_cmd.addArtifactArg(panic_custom_worker);
     const two_worker_recovery = b.addSystemCommand(&.{"sh"});
     two_worker_recovery.addFileArg(b.path("scripts/interop/two_worker_recovery.sh"));
     two_worker_recovery.addArtifactArg(exe);

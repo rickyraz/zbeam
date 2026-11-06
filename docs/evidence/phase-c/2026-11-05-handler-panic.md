@@ -1,0 +1,9 @@
+# Compiled-handler panic isolation
+
+A **test-only executable**, not the example or default CLI, compiles a handler that calls `@panic("test-only compiled handler panic")`. The recovery script disables core dumps for its child processes. A live Elixir test connects to the actual two-worker custom profile, sends a call and asserts the panic text from the owned native process, node disconnection, and `:noconnection` monitors for both actors. It verifies the same BEAM VM and an unrelated process remain responsive, observes no reply to the old reference, and confirms the guard and native child exit. The companion SIGKILL scenario separately exercises an explicit replacement and fresh work without replay.
+
+**Local evidence:** Linux WSL2 x86-64, Zig 0.17.0, Elixir 1.20.4 / OTP 29.1.1. `zig fmt --check build.zig src tests examples` passed. Each `zig build test-all test-labs test-task-lifecycle test-worker-recovery -Doptimize={debug,safe} -j2 --summary all` run passed **77/77 steps, 37/39 newly executed Zig tests and two conditional skips**; other steps were cached. Both external-kill watchdog probes passed. The **4/4 custom fault suite passed in ten additional fresh VMs per mode**, including the real panic marker. Logs are `~/.local/state/zbeam-maintenance/2026-10-29-m2d/panic-{full-debug,full-safe,repeat-debug-1..10,repeat-safe-1..10}.log`.
+
+This proves process-loss behavior for this controlled Zig panic on this environment, not isolation between the two native actors, panic recovery inside the handler, OS-OOM/corruption behavior, production readiness or exactly-once work. Elixir/OTP 25–27 and actual merged-master CI remain separate gates.
+
+**Rollback:** remove the panic-only fixture, its build/script wiring, the live case and this evidence; preserve the regular custom handler and SIGKILL tests.

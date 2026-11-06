@@ -154,8 +154,9 @@ cause or production guardian repair is claimed.
 retains an actual-master `:sys.get_state(nil)` failure and removes a demonstrable
 multi-read test race. The original precise interleaving was not captured.
 
-SIGKILL process-loss checks preserve the BEAM VM and unrelated local process.
-M1 additionally verifies test-only panic, deterministic allocator failure, spin,
+SIGKILL and a [real compiled-handler panic](evidence/phase-c/2026-11-05-handler-panic.md)
+process-loss check preserve the BEAM VM and an unrelated local process; the panic
+loses both native actors. M1 additionally verifies test-only panic, deterministic allocator failure, spin,
 external recovery and owned-process cleanup, including a regression for concurrent
 Port closure. This does not establish OS-OOM/memory-corruption safety or isolate
 actors inside one native process.
@@ -181,10 +182,11 @@ handler profile with borrowed bounded input, inline bounded output, cooperative
 shutdown and no replay. A [local-only implementation](task-runtime.md#compiled-stateless-handler-local-only)
 has focused lifecycle and external-kill checks. Mode-specific routing and
 synthetic service composition are implemented, with independent OTP-generated
-vectors. A separate compiled uppercase example has local OTP 25/26/27 checks in
-both modes and local Elixir/OTP 29 fault coverage; actual-master CI and broader
-production acceptance remain pending. Arbitrary state, destructor ownership,
-large output and dynamic plugins remain outside that proposal.
+vectors. A separate compiled uppercase example has [actual-master OTP 25/26/27
+checks](evidence/phase-c/2026-11-05-handler-interop.md#actual-merged-master-follow-up)
+in both modes and Elixir fault coverage; broader production acceptance remains
+pending. Arbitrary state, destructor ownership, large output and dynamic plugins
+remain outside that proposal.
 
 ### Arena identity and recycling
 

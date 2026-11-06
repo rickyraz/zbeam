@@ -107,9 +107,10 @@ elixir --erl '+S 2:2' --name custom_client@127.0.0.1 \
 
 The example launches its own guarded child, calls both actors, and cleans up the
 connection and child. The [live interoperability campaign](evidence/phase-c/2026-11-05-handler-interop.md)
-covers OTP 25/26/27 in both modes plus local Elixir fault scenarios; final
-actual-master CI and production acceptance remain separate. The raw example is
-not the bounded SHA-256 owner API and does not bound arbitrary BEAM senders.
+covers OTP 25/26/27 in both modes and Elixir fault scenarios, including
+[actual-master CI](evidence/phase-c/2026-11-05-handler-interop.md#actual-merged-master-follow-up).
+Production acceptance remains separate. The raw example is not the bounded
+SHA-256 owner API and does not bound arbitrary BEAM senders.
 
 ## Contract and limits
 
@@ -126,7 +127,10 @@ unrelated work and heartbeats. Replies have separate bounded credits; slow write
 or disconnects can drop replies. Accepted work is drained and discarded before
 reconnect; it is never replayed. Stop/join and deadlines are cooperative, not
 CPU preemption; a noncooperative task requires external process kill and reap.
-A panic or corruption affects the whole native process, not just one worker.
+A panic or corruption affects the whole native process, not just one worker. A
+[test-only compiled-handler panic](evidence/phase-c/2026-11-05-handler-panic.md)
+observes both actor monitors disconnect while the BEAM VM remains responsive; it
+does not establish safety under memory corruption or OS-OOM.
 
 Cookies appear in process arguments; there is no TLS. Authentication trusts the
 peer node, not individual BEAM processes. External supervision and no-replay
