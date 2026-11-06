@@ -12,6 +12,15 @@
 
 ## Local cookie observation
 
-A public sentinel cookie was used in a fresh WSL2 / Elixir 1.20.4 / OTP 29.1.1 run. A temporary probe started the ordinary guarded `serve-workers` child, read only its two owned `/proc/PID/cmdline` files, asserted that each contained the sentinel and printed only the boolean result. It observed the sentinel in **both guardian and native argv**, then closed the guard and observed both child processes exit. The probe and output are retained at `~/.local/state/zbeam-maintenance/2026-10-29-m2d/cookie-exposure-probe.{exs,log}`; they contain no private credential. This demonstrates exposure in that environment, not the effective access policy of every Linux deployment.
+A public sentinel cookie was used in a fresh WSL2 / Elixir 1.20.4 / OTP 29.1.1 run. A probe started the ordinary guarded `serve-workers` child, read only its two owned `/proc/PID/cmdline` files, asserted that each contained the sentinel and printed only the boolean result. It observed the sentinel in **both guardian and native argv**, then closed the guard and observed both child processes exit. The original probe and output are retained at `~/.local/state/zbeam-maintenance/2026-10-29-m2d/cookie-exposure-probe.{exs,log}`; they contain no private credential. This demonstrates exposure in that environment, not the effective access policy of every Linux deployment.
+
+Reproduce the historical observation using only the public sentinel; the checked-in probe rejects other cookies and will fail once both argv exposures are fixed:
+
+```sh
+zig build -Doptimize=safe
+sh scripts/interop/ensure_epmd.sh
+elixir --erl '+S 2:2' --name cookie_probe@127.0.0.1 --cookie zbeam_public_probe_cookie \
+  docs/evidence/phase-c/2026-11-05-development-security/cookie_exposure_probe.exs ./zig-out/bin/zbeam
+```
 
 Existing safeguards include bounded wire decoding and waits, mutual cookie-proof verification, fail-closed EPMD loss, and tests for no automatic replay. They do not resolve the findings above. Independent security review, adversarial handshake and resource testing, OS containment, non-argv secrets and TLS remain required before a broader trust or deployment claim.
