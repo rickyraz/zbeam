@@ -195,12 +195,14 @@ pub fn build(b: *std.Build) void {
     const test_interop_cmd = b.addSystemCommand(&.{"sh"});
     test_interop_cmd.addFileArg(b.path("scripts/interop/otp_matrix.sh"));
     test_interop_cmd.step.dependOn(b.getInstallStep());
+    test_interop_cmd.step.dependOn(&install_custom.step);
     test_interop_step.dependOn(&test_interop_cmd.step);
 
     const docker_interop_step = b.step("test-interop-docker", "Run all OTP targets with pinned Docker images (Linux)");
     const docker_interop_cmd = b.addSystemCommand(&.{"sh"});
     docker_interop_cmd.addFileArg(b.path("scripts/interop/otp_docker_matrix.sh"));
     docker_interop_cmd.step.dependOn(b.getInstallStep());
+    docker_interop_cmd.step.dependOn(&install_custom.step);
     docker_interop_step.dependOn(&docker_interop_cmd.step);
 
     const fault_worker = b.addExecutable(.{

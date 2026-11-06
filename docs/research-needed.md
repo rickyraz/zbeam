@@ -97,6 +97,10 @@ Bounded queue operations, logical token ownership, concurrent-receive exclusion,
 
 A real TCP sender is stopped during a paused handler and completes after progress resumes. This establishes transport backpressure, not how a BEAM distribution sender, port queue or process scheduler behaves under saturation. The M2c owner returns `busy` for a confirmed-unsent `:nosuspend` request without failing its in-flight sibling; connection loss and uncertain timeouts still fail closed. Admission and the 1 MiB input limit do not guarantee successful delivery.
 
+A [short WSL2 observation](evidence/phase-c/2026-11-05-owner-pressure-observation.md)
+records queue and memory snapshots under 80 callers and after 2,000 sequential
+requests; it is not a peak, RSS bound, saturation trial or native-host soak.
+
 **Required evidence:** a fast OTP sender, a slow actor, distribution queue/memory measurements, bounded pause windows and externally observed sender throttling. Report normal pauses separately from actor failures.
 
 ### Reconnect and incarnation expansion
@@ -177,10 +181,10 @@ handler profile with borrowed bounded input, inline bounded output, cooperative
 shutdown and no replay. A [local-only implementation](task-runtime.md#compiled-stateless-handler-local-only)
 has focused lifecycle and external-kill checks. Mode-specific routing and
 synthetic service composition are implemented, with independent OTP-generated
-vectors. A separate compiled uppercase example has a local OTP 29 round trip;
-its broader OTP matrix, fault coverage and end-to-end acceptance remain pending.
-Arbitrary state, destructor ownership, large output and dynamic plugins remain
-outside that proposal.
+vectors. A separate compiled uppercase example has local OTP 25/26/27 checks in
+both modes and local Elixir/OTP 29 fault coverage; actual-master CI and broader
+production acceptance remain pending. Arbitrary state, destructor ownership,
+large output and dynamic plugins remain outside that proposal.
 
 ### Arena identity and recycling
 
