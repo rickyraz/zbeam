@@ -7,9 +7,10 @@ defmodule CustomWorkerTest do
   use ExUnit.Case, async: false
   import M2cTestSupport
   @peer String.to_atom("custom_test_#{System.pid()}@127.0.0.1")
-  [custom, standard] = System.argv()
+  [custom, standard, panic] = System.argv()
   @custom Path.expand(custom)
   @standard Path.expand(standard)
+  @panic Path.expand(panic)
 
   defp with_worker(binary, command, test) do
     Process.flag(:trap_exit, true)
@@ -92,6 +93,34 @@ defmodule CustomWorkerTest do
       {a, _} = connect(port).a
       assert request(a, {:call, "abc"}) == {:error, :bad_request}
       assert request(a, {:hash, "abc"}) == {:ok, :crypto.hash(:sha256, "abc")}
+    end)
+  end
+
+  test "a real compiled handler panic kills both actors but not the BEAM VM" do
+    with_worker(@panic, "serve-custom", fn port, _ ->
+      actors = connect(port)
+      {a, a_monitor} = actors.a
+      {b, b_monitor} = actors.b
+      vm_pid = System.pid()
+      parent = self()
+      other = spawn(fn -> receive do :ping -> send(parent, :pong) end end)
+
+      try do
+        ref = make_ref()
+        assert :ok = :erlang.send(a, {self(), ref, {:call, "panic"}}, [:noconnect, :nosuspend])
+        assert_receive {^port, {:data, {:eol, panic_line}}}, 5_000
+        assert String.contains?(panic_line, "test-only compiled handler panic")
+        peer = @peer
+        assert_receive {:nodedown, ^peer}, 5_000
+        assert_receive {:DOWN, ^a_monitor, :process, ^a, :noconnection}, 5_000
+        assert_receive {:DOWN, ^b_monitor, :process, ^b, :noconnection}, 5_000
+        refute_receive {^ref, _}, 100
+        assert System.pid() == vm_pid and Process.alive?(other)
+        send(other, :ping)
+        assert_receive :pong, 1_000
+      after
+        if Process.alive?(other), do: Process.exit(other, :kill)
+      end
     end)
   end
 

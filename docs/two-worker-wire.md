@@ -126,7 +126,10 @@ unrelated work and heartbeats. Replies have separate bounded credits; slow write
 or disconnects can drop replies. Accepted work is drained and discarded before
 reconnect; it is never replayed. Stop/join and deadlines are cooperative, not
 CPU preemption; a noncooperative task requires external process kill and reap.
-A panic or corruption affects the whole native process, not just one worker.
+A panic or corruption affects the whole native process, not just one worker. A
+[test-only compiled-handler panic](evidence/phase-c/2026-11-05-handler-panic.md)
+observes both actor monitors disconnect while the BEAM VM remains responsive; it
+does not establish safety under memory corruption or OS-OOM.
 
 Cookies appear in process arguments; there is no TLS. Authentication trusts the
 peer node, not individual BEAM processes. External supervision and no-replay

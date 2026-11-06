@@ -1,9 +1,11 @@
 #!/bin/sh
 # Opt-in Linux example checks. No failure injection is compiled into zbeam.
 set -eu
+ulimit -c 0
 bin=${1:?ZBEAM required}
 fault_bin=${2:?FAULT_FIXTURE required}
 custom_bin=${3:?CUSTOM_WORKER required}
+panic_custom_bin=${4:?PANIC_CUSTOM_FIXTURE required}
 root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
 logs=$(mktemp -d)
 private_pid=
@@ -31,7 +33,7 @@ timeout 15 elixir --erl '+S 2:2' --name "m2c_example_$$@127.0.0.1" --cookie zbea
 timeout 15 elixir --erl '+S 2:2' --name "custom_example_$$@127.0.0.1" --cookie zbeam_test_cookie \
     "$root/examples/custom_client.exs" "$custom_bin"
 timeout 30 elixir --erl '+S 2:2' --name "custom_tests_$$@127.0.0.1" --cookie zbeam_test_cookie \
-    "$root/tests/interop/custom_worker_test.exs" "$custom_bin" "$bin"
+    "$root/tests/interop/custom_worker_test.exs" "$custom_bin" "$bin" "$panic_custom_bin"
 timeout 90 elixir --erl '+S 2:2' --name "recovery_$$@127.0.0.1" --cookie zbeam_test_cookie \
     "$root/tests/interop/worker_recovery_test.exs" "$bin" "$fault_bin"
 timeout 15 elixir --erl '+S 2:2' --name "example_$$@127.0.0.1" --cookie zbeam_test_cookie \

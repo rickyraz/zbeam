@@ -150,8 +150,9 @@ cause or production guardian repair is claimed.
 retains an actual-master `:sys.get_state(nil)` failure and removes a demonstrable
 multi-read test race. The original precise interleaving was not captured.
 
-SIGKILL process-loss checks preserve the BEAM VM and unrelated local process.
-M1 additionally verifies test-only panic, deterministic allocator failure, spin,
+SIGKILL and a [real compiled-handler panic](evidence/phase-c/2026-11-05-handler-panic.md)
+process-loss check preserve the BEAM VM and an unrelated local process; the panic
+loses both native actors. M1 additionally verifies test-only panic, deterministic allocator failure, spin,
 external recovery and owned-process cleanup, including a regression for concurrent
 Port closure. This does not establish OS-OOM/memory-corruption safety or isolate
 actors inside one native process.

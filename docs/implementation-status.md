@@ -64,7 +64,9 @@ under an external Elixir supervisor. A guarded child process has independent
 owner/VM-crash cleanup. The opt-in `test-worker-recovery` target covers startup
 failure, normal stop, native/guardian/owner/VM loss, caller admission/death,
 timeout, stale references, restart intensity and private EPMD loss. Panic,
-allocation failure and spin are test-only fixtures, never production endpoints.
+allocation failure and spin are test-only fixtures, never production endpoints;
+the compiled-handler panic fixture also checks process-wide actor loss and BEAM
+survival.
 Owner tests use Elixir 1.20.4 / OTP 29; wire interoperability remains independently
 verified on OTP 25/26/27. This is not a production deployment certification.
 
