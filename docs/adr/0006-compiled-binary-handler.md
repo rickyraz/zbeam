@@ -1,6 +1,6 @@
 # ADR 0006 — Compiled stateless binary handlers
 
-**Status:** proposed; no implementation or compatibility claim.
+**Status:** accepted 2026-11-09 for the separate custom-handler profile; [acceptance record](../evidence/phase-c/2026-11-09-adr-0006-acceptance.md).
 **Date:** 2026-11-05.
 **Relation:** additive to ADR 0001, ADR 0004 and ADR 0005. The default `TaskRuntime`, `serve-worker` and `serve-workers` SHA-256 contracts remain unchanged. ADR 0004's exclusion of general stateful handlers remains in force.
 

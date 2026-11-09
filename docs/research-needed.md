@@ -177,8 +177,8 @@ The committed Port comparison is a single sequential payload/workload on one hos
 
 ### Compiled stateless handlers
 
-[ADR 0006](adr/0006-compiled-binary-handler.md) proposes a separate compiled
-handler profile with borrowed bounded input, inline bounded output, cooperative
+[ADR 0006](adr/0006-compiled-binary-handler.md), [accepted 2026-11-09](evidence/phase-c/2026-11-09-adr-0006-acceptance.md),
+defines a separate compiled handler profile with borrowed bounded input, inline bounded output, cooperative
 shutdown and no replay. A [local-only implementation](task-runtime.md#compiled-stateless-handler-local-only)
 has focused lifecycle and external-kill checks. Mode-specific routing and
 synthetic service composition are implemented, with independent OTP-generated
@@ -186,7 +186,7 @@ vectors. A separate compiled uppercase example has [actual-master OTP 25/26/27
 checks](evidence/phase-c/2026-11-05-handler-interop.md#actual-merged-master-follow-up)
 in both modes and Elixir fault coverage; broader production acceptance remains
 pending. Arbitrary state, destructor ownership, large output and dynamic plugins
-remain outside that proposal.
+remain outside that decision.
 
 ### Arena identity and recycling
 

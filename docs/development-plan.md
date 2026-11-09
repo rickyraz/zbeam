@@ -1,7 +1,7 @@
 # Development Plan: MVP to a Supported Native Worker Peer
 
-- **Status:** bounded M1, local M2a, restricted M2b wire profile and M2c Linux owner example are accepted; broader D0–D5 gates remain incomplete.
-- **Reviewed:** 2026-10-28.
+- **Status:** bounded M1, local M2a, restricted M2b wire profile, M2c Linux owner example and the ADR 0006 compiled-handler profile are accepted; broader D0–D5 gates remain incomplete.
+- **Reviewed:** 2026-11-09.
 - **Historical planning baseline:** local `master` at `11c3319`; restricted MVP introduced by `090bb60`. The compiler candidate includes live remote master's accepted labs at `497d346`.
 - **Next milestone:** validate broader worker functions, ownership and deployment in separately scoped work; M2c remains a fixed-workload development owner.
 - **Allocator track:** [snmalloc evaluation](snmalloc-evaluation.md).

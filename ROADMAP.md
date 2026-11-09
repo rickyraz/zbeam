@@ -2,7 +2,7 @@
 
 zbeam advances only when a milestone leaves executable evidence. The v0.5 specification is a design backlog, not a release description.
 
-## Current delivery sequence — 2026-10-28
+## Current delivery sequence — 2026-11-09
 
 **Bounded worker M1 is accepted into master**, including PID/named monitoring and
 external no-replay recovery; [acceptance evidence](docs/evidence/phase-b/2026-10-26-m1-integration.md).
@@ -10,9 +10,11 @@ external no-replay recovery; [acceptance evidence](docs/evidence/phase-b/2026-10
 two fixed actors, bounded copied work/results and explicit stop/join. The separate
 [M2b wire profile](docs/evidence/phase-c/2026-10-28-m2b-acceptance.md) is accepted
 for two fixed workers and one peer. [M2c](docs/evidence/phase-c/2026-10-28-m2c-acceptance.md)
-adds a bounded Linux Elixir owner with external no-replay supervision. Broader
-scheduling and production certification remain open. Zig 0.17.0 and pre-alpha
-package status remain unchanged.
+adds a bounded Linux Elixir owner with external no-replay supervision.
+[ADR 0006](docs/evidence/phase-c/2026-11-09-adr-0006-acceptance.md) is accepted
+for a separate compiled stateless handler profile with at most 32 output bytes.
+Broader scheduling and production certification remain open. Zig 0.17.0 and
+pre-alpha package status remain unchanged.
 
 The M0–M4 labels/checklists below retain the earlier scaffold roadmap. They are
 broader historical groupings, not the current worker-M1/task-ownership-M2 names;
