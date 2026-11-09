@@ -19,7 +19,7 @@ This file is authoritative when code and historical specifications differ.
 
 | Area | Current contract | Verification |
 |---|---|---|
-| Packaging | Zig 0.17.0; five independent batteries and a behavior-free umbrella; ADR 0001 dependency DAG | Independent unit builds and integration imports |
+| Packaging | Zig 0.17.0; five independent batteries and a behavior-free umbrella; ADR 0001 dependency DAG; `build.zig.zon` paths cover consumer builds | Independent unit builds and integration imports; [fetched-archive consumer](evidence/phase-b/2026-11-09-package-consumer.md) in CI |
 | ETF | Owned integer/UTF-8 atom/tuple/binary/proper list/nil/NEW_PID/reference subset; depth, size and aggregate allocation limits | Unit, golden-vector and conformance tests |
 | EPMD | Registration-socket ownership; node lookup; fail-stop executable when registration socket closes | Deterministic socket-loss test and real OTP discovery/removal |
 | Handshake | Initiating and accepting OTP 23+ format; mutual cookie digest; no read-ahead loss at distribution handoff | Coalesced-frame regression, partial NAME/REPLY and silent-initiator deadline tests; actual OTP 25/26/27 |

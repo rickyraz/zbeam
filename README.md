@@ -88,6 +88,7 @@ zig build example-task-runtime                 # two local tasks; no network
 zig build test-task-lifecycle -Doptimize=safe  # Linux and Python 3 watchdog
 zig build test-worker-recovery -Doptimize=safe # Linux, Python 3, Elixir, and EPMD
 zig build test-interop-docker                  # pinned OTP 25/26/27 images; Linux and Docker
+zig build test-package                         # consumer of a fetched package archive; Git
 ```
 
 For native OTP installations, set `OTP_ERL_25`, `OTP_ERL_26`, and `OTP_ERL_27`,
