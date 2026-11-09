@@ -9,7 +9,8 @@ expected = :crypto.hash(:sha256, input)
 name = "sha_worker_#{System.pid()}"
 port = Port.open({:spawn_executable, String.to_charlist(zbeam_bin)}, [
   :binary, :exit_status, :stderr_to_stdout,
-  args: ["serve-sha256", name, Atom.to_string(Node.get_cookie())]
+  env: [{~c"ZBEAM_COOKIE", Atom.to_charlist(Node.get_cookie())}],
+  args: ["serve-sha256", name, "-"]
 ])
 peer = String.to_atom("#{name}@127.0.0.1")
 

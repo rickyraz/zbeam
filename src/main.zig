@@ -24,8 +24,7 @@ fn runCli(init: std.process.Init, handler: ?zbeam.runtime.TaskRuntime.Handler) !
     if (!serving and !probing and !hashing and !std.mem.eql(u8, command, "echo")) return error.UnknownCommand;
     const short_name = args.next() orelse return error.MissingNodeName;
     try validateName(short_name);
-    const cookie = args.next() orelse return error.MissingCookie;
-    if (cookie.len == 0) return error.EmptyCookie;
+    const cookie = try resolveCookie(args.next() orelse return error.MissingCookie, init.environ_map);
     const peer_name = if (probing) args.next() orelse return error.MissingPeerName else null;
     if (peer_name) |name| try validateName(name);
     const max_messages = if (!probing and !workers) blk: {
@@ -33,6 +32,14 @@ fn runCli(init: std.process.Init, handler: ?zbeam.runtime.TaskRuntime.Handler) !
     } else if (workers) @as(usize, 0) else @as(usize, 1);
     if (args.next() != null) return error.UnexpectedArgument;
     try run(init, short_name, cookie, max_messages, serving, peer_name, hashing, worker, workers, if (custom) handler else null);
+}
+
+/// `-` reads the cookie from ZBEAM_COOKIE, keeping it out of the world-readable
+/// argument list; the environment is readable only by the same user and root.
+fn resolveCookie(argument: []const u8, environ: *const std.process.Environ.Map) ![]const u8 {
+    const cookie = if (std.mem.eql(u8, argument, "-")) environ.get("ZBEAM_COOKIE") orelse return error.MissingCookie else argument;
+    if (cookie.len == 0) return error.EmptyCookie;
+    return cookie;
 }
 
 fn validateName(name: []const u8) !void {
@@ -55,6 +62,7 @@ fn printStatus(init: std.process.Init, custom: bool) !void {
         \\       zbeam serve-workers <short-name> <cookie>
         \\       zbeam probe <short-name> <cookie> <peer-short-name>
         \\Loopback only; start epmd -daemon first.
+        \\A cookie of - is read from the ZBEAM_COOKIE environment variable.
         \\echo: one peer, one message by default; zero messages means until disconnect.
         \\serve: sequential peers until stopped; unlimited messages by default.
         \\sha256: one peer; serve-sha256: sequential peers; binary in, digest out.
@@ -144,6 +152,18 @@ test "closed registration cancels listening service" {
         .creation = 1,
         .max_connections = 0,
     }));
+}
+
+test "a dash cookie comes from ZBEAM_COOKIE and must be nonempty" {
+    var environ = std.process.Environ.Map.init(std.testing.allocator);
+    defer environ.deinit();
+    try std.testing.expectEqualStrings("argv", try resolveCookie("argv", &environ));
+    try std.testing.expectError(error.MissingCookie, resolveCookie("-", &environ));
+    try std.testing.expectError(error.EmptyCookie, resolveCookie("", &environ));
+    try environ.put("ZBEAM_COOKIE", "");
+    try std.testing.expectError(error.EmptyCookie, resolveCookie("-", &environ));
+    try environ.put("ZBEAM_COOKIE", "secret");
+    try std.testing.expectEqualStrings("secret", try resolveCookie("-", &environ));
 }
 
 test "CLI restricts node names to safe short loopback identities" {

@@ -14,6 +14,7 @@ grep -q '^Usage: zbeam echo ' "$logs/output"
 grep -q '^       zbeam serve-sha256 ' "$logs/output"
 grep -q '^       zbeam serve-worker ' "$logs/output"
 grep -q '^       zbeam serve-workers ' "$logs/output"
+grep -q 'ZBEAM_COOKIE' "$logs/output"
 grep -q '^suffix$' "$logs/output"
 
 if "$bin" echo 'bad@name' cookie >"$logs/out" 2>"$logs/error"; then exit 1; fi
@@ -34,4 +35,8 @@ if "$custom_bin" serve-custom 'bad@name' cookie >"$logs/out" 2>"$logs/error"; th
 grep -q InvalidNodeName "$logs/error"
 if "$custom_bin" serve-custom valid cookie unexpected >"$logs/out" 2>"$logs/error"; then exit 1; fi
 grep -q UnexpectedArgument "$logs/error"
+if env -u ZBEAM_COOKIE "$bin" serve-workers valid - >"$logs/out" 2>"$logs/error"; then exit 1; fi
+grep -q MissingCookie "$logs/error"
+if ZBEAM_COOKIE= "$bin" serve-workers valid - >"$logs/out" 2>"$logs/error"; then exit 1; fi
+grep -q EmptyCookie "$logs/error"
 echo 'PASS CLI streaming stdout and argument validation'

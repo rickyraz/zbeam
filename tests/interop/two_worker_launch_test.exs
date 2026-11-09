@@ -46,6 +46,29 @@ defmodule TwoWorkerLaunchTest do
     await_dead([next_guard, next_native])
   end
 
+  test "the launcher keeps the cookie out of both argument lists" do
+    cookie = Atom.to_string(Node.get_cookie())
+    assert {:ok, port} = TwoWorkerLaunch.start(@peer, @bin, 3_000)
+    {guard, native} = child_pids(port)
+
+    try do
+      for pid <- [guard, native] do
+        argv = File.read!("/proc/#{pid}/cmdline") |> String.split(<<0>>, trim: true)
+        refute cookie in argv
+        assert List.last(argv) == "-"
+        # Unlike the world-readable cmdline, environ is readable only by its owner.
+        assert Bitwise.band(File.stat!("/proc/#{pid}/environ").mode, 0o077) == 0
+      end
+
+      environ = File.read!("/proc/#{native}/environ") |> String.split(<<0>>, trim: true)
+      assert "ZBEAM_COOKIE=#{cookie}" in environ
+    after
+      TwoWorkerLaunch.close(port)
+    end
+
+    await_dead([guard, native])
+  end
+
   test "a name collision never attaches to or terminates the existing service" do
     assert {:ok, first} = TwoWorkerLaunch.start(@peer, @bin, 3_000)
     {guard, native} = child_pids(first)

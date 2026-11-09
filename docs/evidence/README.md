@@ -2,7 +2,7 @@
 
 Evidence records support implementation and compatibility claims. Passing tests without preserved inputs or environment details is not sufficient for protocol, safety, or performance claims.
 
-The [focused development security review](phase-c/2026-11-05-development-security-review.md) records source-inspection limits and an observed cookie exposure.
+The [focused development security review](phase-c/2026-11-05-development-security-review.md) records source-inspection limits and an observed cookie exposure; the [environment-cookie follow-up](phase-c/2026-11-09-cookie-environment.md) removes the cookie from the bundled launchers' argv.
 
 ## Current MVP records
 

@@ -78,7 +78,7 @@ erl +S 2:2 -noshell -name otp_echo@127.0.0.1 -setcookie development_cookie -eval
 ./zig-out/bin/zbeam probe zig_client development_cookie otp_echo
 ```
 
-Cookies in CLI arguments are visible in process listings. These commands are development interfaces, not secret-management or TLS interfaces.
+Cookies in CLI arguments are visible in process listings. Passing `-` as the cookie reads it from `ZBEAM_COOKIE` instead, which keeps it out of argv but not away from the same OS user. These commands are development interfaces, not secret-management or TLS interfaces.
 
 ## Additive worker identity profile
 

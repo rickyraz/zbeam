@@ -8,8 +8,10 @@ supported requests, and monitor them over a subset of Erlang Distribution. The
 native runtime uses explicit ownership rather than a tracing garbage collector.
 
 **Development only.** zbeam is not a complete Erlang node or a production
-service. Its CLI binds to IPv4 loopback, has no TLS, and exposes the cookie in
-process arguments. Use it only with trusted local peers and a development cookie.
+service. Its CLI binds to IPv4 loopback and has no TLS. A cookie passed as an
+argument is visible in process listings; pass `-` with `ZBEAM_COOKIE` set
+instead, as the bundled Elixir launchers do. Use it only with trusted local
+peers and a development cookie.
 
 ## Try a Zig handler from Elixir
 

@@ -12,7 +12,7 @@ Suspected vulnerabilities should be reported privately through the repository's 
 
 - The CLI binds IPv4 loopback only. The underlying transport library is not a security sandbox.
 - Distribution cookies use the legacy OTP authentication scheme, not encryption. TLS and production secret management are not implemented. The acceptor does not enforce a peer-name allowlist.
-- CLI and guarded-owner cookies are visible in process arguments where OS permissions allow. Test/benchmark cookies are intentionally public and must never be reused in deployment.
+- A cookie given as a CLI argument is visible in process listings. With `-` as the argument, the CLI reads `ZBEAM_COOKIE` instead; the bundled Elixir launchers use this, so neither the guardian nor the native argv contains the cookie. On Linux the environment remains readable by the same OS user and root (`/proc/PID/environ` is owner-only), and the example BEAM nodes still receive `--cookie` in their own arguments ([record](docs/evidence/phase-c/2026-11-09-cookie-environment.md)). Test/benchmark cookies are intentionally public and must never be reused in deployment.
 - Trust is node-wide, not per BEAM process. The owner admission table is public within its BEAM VM; neither the table nor loopback is an isolation boundary against hostile local code.
 - Compiled Zig handlers execute as trusted native code; their borrowing and concurrency obligations are not a sandbox.
 - Frames, decoded collections, recursion and aggregate term allocations are bounded. Unsupported matching payloads close their connection rather than being interpreted permissively.

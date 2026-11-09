@@ -171,7 +171,7 @@ The committed Port comparison is a single sequential payload/workload on one hos
 
 **Current additional evidence (2026-09-28):** a fixed SHA-256 binary worker has exact OTP 25/26/27 checks, a runnable BEAM client and repeated 32 B/64 KiB Port comparisons. The [SHA-256 record](evidence/phase-c/2026-09-28-sha256-worker.md) retains its negative distribution-latency result. This is one useful computation, not general process/monitor support or a worker-supervision framework.
 
-**Required evidence:** concurrent clients, more useful workload mixtures, confidence intervals, randomized path ordering, allocator/CPU profiles, loaded BEAM workloads and operational restart policies. A [focused development security review](evidence/phase-c/2026-11-05-development-security-review.md) observes cookie exposure in both guardian and native argv. Production work still requires non-argv cookie handling, TLS/trusted-network policy, hostile-peer testing and independent security review.
+**Required evidence:** concurrent clients, more useful workload mixtures, confidence intervals, randomized path ordering, allocator/CPU profiles, loaded BEAM workloads and operational restart policies. A [focused development security review](evidence/phase-c/2026-11-05-development-security-review.md) observes cookie exposure in both guardian and native argv; the bundled launchers [now pass it through `ZBEAM_COOKIE`](evidence/phase-c/2026-11-09-cookie-environment.md). Production work still requires secret delivery beyond a same-user environment variable, TLS/trusted-network policy, hostile-peer testing and independent security review.
 
 ## P1 — Ownership design before implementation
 
