@@ -58,7 +58,7 @@ defmodule CustomWorkerTest do
       {b, _} = actors.b
       assert a != b
       assert request(a, {:call, <<>>}) == {:ok, <<>>}
-      assert request(a, {:call, :binary.copy("a", 32)}) == {:ok, :binary.copy("A", 32)}
+      assert request(a, {:call, :binary.copy("a", 65_536)}) == {:ok, :binary.copy("A", 65_536)}
       assert request(b, {:call, "world"}) == {:ok, "WORLD"}
       assert request(a, {:hash, "abc"}) == {:error, :bad_request}
       assert request(a, {:call, :not_binary}) == {:error, :bad_request}
@@ -78,7 +78,7 @@ defmodule CustomWorkerTest do
       assert elem(actors.a, 0) == a and elem(actors.b, 0) == b
       {_, a_monitor} = actors.a
       {_, b_monitor} = actors.b
-      assert request(a, {:call, :binary.copy("a", 33)}) == {:error, :handler_failed}
+      assert request(a, {:call, :binary.copy("a", 65_537)}) == {:error, :handler_failed}
       assert_receive {:DOWN, ^a_monitor, :process, ^a, :handler_failed}, 5_000
       assert request({:zbeam_workers, @peer}, {:discover, :a}) == {:error, :noproc}
       assert request(b, {:call, "still alive"}) == {:ok, "STILL ALIVE"}

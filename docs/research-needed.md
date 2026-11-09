@@ -186,8 +186,8 @@ vectors. A separate compiled uppercase example has [actual-master OTP 25/26/27
 checks](evidence/phase-c/2026-11-05-handler-interop.md#actual-merged-master-follow-up)
 in both modes and Elixir fault coverage. The supervised Elixir owner also runs
 it with [`profile: :custom`](evidence/phase-c/2026-11-09-custom-owner.md); broader
-production acceptance remains pending. [ADR 0007](adr/0007-bounded-handler-output.md) proposes raising the
-output bound from 32 bytes to 64 KiB. Arbitrary state, destructor ownership,
+production acceptance remains pending. [ADR 0007](adr/0007-bounded-handler-output.md) raises the output
+bound from 32 bytes to 64 KiB ([record](evidence/phase-c/2026-11-09-handler-output-64k.md)). Arbitrary state, destructor ownership,
 outputs above that bound and dynamic plugins remain outside both decisions.
 
 ### Arena identity and recycling

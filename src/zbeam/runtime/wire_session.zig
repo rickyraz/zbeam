@@ -73,13 +73,13 @@ pub const Session = struct {
     pub fn result(self: *Session, value: Runtime.Result, writer: *std.Io.Writer) !void {
         const delivery = self.outputs.beginWrite(self.outputs.epoch, value.request_id) orelse return error.UnknownCompletion;
         defer self.outputs.finishWrite(delivery.ticket);
-        if (value.output_len > 32) return error.InvalidOutputLength;
+        if (value.output.len > encode.max_binary) return error.InvalidOutputLength;
         const envelope = route.Envelope{ .to = delivery.to, .reference = delivery.reference };
         const encoded: encode.Result = switch (value.outcome) {
-            .digest => |*digest| if (self.tasks.handler == null)
-                .{ .digest = digest.* }
+            .digest => |digest| if (self.tasks.handler == null)
+                .{ .digest = digest }
             else
-                return sendBinary(writer, envelope, digest[0..value.output_len]),
+                return sendBinary(writer, envelope, value.output),
             .stopped => .{ .failure = .stopped },
             .canceled => .{ .failure = .canceled },
             .handler_failed => .{ .failure = .handler_failed },

@@ -1,6 +1,6 @@
 # ADR 0007 — Bounded 64 KiB output for compiled handlers
 
-**Status:** proposed; no implementation claim.
+**Status:** proposed; implemented in steps 2 and 3 ([encoder](../evidence/phase-b/2026-11-09-binary-reply-header.md), [runtime](../evidence/phase-c/2026-11-09-handler-output-64k.md)); acceptance pending actual-master CI.
 **Date:** 2026-11-09.
 **Relation:** supersedes only the output rules of [ADR 0006](0006-compiled-binary-handler.md): the 32-byte output buffer, the `*[32]u8` handler parameter and `Result.output_len`. ADR 0006's other decisions remain in force: one stateless build-time function, copied input of at most 1 MiB, separate `call` and `hash` profiles, no replay and process-wide panic risk. The SHA-256 `TaskRuntime`, `serve-worker` and `serve-workers` contracts are unchanged.
 

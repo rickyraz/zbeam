@@ -113,7 +113,7 @@ test "internal session discovers, hashes, stops one actor and preserves sibling"
 
 test "custom session separates commands and writes the exact bounded output" {
     const Handler = struct {
-        fn apply(input: []const u8, output: *[32]u8) error{HandlerFailed}!usize {
+        fn apply(input: []const u8, output: []u8) error{HandlerFailed}!usize {
             if (input.len > output.len) return error.HandlerFailed;
             for (input, 0..) |byte, i| output[i] = std.ascii.toUpper(byte);
             return input.len;
@@ -123,33 +123,38 @@ test "custom session separates commands and writes the exact bounded output" {
     defer tasks.deinit() catch unreachable;
     defer _ = tasks.shutdown();
     var session = Session.init(tasks, &peer, pids, 1);
-    var buffer: [8192]u8 = undefined;
-    var writer = std.Io.Writer.fixed(&buffer);
+    const buffer = try testing.allocator.alloc(u8, Runtime.max_output + 8192);
+    defer testing.allocator.free(buffer);
+    var writer = std.Io.Writer.fixed(buffer);
     var command = [_]etf.Term{ .{ .atom = "hash" }, .{ .binary = "abc" } };
     try request(&session, pids[0], .{ .tuple = &command }, &writer);
     var rejected = try decodeReply(writer.buffered());
     defer rejected.deinit(testing.allocator);
     try testing.expectEqualStrings("bad_request", rejected.tuple[1].tuple[1].atom);
 
-    const maximum: [32]u8 = @splat('a');
+    const input = try testing.allocator.alloc(u8, Runtime.max_output);
+    defer testing.allocator.free(input);
+    @memset(input, 'a');
+    const expected = try testing.allocator.alloc(u8, Runtime.max_output);
+    defer testing.allocator.free(expected);
+    @memset(expected, 'A');
     command[0] = .{ .atom = "call" };
-    for ([_][]const u8{ "", "abc", &maximum }, 0..) |input, i| {
-        writer = .fixed(&buffer);
-        command[1] = .{ .binary = input };
+    for ([_]usize{ 0, 3, 32, 33, Runtime.max_output }, 0..) |len, i| {
+        writer = .fixed(buffer);
+        command[1] = .{ .binary = input[0..len] };
         try request(&session, pids[i % 2], .{ .tuple = &command }, &writer);
         try testing.expectEqual(@as(usize, 0), writer.buffered().len);
         try session.result((try tasks.nextResult()).?, &writer);
         var reply = try decodeReply(writer.buffered());
         defer reply.deinit(testing.allocator);
-        const expected = [_][]const u8{ "", "ABC", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" };
-        try testing.expectEqualStrings(expected[i], reply.tuple[1].tuple[1].binary);
+        try testing.expectEqualStrings(expected[0..len], reply.tuple[1].tuple[1].binary);
     }
     session.outputs.discard();
 }
 
 test "custom handler failure retires its actor without disabling the sibling" {
     const Handler = struct {
-        fn apply(input: []const u8, output: *[32]u8) error{HandlerFailed}!usize {
+        fn apply(input: []const u8, output: []u8) error{HandlerFailed}!usize {
             if (std.mem.eql(u8, input, "fail")) return error.HandlerFailed;
             output[0] = 42;
             return 1;
@@ -188,7 +193,9 @@ test "invalid result length fails closed and releases its output credit" {
     var command = [_]etf.Term{ .{ .atom = "hash" }, .{ .binary = "abc" } };
     try request(&session, pids[0], .{ .tuple = &command }, &writer);
     var result = (try tasks.nextResult()).?;
-    result.output_len = 33;
+    const oversized = try testing.allocator.alloc(u8, Runtime.max_output + 1);
+    defer testing.allocator.free(oversized);
+    result.output = oversized;
     try testing.expectError(error.InvalidOutputLength, session.result(result, &writer));
     try testing.expectError(error.UnknownCompletion, session.result(result, &writer));
     for (0..10) |_| _ = try session.outputs.reserve();

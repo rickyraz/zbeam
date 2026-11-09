@@ -7,11 +7,14 @@ const admission = @import("task_admission.zig");
 const Self = @This();
 
 pub const Outcome = admission.Outcome;
-/// For successful custom handlers, output_len selects the used prefix of the
-/// legacy digest buffer. SHA-256 results always have output_len == 32.
-pub const Result = struct { actor_id: u64, request_id: u64, outcome: Outcome, output_len: u6 = 32 };
-/// Borrows both buffers only during this call; the function must be thread-safe.
-pub const Handler = *const fn ([]const u8, *[32]u8) error{HandlerFailed}!usize;
+pub const max_output = admission.max_output;
+/// A custom success keeps the `.digest` tag with a zeroed digest; its bytes are
+/// in `output`, borrowed until the next `nextResult` call or `deinit`. SHA-256
+/// results carry `outcome.digest` and an empty `output`.
+pub const Result = struct { actor_id: u64, request_id: u64, outcome: Outcome, output: []const u8 = &.{} };
+/// Borrows the input and a zeroed `max_output`-byte buffer only during this
+/// call and returns the used length; the function must be thread-safe.
+pub const Handler = *const fn (input: []const u8, output: []u8) error{HandlerFailed}!usize;
 pub const Exit = enum { stopped, canceled, handler_failed };
 const State = enum { starting, running, stopping, exited, joined };
 const Slot = struct {
@@ -29,6 +32,8 @@ const Slot = struct {
 allocator: std.mem.Allocator,
 io: std.Io,
 handler: ?Handler = null,
+/// Custom mode only: one buffer per completion ticket, then the collector's copy.
+outputs: ?[]u8 = null,
 mutex: std.Io.Mutex = .init,
 changed: std.Io.Condition = .init,
 start: std.Io.Event = .unset,
@@ -45,7 +50,8 @@ pub fn create(allocator: std.mem.Allocator, io: std.Io, names: [2][]const u8) !*
     return createConfigured(allocator, io, names, null);
 }
 
-/// Uses one stateless, compiled function for both actors; output is at most 32 bytes.
+/// Uses one stateless, compiled function for both actors; output is at most
+/// `max_output` bytes, in buffers allocated here rather than at completion.
 pub fn createWithHandler(allocator: std.mem.Allocator, io: std.Io, names: [2][]const u8, handler: Handler) !*Self {
     return createConfigured(allocator, io, names, handler);
 }
@@ -56,6 +62,8 @@ fn createConfigured(allocator: std.mem.Allocator, io: std.Io, names: [2][]const 
     const self = try allocator.create(Self);
     errdefer allocator.destroy(self);
     self.* = .{ .allocator = allocator, .io = io, .handler = handler };
+    if (handler != null) self.outputs = try allocator.alloc(u8, (2 * admission.ticket_capacity + 1) * max_output);
+    errdefer if (self.outputs) |outputs| allocator.free(outputs);
     for (&self.slots, names) |*slot, name| {
         slot.* = .{ .name_len = name.len, .ledger = .{ .allocator = allocator } };
         @memcpy(slot.name[0..name.len], name);
@@ -74,6 +82,7 @@ fn createConfigured(allocator: std.mem.Allocator, io: std.Io, names: [2][]const 
 pub fn deinit(self: *Self) !void {
     if (!self.joined) return error.NotJoined;
     for (&self.slots) |*slot| slot.ledger.discard();
+    if (self.outputs) |outputs| self.allocator.free(outputs);
     self.allocator.destroy(self);
 }
 
@@ -112,7 +121,15 @@ pub fn nextResult(self: *Self) !?Result {
     defer self.mutex.unlock(self.io);
     while (true) {
         for (&self.slots, 0..) |*slot, i| {
-            if (slot.ledger.take()) |result| return .{ .actor_id = i + 1, .request_id = result.request_id, .outcome = result.outcome, .output_len = result.output_len };
+            const completion = slot.ledger.take() orelse continue;
+            var result = Result{ .actor_id = i + 1, .request_id = completion.request_id, .outcome = completion.outcome };
+            if (self.outputs != null and completion.outcome == .digest) {
+                // The ticket is free once taken; copy before a new request can reuse it.
+                const copy = self.outputBuffer(2 * admission.ticket_capacity)[0..completion.output_len];
+                @memcpy(copy, self.outputBuffer(i * admission.ticket_capacity + completion.ticket)[0..completion.output_len]);
+                result.output = copy;
+            }
+            return result;
         }
         if (self.joined) return null;
         try self.changed.wait(self.io, &self.mutex);
@@ -142,6 +159,10 @@ pub fn shutdown(self: *Self) [2]Exit {
     self.start.set(self.io);
     for (0..2) |i| self.joinSlot(i);
     return .{ self.slots[0].exit, self.slots[1].exit };
+}
+
+fn outputBuffer(self: *Self, n: usize) []u8 {
+    return self.outputs.?[n * max_output ..][0..max_output];
 }
 
 fn index(id: u64) !usize {
@@ -191,7 +212,7 @@ fn work(self: *Self, i: usize) error{ Canceled, HandlerFailed }!void {
 
 fn process(self: *Self, i: usize, message: admission.Message) !void {
     var outcome: Outcome = .stopped;
-    var output_len: u6 = 0;
+    var output_len: u32 = 0;
     var claimed = false;
     defer self.complete(i, message, outcome, output_len, claimed);
     if (builtin.is_test) {
@@ -216,9 +237,11 @@ fn process(self: *Self, i: usize, message: admission.Message) !void {
         outcome = .canceled;
         return err;
     };
-    var output: [32]u8 = @splat(0);
     if (self.handler) |handler| {
-        const len = handler(message.bytes, &output) catch {
+        // The active ticket owns this buffer until its completion is collected.
+        const output = self.outputBuffer(i * admission.ticket_capacity + message.ticket);
+        @memset(output, 0);
+        const len = handler(message.bytes, output) catch {
             outcome = .handler_failed;
             return error.HandlerFailed;
         };
@@ -227,14 +250,16 @@ fn process(self: *Self, i: usize, message: admission.Message) !void {
             return error.HandlerFailed;
         }
         output_len = @intCast(len);
+        outcome = .{ .digest = @splat(0) };
     } else {
-        std.crypto.hash.sha2.Sha256.hash(message.bytes, &output, .{});
+        var digest: [32]u8 = undefined;
+        std.crypto.hash.sha2.Sha256.hash(message.bytes, &digest, .{});
         output_len = 32;
+        outcome = .{ .digest = digest };
     }
-    outcome = .{ .digest = output };
 }
 
-fn complete(self: *Self, i: usize, message: admission.Message, outcome: Outcome, output_len: u6, claimed: bool) void {
+fn complete(self: *Self, i: usize, message: admission.Message, outcome: Outcome, output_len: u32, claimed: bool) void {
     self.mutex.lockUncancelable(self.io);
     defer self.mutex.unlock(self.io);
     if (!claimed) self.slots[i].ledger.claim(message);
@@ -286,7 +311,7 @@ test "task owner copies names, hashes on both actors, stops and joins idempotent
         try std.testing.expect(result.request_id == first or result.request_id == second);
         try std.testing.expect(!seen[result.actor_id - 1]);
         seen[result.actor_id - 1] = true;
-        try std.testing.expectEqual(@as(u6, 32), result.output_len);
+        try std.testing.expectEqual(@as(usize, 0), result.output.len);
         try std.testing.expectEqualStrings("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad", &std.fmt.bytesToHex(result.outcome.digest, .lower));
     }
     _ = try self.stopAndJoin(a);

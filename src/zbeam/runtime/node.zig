@@ -103,7 +103,7 @@ test "two-worker internal failures stop service without changing M1 error policy
 
 test "custom handler is rejected outside the two-worker service" {
     const Handler = struct {
-        fn apply(_: []const u8, _: *[32]u8) error{HandlerFailed}!usize {
+        fn apply(_: []const u8, _: []u8) error{HandlerFailed}!usize {
             return 0;
         }
     };

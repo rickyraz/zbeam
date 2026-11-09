@@ -143,7 +143,7 @@ defmodule TwoWorkerOwner do
 
   @impl true
   def handle_info({ref, {:ok, output}}, state)
-      when is_reference(ref) and is_binary(output) and byte_size(output) <= 32 do
+      when is_reference(ref) and is_binary(output) and byte_size(output) <= 65_536 do
     actor = actor_for_ref(state, ref)
     operation = actor && elem(state.pending[actor], 5)
 

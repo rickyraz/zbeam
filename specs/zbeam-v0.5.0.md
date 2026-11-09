@@ -429,7 +429,8 @@ contracts. `example-task-runtime` exercises the local API, not wire actor routes
 **Compiled handlers:** [ADR 0006](../docs/adr/0006-compiled-binary-handler.md)
 scopes an additive stateless binary handler profile. The local-only
 [`createWithHandler`](../docs/task-runtime.md#compiled-stateless-handler-local-only)
-borrows owned input, returns at most 32 inline bytes and retains join barriers.
+borrows owned input, returns at most 64 KiB through runtime-owned buffers
+([ADR 0007](../docs/adr/0007-bounded-handler-output.md)) and retains join barriers.
 Mode-specific routing and bounded binary encoding have conformance vectors, and
 `node.Config.custom_handler` composes an experimental separate `call` profile.
 A separately built example runs a non-SHA-256 function from Elixir; live OTP
