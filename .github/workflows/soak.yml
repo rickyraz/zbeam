@@ -1,0 +1,46 @@
+name: Soak
+
+on:
+  workflow_dispatch:
+    inputs:
+      seconds:
+        description: Duration per profile, in seconds
+        default: "600"
+      callers:
+        description: Concurrent callers per actor
+        default: "4"
+
+permissions:
+  contents: read
+
+jobs:
+  owner-soak:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: ["sha256", "custom"]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.17.0
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: "29"
+          elixir-version: "1.20.4"
+      - run: zig build -Doptimize=safe
+      - run: zig build example-custom-worker -Doptimize=safe
+      - run: sh scripts/interop/ensure_epmd.sh
+      - name: Soak the ${{ matrix.profile }} owner
+        env:
+          PROFILE: ${{ matrix.profile }}
+          SECONDS_INPUT: ${{ inputs.seconds }}
+          CALLERS_INPUT: ${{ inputs.callers }}
+        run: |
+          bin=./zig-out/bin/zbeam
+          if [ "$PROFILE" = custom ]; then bin=./zig-out/bin/zbeam-custom-worker; fi
+          uname -a
+          elixir --erl '+S 2:2' --name "soak_$$@127.0.0.1" --cookie zbeam_soak_cookie \
+            benchmarks/owner_soak.exs "$bin" "$PROFILE" "$SECONDS_INPUT" "$CALLERS_INPUT"

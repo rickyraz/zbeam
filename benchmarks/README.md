@@ -6,6 +6,26 @@ Benchmarks are evidence tooling, not product claims. Results record environment,
 
 `benchmarks/owner_pressure.exs` self-checks 80 callers against a paused owned child and records instantaneous BEAM, owner, distribution-port and Linux `/proc` measurements before and after resume. See the [WSL2 observation](../docs/evidence/phase-c/2026-11-05-owner-pressure-observation.md) for commands, results and sampling limitations. This is not a native-host soak or an RSS bound.
 
+## Owner soak
+
+`benchmarks/owner_soak.exs EXECUTABLE sha256|custom SECONDS CALLERS` runs
+concurrent callers per actor through one supervised `TwoWorkerOwner` for a fixed
+time. Every result is checked exactly, `busy` is counted, and any other result,
+or an owner restart, fails the run. Payload sizes are drawn from fixed lists up to
+1 MiB (SHA-256) or 64 KiB (custom). A sampler records first/min/max/last native
+and BEAM `VmRSS`, native `VmHWM`, BEAM total memory and owner queue length once a
+second; latency percentiles use one successful call in eight. The manual
+[Soak workflow](../.github/workflows/soak.yml) runs both profiles on an
+ubuntu-24.04 GitHub runner.
+
+```sh
+elixir --erl '+S 2:2' --name soak@127.0.0.1 --cookie zbeam_soak_cookie \
+  benchmarks/owner_soak.exs ./zig-out/bin/zbeam-custom-worker custom 60 2
+```
+
+Results describe one host and one run; they are not RSS, latency or fairness bounds.
+See the [soak record](../docs/evidence/phase-c/2026-11-09-owner-soak.md).
+
 ## Allocator research
 
 The [snmalloc evaluation plan](../docs/snmalloc-evaluation.md) defines a future isolated experiment; no snmalloc build target or result exists yet. The [source audit](../docs/evidence/phase-a/2026-09-26-allocator-source-audit.md) identifies `DebugAllocator` in the recorded no-libc ReleaseSafe executable. The Port payload path uses fixed storage, so the Port comparison alone cannot identify an allocator bottleneck. Compare an explicit `smp_allocator` configuration before adding an external backend, and preserve the existing results rather than relabeling them.
