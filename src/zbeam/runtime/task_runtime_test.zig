@@ -1,6 +1,7 @@
 //! Imported only by test builds; no fault switch or pause hook exists in production.
 const std = @import("std");
 const Runtime = @import("task_runtime.zig");
+const admission = @import("task_admission.zig");
 const io = std.testing.io;
 
 const Phase = enum { before_claim, active };
@@ -193,9 +194,9 @@ test "lifecycle: handler error retires actor, joins and preserves sibling progre
     try std.testing.expectEqual(@as(usize, 1), digests);
 }
 
-test "lifecycle: compiled handler returns bounded inline bytes on both actors" {
+test "lifecycle: compiled handler returns bounded bytes on both actors" {
     const Handler = struct {
-        fn apply(input: []const u8, output: *[32]u8) error{HandlerFailed}!usize {
+        fn apply(input: []const u8, output: []u8) error{HandlerFailed}!usize {
             for (input, 0..) |byte, i| output[i] = std.ascii.toUpper(byte);
             return input.len;
         }
@@ -204,33 +205,25 @@ test "lifecycle: compiled handler returns bounded inline bytes on both actors" {
     defer tasks.deinit() catch unreachable;
     defer _ = tasks.shutdown();
 
-    const empty = try tasks.trySend(1, "");
-    var input: [32]u8 = @splat('a');
-    const maximum = try tasks.trySend(2, &input);
-    @memset(&input, 'z');
-    var seen: [2]bool = @splat(false);
-    for (0..2) |_| {
+    const input = try std.testing.allocator.alloc(u8, Runtime.max_output);
+    defer std.testing.allocator.free(input);
+    @memset(input, 'a');
+    for ([_]usize{ 0, 32, 33, Runtime.max_output }, 0..) |len, i| {
+        const id = try tasks.trySend(i % 2 + 1, input[0..len]);
         const result = (try tasks.nextResult()).?;
+        try std.testing.expectEqual(id, result.request_id);
         try std.testing.expect(result.outcome == .digest);
-        if (result.request_id == empty) {
-            try std.testing.expectEqual(@as(u6, 0), result.output_len);
-            try std.testing.expectEqual(@as([32]u8, @splat(0)), result.outcome.digest);
-            seen[0] = true;
-        } else {
-            try std.testing.expectEqual(maximum, result.request_id);
-            try std.testing.expectEqual(@as(u6, 32), result.output_len);
-            try std.testing.expectEqualStrings("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", &result.outcome.digest);
-            seen[1] = true;
-        }
+        try std.testing.expectEqual(@as([32]u8, @splat(0)), result.outcome.digest);
+        try std.testing.expectEqual(len, result.output.len);
+        for (result.output) |byte| try std.testing.expectEqual(@as(u8, 'A'), byte);
     }
-    try std.testing.expect(seen[0] and seen[1]);
 }
 
 test "lifecycle: compiled handler failures retire only the affected actor" {
     const Handler = struct {
-        fn apply(input: []const u8, output: *[32]u8) error{HandlerFailed}!usize {
+        fn apply(input: []const u8, output: []u8) error{HandlerFailed}!usize {
             if (std.mem.eql(u8, input, "error")) return error.HandlerFailed;
-            if (std.mem.eql(u8, input, "too long")) return 33;
+            if (std.mem.eql(u8, input, "too long")) return output.len + 1;
             output[0] = 42;
             return 1;
         }
@@ -242,14 +235,55 @@ test "lifecycle: compiled handler failures retire only the affected actor" {
         _ = try tasks.trySend(1, input);
         const failed = (try tasks.nextResult()).?;
         try std.testing.expect(failed.outcome == .handler_failed);
+        try std.testing.expectEqual(@as(usize, 0), failed.output.len);
         try std.testing.expectEqual(Runtime.Exit.handler_failed, try tasks.stopAndJoin(1));
         try std.testing.expectError(error.ActorStopped, tasks.trySend(1, "late"));
         _ = try tasks.trySend(2, "ok");
         const sibling = (try tasks.nextResult()).?;
-        try std.testing.expectEqual(@as(u6, 1), sibling.output_len);
-        try std.testing.expectEqual(@as(u8, 42), sibling.outcome.digest[0]);
-        for (sibling.outcome.digest[1..]) |byte| try std.testing.expectEqual(@as(u8, 0), byte);
+        try std.testing.expectEqualSlices(u8, &.{42}, sibling.output);
     }
+}
+
+test "lifecycle: handler buffers are zeroed and collected output survives ticket reuse" {
+    const Handler = struct {
+        fn apply(input: []const u8, output: []u8) error{HandlerFailed}!usize {
+            // Stale bytes from an earlier request on this ticket would fail here.
+            for (output) |byte| if (byte != 0) return error.HandlerFailed;
+            @memset(output[0..1000], input[0]);
+            return if (input.len == 1) 1000 else 1;
+        }
+    };
+    const tasks = try Runtime.createWithHandler(std.testing.allocator, io, .{ "a", "b" }, Handler.apply);
+    defer tasks.deinit() catch unreachable;
+    defer _ = tasks.shutdown();
+    _ = try tasks.trySend(1, "x");
+    const first = (try tasks.nextResult()).?;
+    try std.testing.expectEqual(@as(usize, 1000), first.output.len);
+    // Reuse actor a's tickets, including the first one's, while `first` is borrowed.
+    for (0..admission.queue_capacity) |_| _ = try tasks.trySend(1, "yy");
+    while (true) {
+        tasks.mutex.lockUncancelable(io);
+        var complete: usize = 0;
+        for (tasks.slots[0].ledger.records) |record| complete += @intFromBool(record.stage == .complete);
+        tasks.mutex.unlock(io);
+        if (complete == admission.queue_capacity) break;
+        try io.sleep(.fromMilliseconds(1), .awake);
+    }
+    for (first.output) |byte| try std.testing.expectEqual(@as(u8, 'x'), byte);
+    for (0..admission.queue_capacity) |_| {
+        const later = (try tasks.nextResult()).?;
+        try std.testing.expect(later.outcome == .digest);
+        try std.testing.expectEqualSlices(u8, "y", later.output);
+    }
+}
+
+test "lifecycle: SHA-256 runtimes allocate no handler output storage" {
+    var counted = std.testing.FailingAllocator.init(std.testing.allocator, .{});
+    const tasks = try Runtime.create(counted.allocator(), io, .{ "a", "b" });
+    defer tasks.deinit() catch unreachable;
+    defer _ = tasks.shutdown();
+    try std.testing.expectEqual(@sizeOf(Runtime), counted.allocated_bytes - counted.freed_bytes);
+    try std.testing.expect(tasks.outputs == null);
 }
 
 test "lifecycle: noncooperative spin requires external process termination" {
@@ -289,7 +323,7 @@ test "lifecycle: noncooperative compiled handler requires external process termi
     if (!std.mem.eql(u8, enabled, "handler")) return error.SkipZigTest;
     const Handler = struct {
         var entered: std.atomic.Value(bool) = .init(false);
-        fn apply(_: []const u8, _: *[32]u8) error{HandlerFailed}!usize {
+        fn apply(_: []const u8, _: []u8) error{HandlerFailed}!usize {
             std.debug.print("M2_SPIN_ENTERED\n", .{});
             entered.store(true, .release);
             while (true) std.atomic.spinLoopHint();

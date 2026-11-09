@@ -6,6 +6,6 @@ pub fn main(init: std.process.Init) !void {
     try cli.runCustom(init, panicHandler);
 }
 
-fn panicHandler(_: []const u8, _: *[32]u8) error{HandlerFailed}!usize {
+fn panicHandler(_: []const u8, _: []u8) error{HandlerFailed}!usize {
     @panic("test-only compiled handler panic");
 }

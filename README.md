@@ -34,9 +34,9 @@ to try another handler. The [Elixir client](examples/custom_client.exs) starts t
 supervised `TwoWorkerOwner` with `profile: :custom` and uses `TwoWorkerOwner.call/3`.
 
 A handler borrows the runtime's copied input for the duration of the call and
-writes up to 32 bytes to the supplied output buffer. It must not retain either
+writes up to 64 KiB to the supplied output buffer. It must not retain either
 buffer and must be safe to call concurrently. The runtime accepts input up to
-1 MiB, but this uppercase example returns `handler_failed` for input over 32 bytes
+1 MiB, but this uppercase example returns `handler_failed` for input over 64 KiB
 and retires that actor. See the [handler contract and wire profile](docs/two-worker-wire.md#compiled-handler-composition-experimental).
 
 ## What works

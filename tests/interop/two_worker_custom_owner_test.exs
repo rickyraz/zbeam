@@ -43,8 +43,9 @@ defmodule TwoWorkerCustomOwnerTest do
     {_, _, _, _} = start()
     assert TwoWorkerOwner.call(@name, :a, "hello") == {:ok, "HELLO"}
     assert TwoWorkerOwner.call(@name, :b, <<>>) == {:ok, <<>>}
-    maximum = :binary.copy("z", 32)
-    assert TwoWorkerOwner.call(@name, :b, maximum) == {:ok, :binary.copy("Z", 32)}
+    assert TwoWorkerOwner.call(@name, :b, :binary.copy("z", 33)) == {:ok, :binary.copy("Z", 33)}
+    maximum = :binary.copy("z", 65_536)
+    assert TwoWorkerOwner.call(@name, :b, maximum) == {:ok, :binary.copy("Z", 65_536)}
     assert TwoWorkerOwner.hash(@name, :a, "abc") == {:error, :unsupported}
     assert :ets.info(@name, :size) == 0
     assert TwoWorkerOwner.call(@name, :a, "still usable") == {:ok, "STILL USABLE"}
@@ -84,7 +85,7 @@ defmodule TwoWorkerCustomOwnerTest do
       if not Process.get(:custom_resumed, false) and live?(native), do: kill(native, "CONT")
     end
 
-    assert TwoWorkerOwner.call(@name, :a, :binary.copy("a", 33)) == {:error, :handler_failed}
+    assert TwoWorkerOwner.call(@name, :a, :binary.copy("a", 65_537)) == {:error, :handler_failed}
     assert TwoWorkerOwner.call(@name, :a, "retired") == {:error, :unavailable}
     assert TwoWorkerOwner.call(@name, :b, "sibling") == {:ok, "SIBLING"}
     assert TwoWorkerOwner.stop(@name, :b) == :ok

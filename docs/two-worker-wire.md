@@ -86,7 +86,7 @@ A Zig embedding may set `node.Config.custom_handler` for the `workers` service.
 This selects a separate profile using `{FromPid, Ref, {call, Binary}}` and
 `{Ref, {ok, Binary}}`; it rejects `hash`. The ordinary `serve-workers` command
 continues to use SHA-256 and rejects `call`. The handler borrows its runtime-owned
-input during the call and returns 0–32 bytes in zeroed inline output storage;
+input during the call and writes 0–64 KiB into a zeroed runtime-owned buffer;
 see the [local handler contract](task-runtime.md#compiled-stateless-handler-local-only).
 Discovery, bounded admission, stop, monitors and joined connection epochs are
 shared with the two-worker service.
@@ -94,8 +94,8 @@ shared with the two-worker service.
 The separate example executable compiles the Zig function in
 [`examples/custom_worker.zig`](../examples/custom_worker.zig); replace that
 function and rebuild to use another handler. Its example function uppercases
-ASCII bytes and deliberately returns `handler_failed` for inputs above 32
-bytes, retiring that actor. The runtime's general input limit remains 1 MiB.
+ASCII bytes and deliberately returns `handler_failed` for inputs above 64 KiB,
+retiring that actor. The runtime's general input limit remains 1 MiB.
 
 ```sh
 zig build example-custom-worker -Doptimize=safe
@@ -116,7 +116,7 @@ opts = [name: :custom, peer: :"native_custom@127.0.0.1",
 
 The custom owner launches `serve-custom` and keeps the same admission, `busy`,
 stop, timeout and no-replay rules as the SHA-256 owner. `call/3` returns the
-handler's 0–32 output bytes. Each owner accepts only its own profile's command:
+handler's 0–65 536 output bytes. Each owner accepts only its own profile's command:
 `hash/3` on a custom owner, or `call/3` on a SHA-256 owner, returns
 `{:error, :unsupported}` and releases the claimed admission slot. A returned
 `handler_failed` retires that actor until the native process is replaced. The

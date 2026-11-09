@@ -46,18 +46,23 @@ mailbox handles; Zig does not statically prevent direct field/slice misuse.
 
 `TaskRuntime.createWithHandler(allocator, io, names, handler)` selects one
 compiled Zig function for both fixed actors. `Handler` has the signature
-`fn ([]const u8, *[32]u8) error{HandlerFailed}!usize`. Input is the runtime's
-owned copy, borrowed only until the function returns; output is a zeroed inline
-buffer borrowed for the same duration. The function must not retain either
-buffer or create unmanaged tasks, and must be safe for concurrent calls. Its
-returned length must be 0–32. An error or larger length retires that actor with
-`handler_failed`; the sibling remains usable. A panic still affects the native
-process, and an uncooperative function requires external kill/reap.
+`fn (input: []const u8, output: []u8) error{HandlerFailed}!usize`. Input is the
+runtime's owned copy, borrowed only until the function returns; `output` is a
+runtime-owned buffer of exactly `TaskRuntime.max_output` (64 KiB) bytes, zeroed
+before each call and borrowed for the same duration. The function must not
+retain either buffer or create unmanaged tasks, and must be safe for concurrent
+calls. It returns the used length, at most `output.len`. An error or larger
+length retires that actor with `handler_failed`; the sibling remains usable. A
+panic still affects the native process, and an uncooperative function requires
+external kill/reap.
 
-For a successful custom result, `result.output_len` selects the used prefix of
-`result.outcome.digest`; the field name is retained for SHA-256 compatibility.
-Default `create` still hashes and returns length 32. The ticket remains held
-until collection, just as for a digest. The separate experimental
+A successful custom result keeps the `.digest` tag with a zeroed digest; its
+bytes are in `result.output`, a copy that stays valid until the next
+`nextResult` call or `deinit`. SHA-256 results carry `outcome.digest` and an
+empty `output`. With a handler, `createWithHandler` allocates one 64 KiB buffer
+per completion ticket plus one for that copy (704 KiB); completion allocates
+nothing. The ticket remains held until collection, just as for a digest. See
+[ADR 0007](adr/0007-bounded-handler-output.md). The separate experimental
 [custom wire composition](two-worker-wire.md#compiled-handler-composition-experimental)
 uses the same handler contract without changing the SHA-256 service. Stateful
 handlers, owned user destructors and dynamic plugins are not supported. See the

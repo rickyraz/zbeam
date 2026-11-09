@@ -94,9 +94,9 @@ test "authenticated sequential peers observe stable distinct service identities"
     try testing.expectEqual(@as(u64, 3), owner.epoch);
 }
 
-test "custom service owns its compiled handler and inline result" {
+test "custom service owns its compiled handler and bounded result" {
     const Handler = struct {
-        fn apply(_: []const u8, output: *[32]u8) error{HandlerFailed}!usize {
+        fn apply(_: []const u8, output: []u8) error{HandlerFailed}!usize {
             output[0] = 42;
             return 1;
         }
@@ -105,8 +105,7 @@ test "custom service owns its compiled handler and inline result" {
     defer owner.deinit();
     _ = try owner.tasks.trySend(1, "input");
     const result = (try owner.tasks.nextResult()).?;
-    try testing.expectEqual(@as(u6, 1), result.output_len);
-    try testing.expectEqual(@as(u8, 42), result.outcome.digest[0]);
+    try testing.expectEqualSlices(u8, &.{42}, result.output);
 }
 
 test "identity is not published when either actor cannot start" {
