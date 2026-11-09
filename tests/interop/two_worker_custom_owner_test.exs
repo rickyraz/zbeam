@@ -56,6 +56,19 @@ defmodule TwoWorkerCustomOwnerTest do
     assert TwoWorkerOwner.call(@name, :c, "x") == {:error, :invalid_input}
   end
 
+  test "sequential small calls do not stall on split reply writes" do
+    {_, _, _, _} = start()
+    started = System.monotonic_time(:millisecond)
+
+    for i <- 1..200 do
+      input = Integer.to_string(i)
+      assert TwoWorkerOwner.call(@name, :a, input) == {:ok, input}
+    end
+
+    # A delayed-ACK stall on each reply would take about 8 s.
+    assert System.monotonic_time(:millisecond) - started < 2_000
+  end
+
   test "the SHA-256 owner rejects call without consuming admission" do
     {_, _, _, _} = start(executable: @sha256, profile: :sha256)
     assert TwoWorkerOwner.call(@name, :a, "abc") == {:error, :unsupported}

@@ -28,6 +28,10 @@ uses the same path with an empty tail, so every frame still uses one call.
 
 - A counting writer with no buffer receives exactly one `drain` call carrying
   all seven bytes of a split frame; the previous two-`writeAll` form makes two.
+- A live regression guard in the custom owner suite sends 200 sequential small
+  calls and requires them to finish within 2 s. Against the pre-fix transport it
+  failed after 8 823 ms; with the fix it took 175 ms (logs
+  `latency-guard-{prefix,fixed}.log`).
 - The same 20-second custom soak afterwards measured **p50 770 µs, p99 2 715 µs,
   max 4 834 µs and 2 063 successful calls per second**, with exact results and
   no owner restart.
