@@ -34,6 +34,8 @@ timeout 15 elixir --erl '+S 2:2' --name "custom_example_$$@127.0.0.1" --cookie z
     "$root/examples/custom_client.exs" "$custom_bin"
 timeout 30 elixir --erl '+S 2:2' --name "custom_tests_$$@127.0.0.1" --cookie zbeam_test_cookie \
     "$root/tests/interop/custom_worker_test.exs" "$custom_bin" "$bin" "$panic_custom_bin"
+timeout 30 elixir --erl '+S 2:2' --name "custom_owner_$$@127.0.0.1" --cookie zbeam_test_cookie \
+    "$root/tests/interop/two_worker_custom_owner_test.exs" "$custom_bin" "$bin"
 timeout 90 elixir --erl '+S 2:2' --name "recovery_$$@127.0.0.1" --cookie zbeam_test_cookie \
     "$root/tests/interop/worker_recovery_test.exs" "$bin" "$fault_bin"
 timeout 15 elixir --erl '+S 2:2' --name "example_$$@127.0.0.1" --cookie zbeam_test_cookie \

@@ -89,8 +89,7 @@ continues to use SHA-256 and rejects `call`. The handler borrows its runtime-own
 input during the call and returns 0–32 bytes in zeroed inline output storage;
 see the [local handler contract](task-runtime.md#compiled-stateless-handler-local-only).
 Discovery, bounded admission, stop, monitors and joined connection epochs are
-shared with the two-worker service. The SHA-256 Elixir owner is not a
-custom-call client.
+shared with the two-worker service.
 
 The separate example executable compiles the Zig function in
 [`examples/custom_worker.zig`](../examples/custom_worker.zig); replace that
@@ -105,12 +104,28 @@ elixir --erl '+S 2:2' --name custom_client@127.0.0.1 \
   --cookie development_cookie examples/custom_client.exs ./zig-out/bin/zbeam-custom-worker
 ```
 
-The example launches its own guarded child, calls both actors, and cleans up the
-connection and child. The [live interoperability campaign](evidence/phase-c/2026-11-05-handler-interop.md)
-covers OTP 25/26/27 in both modes and Elixir fault scenarios, including
-[actual-master CI](evidence/phase-c/2026-11-05-handler-interop.md#actual-merged-master-follow-up).
-Production acceptance remains separate. The raw example is not the bounded
-SHA-256 owner API and does not bound arbitrary BEAM senders.
+The example runs the handler under the supervised owner described above, with
+`profile: :custom`:
+
+```elixir
+opts = [name: :custom, peer: :"native_custom@127.0.0.1",
+        executable: "./zig-out/bin/zbeam-custom-worker", profile: :custom]
+{:ok, supervisor} = Supervisor.start_link([{TwoWorkerOwner, opts}], strategy: :one_for_one)
+{:ok, "HELLO"} = TwoWorkerOwner.call(:custom, :a, "hello")
+```
+
+The custom owner launches `serve-custom` and keeps the same admission, `busy`,
+stop, timeout and no-replay rules as the SHA-256 owner. `call/3` returns the
+handler's 0–32 output bytes. Each owner accepts only its own profile's command:
+`hash/3` on a custom owner, or `call/3` on a SHA-256 owner, returns
+`{:error, :unsupported}` and releases the claimed admission slot. A returned
+`handler_failed` retires that actor until the native process is replaced. The
+[custom owner record](evidence/phase-c/2026-11-09-custom-owner.md) covers these
+cases. The [live interoperability campaign](evidence/phase-c/2026-11-05-handler-interop.md)
+covers the raw `call` wire profile on OTP 25/26/27 in both modes and Elixir fault
+scenarios, including [actual-master CI](evidence/phase-c/2026-11-05-handler-interop.md#actual-merged-master-follow-up).
+Production acceptance remains separate. Admission bounds calls made through the
+owner; it does not bound arbitrary BEAM senders.
 
 ## Contract and limits
 

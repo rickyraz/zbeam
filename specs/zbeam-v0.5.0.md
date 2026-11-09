@@ -435,7 +435,8 @@ Mode-specific routing and bounded binary encoding have conformance vectors, and
 A separately built example runs a non-SHA-256 function from Elixir; live OTP
 25/26/27 checks cover both debug and safe modes on actual master, and ADR 0006
 is [accepted](../docs/evidence/phase-c/2026-11-09-adr-0006-acceptance.md) for this
-profile. Production acceptance remains separate. The SHA-256 profiles are unchanged.
+profile. The supervised Elixir owner runs it with `profile: :custom` and
+`call/3`. Production acceptance remains separate. The SHA-256 profiles are unchanged.
 
 **M2a prerequisite:** `Mailbox(T).tryDeliver` adds one-element nonblocking
 capacity admission with caller ownership retained on error. It does not change
