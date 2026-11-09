@@ -5,6 +5,7 @@ Code.require_file("two_worker_peer.ex", __DIR__)
 defmodule TwoWorkerOwner do
   @moduledoc "Linux development owner for two fixed workers; uncertain work is never replayed."
   use GenServer
+  @profiles %{sha256: {"serve-workers", :hash}, custom: {"serve-custom", :call}}
 
   def start_link(options) do
     GenServer.start_link(__MODULE__, options,
@@ -14,6 +15,7 @@ defmodule TwoWorkerOwner do
   end
 
   def hash(name, actor, input), do: request(name, actor, input, :hash)
+  def call(name, actor, input), do: request(name, actor, input, :call)
   def stop(name, actor), do: request(name, actor, <<>>, :stop)
 
   defp request(name, actor, input, operation) do
@@ -38,13 +40,15 @@ defmodule TwoWorkerOwner do
     executable = Keyword.fetch!(options, :executable)
     timeout = Keyword.get(options, :timeout_ms, 1_000)
     startup = Keyword.get(options, :startup_ms, 3_000)
+    profile = Keyword.get(options, :profile, :sha256)
 
     with true <- is_integer(timeout) and timeout > 0 and is_integer(startup) and startup > 0,
+         {command, operation} <- Map.get(@profiles, profile),
          deadline = System.monotonic_time(:millisecond) + startup,
-         {:ok, port} <- TwoWorkerLaunch.start(peer, executable, startup) do
+         {:ok, port} <- TwoWorkerLaunch.start(peer, executable, startup, command) do
       result =
         try do
-          initialize(name, peer, port, timeout, deadline)
+          initialize(name, peer, port, timeout, deadline, operation)
         catch
           kind, reason ->
             cleanup(peer, port)
@@ -64,14 +68,22 @@ defmodule TwoWorkerOwner do
     end
   end
 
-  defp initialize(name, peer, port, timeout, deadline) do
+  defp initialize(name, peer, port, timeout, deadline, operation) do
     with {:ok, actors} <- TwoWorkerPeer.connect(port, peer, deadline) do
       :ets.new(name, [:named_table, :public, :set])
       table = :ets.whereis(name)
       Process.send_after(self(), :check_admission, 100)
 
       {:ok,
-       %{peer: peer, port: port, actors: actors, table: table, pending: %{}, timeout: timeout}}
+       %{
+         peer: peer,
+         port: port,
+         actors: actors,
+         table: table,
+         pending: %{},
+         timeout: timeout,
+         operation: operation
+       }}
     end
   rescue
     ArgumentError -> {:error, :not_ready}
@@ -84,9 +96,17 @@ defmodule TwoWorkerOwner do
   end
 
   @impl true
-  def handle_call({:hash, actor, ticket, input}, from, state)
-      when actor in [:a, :b] and is_binary(input) and byte_size(input) <= 1_048_576,
-      do: submit(state, actor, ticket, from, :hash, {:hash, input})
+  def handle_call({operation, actor, ticket, input}, {caller, _} = from, state)
+      when operation in [:hash, :call] and actor in [:a, :b] and is_binary(input) and
+             byte_size(input) <= 1_048_576 do
+    if operation == state.operation do
+      submit(state, actor, ticket, from, operation, {operation, input})
+    else
+      # The other profile's command: release the claimed slot so the actor stays usable.
+      TwoWorkerAdmission.release(state.table, actor, caller, ticket)
+      {:reply, {:error, :unsupported}, state}
+    end
+  end
 
   def handle_call({:stop, actor, ticket, <<>>}, from, state) when actor in [:a, :b],
     do: submit(state, actor, ticket, from, :stop, :stop)
@@ -122,15 +142,14 @@ defmodule TwoWorkerOwner do
   end
 
   @impl true
-  def handle_info({ref, {:ok, digest}}, state)
-      when is_reference(ref) and is_binary(digest) and byte_size(digest) == 32 do
-    case actor_for_ref(state, ref) do
-      nil -> {:noreply, state}
-      actor ->
-        if elem(state.pending[actor], 5) == :hash,
-          do: {:noreply, finish(state, actor, {:ok, digest})},
-          else: {:noreply, state}
-    end
+  def handle_info({ref, {:ok, output}}, state)
+      when is_reference(ref) and is_binary(output) and byte_size(output) <= 32 do
+    actor = actor_for_ref(state, ref)
+    operation = actor && elem(state.pending[actor], 5)
+
+    if operation == :call or (operation == :hash and byte_size(output) == 32),
+      do: {:noreply, finish(state, actor, {:ok, output})},
+      else: {:noreply, state}
   end
 
   def handle_info({ref, :ok}, state) when is_reference(ref) do

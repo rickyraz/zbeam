@@ -30,8 +30,8 @@ PASS compiled Zig uppercase handler on both workers
 
 The handler in [`examples/custom_worker.zig`](examples/custom_worker.zig)
 converts ASCII input to uppercase. Change the function and rebuild the executable
-to try another handler. The [Elixir client](examples/custom_client.exs) uses the
-separate `call` profile; the SHA-256 owner does not expose custom calls.
+to try another handler. The [Elixir client](examples/custom_client.exs) starts the
+supervised `TwoWorkerOwner` with `profile: :custom` and uses `TwoWorkerOwner.call/3`.
 
 A handler borrows the runtime's copied input for the duration of the call and
 writes up to 32 bytes to the supplied output buffer. It must not retain either
@@ -46,15 +46,16 @@ and retires that actor. See the [handler contract and wire profile](docs/two-wor
 - `serve-workers` provides two fixed SHA-256 workers. Its
   [Elixir owner](docs/two-worker-wire.md#supervised-elixir-owner) admits one request
   per actor, returns `busy` under pressure, and can stop one actor without stopping its sibling.
-- A separately compiled handler can run on the two-worker `call` profile, as in
-  the example above. The ordinary `serve-workers` command remains SHA-256.
+- A separately compiled handler can run on the two-worker `call` profile under
+  the same owner, as in the example above. The ordinary `serve-workers` command
+  remains SHA-256.
 - The wire subset, handshake, monitoring, and worker profiles are tested with OTP
   25, 26, and 27. The [implementation status](docs/implementation-status.md)
   lists the contracts and evidence.
 
 A sent request may have an unknown outcome after a timeout or disconnect. The
-supervised SHA-256 owner does not automatically replay uncertain work; that is not
-an exactly-once guarantee. Shutdown is cooperative: if a handler never returns,
+supervised owner does not automatically replay uncertain work; that is not an
+exactly-once guarantee. Shutdown is cooperative: if a handler never returns,
 the native process must be killed and reaped externally. A panic or memory
 corruption can affect both native workers.
 

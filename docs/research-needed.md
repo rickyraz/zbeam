@@ -184,8 +184,9 @@ has focused lifecycle and external-kill checks. Mode-specific routing and
 synthetic service composition are implemented, with independent OTP-generated
 vectors. A separate compiled uppercase example has [actual-master OTP 25/26/27
 checks](evidence/phase-c/2026-11-05-handler-interop.md#actual-merged-master-follow-up)
-in both modes and Elixir fault coverage; broader production acceptance remains
-pending. Arbitrary state, destructor ownership, large output and dynamic plugins
+in both modes and Elixir fault coverage. The supervised Elixir owner also runs
+it with [`profile: :custom`](evidence/phase-c/2026-11-09-custom-owner.md); broader
+production acceptance remains pending. Arbitrary state, destructor ownership, large output and dynamic plugins
 remain outside that decision.
 
 ### Arena identity and recycling
