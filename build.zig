@@ -123,6 +123,12 @@ pub fn build(b: *std.Build) void {
     cli_smoke.addArtifactArg(exe);
     cli_smoke.addArtifactArg(custom_worker);
     test_integration_step.dependOn(&cli_smoke.step);
+    // Opt-in: needs git and builds a consumer from a fetched archive of this checkout.
+    const package_consumer = b.addSystemCommand(&.{"sh"});
+    package_consumer.addFileArg(b.path("scripts/test/package_consumer.sh"));
+    package_consumer.addFileArg(.zig_exe);
+    package_consumer.has_side_effects = true;
+    b.step("test-package", "Build a consumer from a fetched package archive of this checkout").dependOn(&package_consumer.step);
 
     const etf_fixtures_mod = b.createModule(.{
         .root_source_file = b.path("fixtures/etf/manifest.zig"),

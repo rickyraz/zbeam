@@ -1,0 +1,9 @@
+.{
+    .name = .zbeam_consumer,
+    .version = "0.0.0",
+    .fingerprint = 0x3a6cc4c527f54724,
+    .minimum_zig_version = "0.17.0",
+    // scripts/test/package_consumer.sh adds the fetched zbeam archive here.
+    .dependencies = .{},
+    .paths = .{""},
+}
