@@ -36,12 +36,36 @@ pub fn writePacket(writer: *std.Io.Writer, packet: []const u8) !void {
 
 /// Writes one frame whose length prefix in `head` also covers the borrowed
 /// `tail`, so a large trailing binary is never copied into a frame buffer.
+/// One vectored write keeps a small frame in one segment: two sends would let
+/// Nagle's algorithm hold the tail until the peer's delayed ACK.
 pub fn writePacketParts(writer: *std.Io.Writer, head: []const u8, tail: []const u8) !void {
     if (head.len < 4) return error.Truncated;
     if (readU32(head[0..4]) != head.len - 4 + tail.len) return error.LengthMismatch;
-    try writer.writeAll(head);
-    try writer.writeAll(tail);
+    var parts = [_][]const u8{ head, tail };
+    try writer.writeVecAll(&parts);
     try writer.flush();
+}
+
+test "split frames reach an unbuffered writer in one vectored call" {
+    const Counting = struct {
+        calls: usize = 0,
+        bytes: usize = 0,
+        writer: std.Io.Writer = .{ .vtable = &.{ .drain = drain }, .buffer = &.{} },
+
+        fn drain(w: *std.Io.Writer, data: []const []const u8, splat: usize) std.Io.Writer.Error!usize {
+            const self: *@This() = @alignCast(@fieldParentPtr("writer", w));
+            self.calls += 1;
+            var n: usize = 0;
+            for (data[0 .. data.len - 1]) |bytes| n += bytes.len;
+            n += data[data.len - 1].len * splat;
+            self.bytes += n;
+            return n;
+        }
+    };
+    var counting: Counting = .{};
+    try writePacketParts(&counting.writer, &.{ 0, 0, 0, 3, 112 }, "ab");
+    try std.testing.expectEqual(@as(usize, 1), counting.calls);
+    try std.testing.expectEqual(@as(usize, 7), counting.bytes);
 }
 
 test "split frames validate the combined length before writing" {
