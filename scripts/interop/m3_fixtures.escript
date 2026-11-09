@@ -8,11 +8,13 @@ main(_) ->
     Request = fun(Bin) -> {Peer, Ref, {call, Bin}} end,
     Reply = fun(Bin) -> {Ref, {ok, Bin}} end,
     Max = binary:copy(<<42>>, 32),
+    Large = binary:copy(<<42>>, 300),
     Vectors = [
         {call_empty, Send(A), Request(<<>>)},
         {call_max, Send(A), Request(Max)},
         {reply_empty, Send(Peer), Reply(<<>>)},
-        {reply_max, Send(Peer), Reply(Max)}
+        {reply_max, Send(Peer), Reply(Max)},
+        {reply_large, Send(Peer), Reply(Large)}
     ],
     lists:foreach(fun({Name, Control, Payload}) ->
         C = term_to_binary(Control, [{minor_version, 2}]),

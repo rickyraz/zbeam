@@ -19,4 +19,7 @@ test "independent OTP 25/26/27 custom binary request and reply frames match" {
     try check(vectors, "reply_empty", &.{ .tuple = &send }, &.{ .tuple = &reply });
     value[1] = .{ .binary = &maximum };
     try check(vectors, "reply_max", &.{ .tuple = &send }, &.{ .tuple = &reply });
+    const large: [300]u8 = @splat(42);
+    value[1] = .{ .binary = &large };
+    try check(vectors, "reply_large", &.{ .tuple = &send }, &.{ .tuple = &reply });
 }
