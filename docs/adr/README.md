@@ -23,3 +23,4 @@ Accepted ADRs are immutable except for status and supersession links. New eviden
 - [0004 — Bounded task-owned runtime](0004-bounded-task-owned-runtime.md) — accepted and implemented for local M2a; M2b wire expansion separately gated
 - [0005 — Bounded two-worker wire profile](0005-two-worker-wire-profile.md) — accepted and implemented for the restricted M2b profile
 - [0006 — Compiled stateless binary handlers](0006-compiled-binary-handler.md) — accepted and implemented for the separate custom-handler profile
+- [0007 — Bounded 64 KiB output for compiled handlers](0007-bounded-handler-output.md) — proposed; would supersede only 0006's output rules
