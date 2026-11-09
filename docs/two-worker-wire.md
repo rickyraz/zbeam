@@ -147,7 +147,8 @@ A panic or corruption affects the whole native process, not just one worker. A
 observes both actor monitors disconnect while the BEAM VM remains responsive; it
 does not establish safety under memory corruption or OS-OOM.
 
-Cookies appear in process arguments; there is no TLS. Authentication trusts the
+The bundled launcher passes the cookie through `ZBEAM_COOKIE`, not argv; a
+cookie given as an argument is visible in process listings. There is no TLS. Authentication trusts the
 peer node, not individual BEAM processes. External supervision and no-replay
 recovery are deployment responsibilities. The Linux
 [process-loss campaign](evidence/phase-c/2026-10-28-m2b-process-recovery.md)

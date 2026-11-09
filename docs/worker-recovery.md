@@ -88,6 +88,6 @@ Elixir build runs on those older VMs. Full records and exact commands are in
 open/closed/invalid-Port regression: the current target executes 13 ordinary
 cases plus the complementary private-EPMD case, 14 cases per optimizer mode.
 
-Cookies appear in process arguments in this local example; distribution is not
-TLS. Secret delivery, cgroup/service-manager containment, supported Elixir/OTP
+This local example passes the cookie through `ZBEAM_COOKIE`, which the same OS
+user can still read; distribution is not TLS. Secret delivery, cgroup/service-manager containment, supported Elixir/OTP
 pairings and non-Linux deployment need a separate production review.

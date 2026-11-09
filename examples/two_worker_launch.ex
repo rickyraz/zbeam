@@ -22,13 +22,9 @@ defmodule TwoWorkerLaunch do
           :exit_status,
           :stderr_to_stdout,
           {:line, 1024},
-          args: [
-            @guard,
-            Path.expand(executable),
-            command,
-            short,
-            Atom.to_string(Node.get_cookie())
-          ]
+          # The guard and native child inherit the cookie; neither argv contains it.
+          env: [{~c"ZBEAM_COOKIE", Atom.to_charlist(Node.get_cookie())}],
+          args: [@guard, Path.expand(executable), command, short, "-"]
         ])
 
       case await_registration(port, Atom.to_string(peer), deadline) do

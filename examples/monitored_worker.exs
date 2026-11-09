@@ -12,13 +12,8 @@ launch = fn ->
       :binary,
       :exit_status,
       :stderr_to_stdout,
-      args: [
-        Path.join(__DIR__, "worker_guard.py"),
-        Path.expand(bin),
-        "serve-worker",
-        short,
-        Atom.to_string(Node.get_cookie())
-      ]
+      env: [{~c"ZBEAM_COOKIE", Atom.to_charlist(Node.get_cookie())}],
+      args: [Path.join(__DIR__, "worker_guard.py"), Path.expand(bin), "serve-worker", short, "-"]
     ])
 
   {port, String.to_atom(short <> "@127.0.0.1")}
