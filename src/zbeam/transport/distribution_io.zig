@@ -31,10 +31,27 @@ pub fn readPacket(allocator: std.mem.Allocator, reader: *std.Io.Reader, max_pack
 /// Refuses internally inconsistent frames before writing and flushes because a
 /// tick or reply must reach the peer promptly to advance connection state.
 pub fn writePacket(writer: *std.Io.Writer, packet: []const u8) !void {
-    if (packet.len < 4) return error.Truncated;
-    if (readU32(packet[0..4]) != packet.len - 4) return error.LengthMismatch;
-    try writer.writeAll(packet);
+    return writePacketParts(writer, packet, &.{});
+}
+
+/// Writes one frame whose length prefix in `head` also covers the borrowed
+/// `tail`, so a large trailing binary is never copied into a frame buffer.
+pub fn writePacketParts(writer: *std.Io.Writer, head: []const u8, tail: []const u8) !void {
+    if (head.len < 4) return error.Truncated;
+    if (readU32(head[0..4]) != head.len - 4 + tail.len) return error.LengthMismatch;
+    try writer.writeAll(head);
+    try writer.writeAll(tail);
     try writer.flush();
+}
+
+test "split frames validate the combined length before writing" {
+    var buffer: [16]u8 = undefined;
+    var writer = std.Io.Writer.fixed(&buffer);
+    try writePacketParts(&writer, &.{ 0, 0, 0, 3, 112 }, "ab");
+    try std.testing.expectEqualSlices(u8, &.{ 0, 0, 0, 3, 112, 'a', 'b' }, writer.buffered());
+    try std.testing.expectError(error.LengthMismatch, writePacketParts(&writer, &.{ 0, 0, 0, 3, 112 }, "a"));
+    try std.testing.expectError(error.Truncated, writePacketParts(&writer, &.{ 0, 0 }, "ab"));
+    try std.testing.expectEqual(@as(usize, 7), writer.buffered().len);
 }
 
 test "framing distinguishes clean EOF from truncated headers and payloads" {

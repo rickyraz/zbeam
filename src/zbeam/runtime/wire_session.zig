@@ -74,17 +74,18 @@ pub const Session = struct {
         const delivery = self.outputs.beginWrite(self.outputs.epoch, value.request_id) orelse return error.UnknownCompletion;
         defer self.outputs.finishWrite(delivery.ticket);
         if (value.output_len > 32) return error.InvalidOutputLength;
+        const envelope = route.Envelope{ .to = delivery.to, .reference = delivery.reference };
         const encoded: encode.Result = switch (value.outcome) {
             .digest => |*digest| if (self.tasks.handler == null)
                 .{ .digest = digest.* }
             else
-                .{ .binary = digest[0..value.output_len] },
+                return sendBinary(writer, envelope, digest[0..value.output_len]),
             .stopped => .{ .failure = .stopped },
             .canceled => .{ .failure = .canceled },
             .handler_failed => .{ .failure = .handler_failed },
         };
         if (value.outcome == .handler_failed) _ = try self.tasks.stopAndJoin(value.actor_id);
-        try sendReply(writer, .{ .to = delivery.to, .reference = delivery.reference }, encoded);
+        try sendReply(writer, envelope, encoded);
         if (value.outcome == .handler_failed) {
             const index: usize = @intCast(value.actor_id - 1);
             while (self.monitors.takeExit(self.pids[index])) |subscription| {
@@ -98,6 +99,12 @@ fn sendReply(writer: *std.Io.Writer, envelope: route.Envelope, result_value: enc
     var scratch: [encode.scratch_bytes]u8 = undefined;
     const bytes = try encode.reply(&scratch, envelope.to, envelope.reference, result_value);
     try transport.distribution_io.writePacket(writer, bytes);
+}
+
+fn sendBinary(writer: *std.Io.Writer, envelope: route.Envelope, bytes: []const u8) !void {
+    var scratch: [encode.scratch_bytes]u8 = undefined;
+    const header = try encode.binaryReplyHeader(&scratch, envelope.to, envelope.reference, bytes.len);
+    try transport.distribution_io.writePacketParts(writer, header, bytes);
 }
 
 fn sendExit(writer: *std.Io.Writer, target: protocol.monitor.Target, to: etf.Pid, ref: etf.Reference, reason: encode.Reason) !void {
